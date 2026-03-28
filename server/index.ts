@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { initDatabase } from './db.js';
 import { seedDatabase } from './seed.js';
@@ -10,10 +11,21 @@ import statsRouter from './routes/stats.js';
 import configRouter from './routes/config.js';
 import pool from './db.js';
 
-dotenv.config();
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Load .env manually to ensure it works with all Node/tsx versions
+try {
+  const envPath = path.resolve(__dirname, '.env');
+  const envContent = fs.readFileSync(envPath, 'utf8');
+  const parsed = dotenv.parse(envContent);
+  for (const [key, value] of Object.entries(parsed)) {
+    if (!process.env[key]) {
+      process.env[key] = value;
+    }
+  }
+} catch { /* .env file not found, using system env vars */ }
+console.log('ANTHROPIC_API_KEY loaded:', !!process.env.GEMINI_API_KEY);
 
 const app = express();
 app.use(cors());
@@ -22,7 +34,6 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve uploaded files
 const uploadsDir = path.join(__dirname, 'uploads');
-import fs from 'fs';
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
@@ -67,7 +78,7 @@ app.get('/api/audit-log', async (req, res) => {
 
 // Health check
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', aiAvailable: !!process.env.ANTHROPIC_API_KEY });
+  res.json({ status: 'ok', aiAvailable: !!process.env.GEMINI_API_KEY });
 });
 
 const PORT = parseInt(process.env.PORT || '5000');
@@ -86,7 +97,7 @@ async function start() {
   Stats:           http://localhost:${PORT}/api/stats
   Scoring Config:  http://localhost:${PORT}/api/scoring-config
   Health:          http://localhost:${PORT}/api/health
-  AI Available:    ${!!process.env.ANTHROPIC_API_KEY ? 'Yes' : 'No (set ANTHROPIC_API_KEY in .env)'}
+  AI Available:    ${!!process.env.GEMINI_API_KEY ? 'Yes' : 'No (set ANTHROPIC_API_KEY in .env)'}
       `);
     });
   } catch (err) {

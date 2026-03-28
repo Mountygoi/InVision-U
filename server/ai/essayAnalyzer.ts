@@ -1,20 +1,56 @@
-import Anthropic from '@anthropic-ai/sdk';
+import https from 'https';
 import { ESSAY_ANALYSIS_SYSTEM_PROMPT, buildEssayAnalysisPrompt } from './prompts.js';
 import type { AIAnalysisResult, AIScores, AIFlags, Achievement } from '../types.js';
 
-const MODEL = 'claude-haiku-4-5-20251001';
+const MODEL = 'gemini-2.5-flash';
 
-let client: Anthropic | null = null;
-
-function getClient(): Anthropic {
-  if (!client) {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+function callGemini(prompt: string, systemInstruction: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      throw new Error('ANTHROPIC_API_KEY is not set in environment variables');
+      return reject(new Error('GEMINI_API_KEY is not set'));
     }
-    client = new Anthropic({ apiKey });
-  }
-  return client;
+
+    const body = JSON.stringify({
+      system_instruction: { parts: [{ text: systemInstruction }] },
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.3, maxOutputTokens: 3000 },
+    });
+
+    const url = new URL(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`);
+
+    const req = https.request({
+      hostname: url.hostname,
+      path: url.pathname + url.search,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(body),
+      },
+    }, (res) => {
+      let data = '';
+      res.on('data', (chunk) => data += chunk);
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed.error) {
+            return reject(new Error(`Gemini API error: ${parsed.error.message}`));
+          }
+          const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (!text) {
+            return reject(new Error('No text in Gemini response'));
+          }
+          resolve(text);
+        } catch (e) {
+          reject(new Error(`Failed to parse Gemini response: ${data.substring(0, 200)}`));
+        }
+      });
+    });
+
+    req.on('error', (e) => reject(new Error(`Network error calling Gemini: ${e.message}`)));
+    req.write(body);
+    req.end();
+  });
 }
 
 export async function analyzeEssay(
@@ -24,8 +60,6 @@ export async function analyzeEssay(
   university: string,
   city: string
 ): Promise<AIAnalysisResult> {
-  const anthropic = getClient();
-
   const achievementsStr = achievements.length > 0
     ? achievements.map(a => `${a.type}: ${a.title}${a.description ? ' - ' + a.description : ''}`).join('; ')
     : 'None listed';
@@ -38,28 +72,46 @@ export async function analyzeEssay(
     city
   );
 
-  const response = await anthropic.messages.create({
-    model: MODEL,
-    max_tokens: 2000,
-    system: ESSAY_ANALYSIS_SYSTEM_PROMPT,
-    messages: [{ role: 'user', content: userMessage }],
-  });
+  const responseText = await callGemini(userMessage, ESSAY_ANALYSIS_SYSTEM_PROMPT);
 
-  const textBlock = response.content.find(b => b.type === 'text');
-  if (!textBlock || textBlock.type !== 'text') {
-    throw new Error('No text response from Claude');
-  }
+  // Extract JSON from response (handle markdown code blocks and thinking tokens)
+  let jsonStr = responseText.trim();
 
-  // Extract JSON from response (handle markdown code blocks)
-  let jsonStr = textBlock.text.trim();
+  // Try extracting from code block first
   const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (jsonMatch) {
     jsonStr = jsonMatch[1].trim();
   }
 
-  const parsed = JSON.parse(jsonStr);
+  // If still not valid JSON, try finding the JSON object directly
+  if (!jsonStr.startsWith('{')) {
+    const braceStart = jsonStr.indexOf('{');
+    const braceEnd = jsonStr.lastIndexOf('}');
+    if (braceStart !== -1 && braceEnd !== -1) {
+      jsonStr = jsonStr.substring(braceStart, braceEnd + 1);
+    }
+  }
 
-  // Validate structure
+  console.log('Parsing AI response, first 500 chars:', jsonStr.substring(0, 500));
+
+  // Try to fix common JSON issues from LLMs
+  // Remove trailing commas before ] or }
+  jsonStr = jsonStr.replace(/,\s*([}\]])/g, '$1');
+
+  let parsed: any;
+  try {
+    parsed = JSON.parse(jsonStr);
+  } catch (e: any) {
+    console.error('JSON parse error:', e.message);
+    console.error('Full JSON string:', jsonStr.substring(0, 2000));
+    // Try more aggressive cleanup: remove control characters
+    jsonStr = jsonStr.replace(/[\x00-\x1f\x7f]/g, (ch) => {
+      if (ch === '\n' || ch === '\r' || ch === '\t') return ch;
+      return '';
+    });
+    parsed = JSON.parse(jsonStr);
+  }
+
   const scores = parsed.scores as AIScores;
   const flags = parsed.flags as AIFlags;
   const summary = parsed.summary as string;
@@ -78,5 +130,5 @@ export async function analyzeEssay(
 }
 
 export function isAIAvailable(): boolean {
-  return !!process.env.ANTHROPIC_API_KEY;
+  return !!process.env.GEMINI_API_KEY;
 }

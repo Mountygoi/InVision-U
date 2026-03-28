@@ -58,11 +58,20 @@ const StudentForm = () => {
       formData.append('achievements', JSON.stringify(achievements.filter(a => a.title)));
       formData.append('skills', JSON.stringify(skills));
 
-      if (values.essayText) {
-        formData.append('essayText', values.essayText);
+      const hasEssayText = values.essayText?.trim();
+      const hasEssayFile = values.essayFile?.fileList?.[0]?.originFileObj;
+
+      if (!hasEssayText && !hasEssayFile) {
+        message.error('Please provide a motivation essay — either upload a PDF or write it directly. The AI needs your essay to evaluate your potential.');
+        setSubmitting(false);
+        return;
       }
 
-      if (values.essayFile?.fileList?.[0]?.originFileObj) {
+      if (hasEssayText) {
+        formData.append('essayText', values.essayText.trim());
+      }
+
+      if (hasEssayFile) {
         formData.append('essay', values.essayFile.fileList[0].originFileObj);
       }
 

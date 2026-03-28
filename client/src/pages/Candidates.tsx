@@ -226,7 +226,7 @@ const Candidates = () => {
                 <Divider style={{ margin: '20px 0' }} />
 
                 {/* AI Assessment Summary */}
-                {selectedCandidate.aiSummary && (
+                {selectedCandidate.aiSummary ? (
                   <div style={{
                     background: selectedCandidate.compositeScore >= 70 ? '#F0FDF4' : selectedCandidate.compositeScore >= 50 ? '#FFFBEB' : '#FEF2F2',
                     padding: '20px',
@@ -247,6 +247,21 @@ const Candidates = () => {
                     }}>
                       {selectedCandidate.aiSummary}
                     </Paragraph>
+                  </div>
+                ) : (
+                  <div style={{
+                    background: '#F5F7FA',
+                    padding: '20px',
+                    borderRadius: '14px',
+                    marginBottom: '24px',
+                    border: '1px solid #E5E7EB',
+                    textAlign: 'center'
+                  }}>
+                    <Bot size={24} color="#9CA3AF" style={{ marginBottom: 8 }} />
+                    <Title level={5} style={{ color: '#6B7280', marginBottom: 4 }}>AI Analysis Not Available</Title>
+                    <Text type="secondary" style={{ fontSize: 13 }}>
+                      No motivation essay was submitted for this candidate. AI scoring requires an essay to evaluate leadership potential, motivation, and other dimensions.
+                    </Text>
                   </div>
                 )}
 
@@ -373,41 +388,51 @@ const Candidates = () => {
                       variant="borderless"
                       style={{ border: '1px solid #F0F0F0', borderRadius: '14px' }}
                     >
-                      <div style={{ height: '260px', width: '100%' }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <RadarChart cx="50%" cy="50%" outerRadius="78%" data={radarData}>
-                            <PolarGrid stroke="#E5E7EB" />
-                            <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: '#6B7280' }} />
-                            <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                            <RadarArea name="Candidate" dataKey="A" stroke="#006CFF" fill="#006CFF" fillOpacity={0.12} dot={{ r: 3, fill: '#006CFF', strokeWidth: 2 }} />
-                          </RadarChart>
-                        </ResponsiveContainer>
-                      </div>
+                      {radarData.length > 0 ? (
+                        <>
+                          <div style={{ height: '260px', width: '100%' }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                              <RadarChart cx="50%" cy="50%" outerRadius="78%" data={radarData}>
+                                <PolarGrid stroke="#E5E7EB" />
+                                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: '#6B7280' }} />
+                                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                                <RadarArea name="Candidate" dataKey="A" stroke="#006CFF" fill="#006CFF" fillOpacity={0.12} dot={{ r: 3, fill: '#006CFF', strokeWidth: 2 }} />
+                              </RadarChart>
+                            </ResponsiveContainer>
+                          </div>
 
-                      {/* Dimension Breakdown */}
-                      {selectedCandidate.aiScores && (
-                        <div style={{ marginTop: 12 }}>
-                          {Object.entries(selectedCandidate.aiScores).map(([key, val]) => (
-                            <div key={key} style={{ display: 'flex', alignItems: 'center', marginBottom: 6, gap: 8 }}>
-                              <Text style={{ fontSize: 12, width: 110, color: '#6B7280' }}>
-                                {key.replace(/([A-Z])/g, ' $1').trim()}
-                              </Text>
-                              <Progress
-                                percent={val.score}
-                                size="small"
-                                style={{ flex: 1 }}
-                                strokeColor={getScoreColor(val.score)}
-                                format={() => <Text style={{ fontSize: 11 }}>{val.score}</Text>}
-                              />
-                              <Badge
-                                count={val.confidence >= 0.9 ? 'HIGH' : val.confidence >= 0.7 ? 'MED' : 'LOW'}
-                                style={{
-                                  backgroundColor: val.confidence >= 0.9 ? '#10B981' : val.confidence >= 0.7 ? '#F59E0B' : '#EF4444',
-                                  fontSize: 9, padding: '0 4px'
-                                }}
-                              />
+                          {/* Dimension Breakdown */}
+                          {selectedCandidate.aiScores && (
+                            <div style={{ marginTop: 12 }}>
+                              {Object.entries(selectedCandidate.aiScores).map(([key, val]) => (
+                                <div key={key} style={{ display: 'flex', alignItems: 'center', marginBottom: 6, gap: 8 }}>
+                                  <Text style={{ fontSize: 12, width: 110, color: '#6B7280' }}>
+                                    {key.replace(/([A-Z])/g, ' $1').trim()}
+                                  </Text>
+                                  <Progress
+                                    percent={val.score}
+                                    size="small"
+                                    style={{ flex: 1 }}
+                                    strokeColor={getScoreColor(val.score)}
+                                    format={() => <Text style={{ fontSize: 11 }}>{val.score}</Text>}
+                                  />
+                                  <Badge
+                                    count={val.confidence >= 0.9 ? 'HIGH' : val.confidence >= 0.7 ? 'MED' : 'LOW'}
+                                    style={{
+                                      backgroundColor: val.confidence >= 0.9 ? '#10B981' : val.confidence >= 0.7 ? '#F59E0B' : '#EF4444',
+                                      fontSize: 9, padding: '0 4px'
+                                    }}
+                                  />
+                                </div>
+                              ))}
                             </div>
-                          ))}
+                          )}
+                        </>
+                      ) : (
+                        <div style={{ height: '260px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+                          <Bot size={32} color="#D1D5DB" />
+                          <Text type="secondary" style={{ marginTop: 12, fontSize: 13 }}>No essay submitted</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>AI competency analysis requires a motivation essay</Text>
                         </div>
                       )}
                     </Card>

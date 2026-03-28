@@ -208,7 +208,7 @@ router.post('/apply', upload.single('essay'), async (req, res) => {
 router.post('/:id/analyze', async (req, res) => {
   try {
     if (!isAIAvailable()) {
-      return res.status(503).json({ error: 'AI analysis is not available. Set ANTHROPIC_API_KEY in .env' });
+      return res.status(503).json({ error: 'AI analysis is not available. Set GEMINI_API_KEY in .env' });
     }
 
     const candidate = await pool.query('SELECT * FROM candidates WHERE id = $1', [req.params.id]);
@@ -226,9 +226,10 @@ router.post('/:id/analyze', async (req, res) => {
 
     const updated = await pool.query('SELECT ai_scores, ai_summary, ai_flags, composite_score FROM candidates WHERE id = $1', [req.params.id]);
     res.json({ message: 'Analysis complete', ...updated.rows[0] });
-  } catch (err) {
-    console.error('Error analyzing candidate:', err);
-    res.status(500).json({ error: 'Failed to analyze candidate' });
+  } catch (err: any) {
+    console.error('Error analyzing candidate:', err?.message || err);
+    console.error('Full error:', JSON.stringify(err, null, 2));
+    res.status(500).json({ error: 'Failed to analyze candidate', details: err?.message || String(err) });
   }
 });
 
