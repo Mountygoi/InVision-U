@@ -1,118 +1,160 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Row, Col, List, Avatar, Tag, Button, Typography, Space, Empty, message, Input, Layout, Card, Divider } from 'antd';
-import { ShieldCheck, FileText, Send, XCircle, MoreVertical, MapPin, GraduationCap, Award, CheckCircle2 } from 'lucide-react'; 
+import { Row, Col, List, Avatar, Tag, Button, Typography, Space, Empty, message, Input, Layout, Card, Divider, Select, Progress, Badge } from 'antd';
+import { ShieldCheck, FileText, Send, XCircle, MapPin, GraduationCap, CheckCircle2, AlertTriangle, Bot, TrendingUp } from 'lucide-react';
 import axios from 'axios';
-import {  RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, PolarRadiusAxis, Radar as RadarArea } from 'recharts';
-import { useScoring } from '../context/ScoringContext';
-import { calculateCandidateScore } from '../utils/scoringUtils';
+import { RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, PolarRadiusAxis, Radar as RadarArea } from 'recharts';
 import AppHeader from '../layout/AppHeader';
-
-// Твои SVG иконки из assets
 import searchIcon from '../assets/icons/search.svg';
-import filterIcon from '../assets/icons/filter.svg';
-
 import type { Candidate } from '../types';
 
 const { Title, Text, Paragraph } = Typography;
 const { Content } = Layout;
+const { TextArea } = Input;
+
+const STATUS_COLORS: Record<string, string> = {
+  new: 'blue',
+  under_review: 'orange',
+  interview: 'purple',
+  accepted: 'green',
+  declined: 'red',
+  waitlisted: 'default',
+};
+
+const ACHIEVEMENT_ICONS: Record<string, string> = {
+  olympiad: '🏅',
+  volunteering: '🤝',
+  project: '🚀',
+  award: '🏆',
+};
 
 const Candidates = () => {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const { weights } = useScoring();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [reviewNotes, setReviewNotes] = useState('');
 
   const fetchCandidates = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await axios.get('http://localhost:5000/api/candidates');
+      const params: any = { sort: 'composite_score', order: 'desc' };
+      if (searchQuery) params.search = searchQuery;
+      if (statusFilter !== 'all') params.status = statusFilter;
+
+      const res = await axios.get('http://localhost:5000/api/candidates', { params });
       setCandidates(res.data);
       if (res.data.length > 0 && !selectedId) setSelectedId(res.data[0].id);
     } catch (err) {
       console.error('Data fetch error:', err);
-      message.error('Ошибка загрузки данных с сервера');
+      message.error('Error loading data from server');
     } finally {
       setLoading(false);
     }
-  }, [selectedId]);
+  }, [searchQuery, statusFilter, selectedId]);
 
   useEffect(() => {
     fetchCandidates();
   }, [fetchCandidates]);
 
-  // Полный пересчет с сортировкой
-  const scoredCandidates = candidates.map(c => ({
-    ...c,
-    dynamicScore: calculateCandidateScore(c, weights)
-  })).sort((a, b) => b.dynamicScore - a.dynamicScore);
-
-  const selectedCandidate = scoredCandidates.find(c => c.id === selectedId);
+  const selectedCandidate = candidates.find(c => c.id === selectedId);
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     try {
       await axios.patch(`http://localhost:5000/api/candidates/${id}/status`, { status: newStatus });
-      message.success(`Кандидат переведен в статус: ${newStatus}`);
+      message.success(`Candidate status updated to: ${newStatus}`);
       fetchCandidates();
     } catch (err) {
       console.error('Update status error:', err);
-      message.error('Ошибка обновления статуса');
+      message.error('Error updating status');
     }
   };
 
-  const radarData = selectedCandidate?.competencies ? [
-    { subject: 'Leadership', A: selectedCandidate.competencies.leadership },
-    { subject: 'Motivation', A: selectedCandidate.competencies.motivation },
-    { subject: 'Technical', A: selectedCandidate.competencies.technicalPotential },
-    { subject: 'Creativity', A: selectedCandidate.competencies.creativity },
-    { subject: 'Empathy', A: selectedCandidate.competencies.empathy },
+  const handleSaveNotes = async () => {
+    if (!selectedId) return;
+    try {
+      await axios.patch(`http://localhost:5000/api/candidates/${selectedId}/review`, {
+        notes: reviewNotes,
+        reviewedBy: 'admin'
+      });
+      message.success('Review notes saved');
+    } catch (err) {
+      message.error('Error saving notes');
+    }
+  };
+
+  const radarData = selectedCandidate?.aiScores ? [
+    { subject: 'Motivation', A: selectedCandidate.aiScores.motivation.score },
+    { subject: 'Leadership', A: selectedCandidate.aiScores.leadership.score },
+    { subject: 'Technical', A: selectedCandidate.aiScores.technicalPotential.score },
+    { subject: 'Creativity', A: selectedCandidate.aiScores.creativity.score },
+    { subject: 'Resilience', A: selectedCandidate.aiScores.resilience.score },
+    { subject: 'Social Impact', A: selectedCandidate.aiScores.socialImpact.score },
   ] : [];
+
+  const getScoreColor = (score: number) => {
+    if (score >= 70) return '#10B981';
+    if (score >= 50) return '#F59E0B';
+    return '#EF4444';
+  };
+
+  const getAiWrittenColor = (prob: number) => {
+    if (prob < 0.3) return '#10B981';
+    if (prob < 0.6) return '#F59E0B';
+    return '#EF4444';
+  };
 
   return (
     <Layout style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif', background: '#FFFFFF' }}>
       <AppHeader />
-      
+
       <Content style={{ padding: '24px', marginTop: '72px' }}>
-        <Row gutter={0} style={{ 
-          background: '#FFFFFF', 
-          borderRadius: '16px', 
-          border: '1px solid #F0F0F0', 
+        <Row gutter={0} style={{
+          background: '#FFFFFF',
+          borderRadius: '16px',
+          border: '1px solid #F0F0F0',
           overflow: 'hidden',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.03)' 
+          boxShadow: '0 4px 20px rgba(0,0,0,0.03)'
         }}>
-          
-          {/* ЛЕВАЯ КОЛОНКА: СПИСОК */}
+
+          {/* LEFT: Candidate List */}
           <Col span={9} style={{ borderRight: '1px solid #F0F0F0', height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column' }}>
             <div style={{ padding: '24px', borderBottom: '1px solid #F0F0F0' }}>
-              <Row justify="space-between" align="middle" style={{ marginBottom: '20px' }}>
-                <Title level={4} style={{ margin: 0, fontWeight: 700, fontFamily: 'Inter' }}>
-                  Applicants <Text type="secondary" style={{ fontWeight: 400 }}>({scoredCandidates.length})</Text>
+              <Row justify="space-between" align="middle" style={{ marginBottom: '16px' }}>
+                <Title level={4} style={{ margin: 0, fontWeight: 700 }}>
+                  Applicants <Text type="secondary" style={{ fontWeight: 400 }}>({candidates.length})</Text>
                 </Title>
-                <Button type="text" icon={<img src={filterIcon} alt="filter" style={{ width: 16 }} />} style={{ fontFamily: 'Inter' }}>
-                  Filters
-                </Button>
+                <Select value={statusFilter} onChange={setStatusFilter} style={{ width: 140 }} size="small">
+                  <Select.Option value="all">All Status</Select.Option>
+                  <Select.Option value="new">New</Select.Option>
+                  <Select.Option value="under_review">Under Review</Select.Option>
+                  <Select.Option value="interview">Interview</Select.Option>
+                  <Select.Option value="accepted">Accepted</Select.Option>
+                  <Select.Option value="declined">Declined</Select.Option>
+                </Select>
               </Row>
-              <Input 
-                placeholder="Search by name or university..." 
-                prefix={<img src={searchIcon} alt="search" style={{ width: '14px', marginRight: '4px' }} />} 
-                style={{ 
-                  borderRadius: '10px', 
-                  background: '#F5F7FA', 
-                  border: '1px solid #F0F0F0', 
-                  height: '40px', 
-                  fontFamily: 'Inter' 
-                }}
+              <Input
+                placeholder="Search by name or university..."
+                prefix={<img src={searchIcon} alt="search" style={{ width: '14px', marginRight: '4px' }} />}
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                style={{ borderRadius: '10px', background: '#F5F7FA', border: '1px solid #F0F0F0', height: '40px' }}
+                allowClear
               />
             </div>
 
             <List
               loading={loading}
-              dataSource={scoredCandidates}
+              dataSource={candidates}
               style={{ flex: 1, overflowY: 'auto' }}
               renderItem={(item) => (
                 <List.Item
-                  onClick={() => setSelectedId(item.id)}
-                  style={{ 
-                    padding: '20px 24px', 
+                  onClick={() => {
+                    setSelectedId(item.id);
+                    setReviewNotes(item.reviewerNotes || '');
+                  }}
+                  style={{
+                    padding: '16px 24px',
                     cursor: 'pointer',
                     background: selectedId === item.id ? '#F0F7FF' : '#FFFFFF',
                     borderLeft: selectedId === item.id ? '4px solid #006CFF' : '4px solid transparent',
@@ -120,26 +162,30 @@ const Candidates = () => {
                     transition: 'all 0.2s ease'
                   }}
                 >
-                  <Row align="middle" gutter={16} style={{ width: '100%' }}>
+                  <Row align="middle" gutter={12} style={{ width: '100%' }}>
                     <Col span={4}>
-                      <Avatar size={52} src={item.avatarUrl} style={{ border: '2px solid #FFF', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }} />
+                      <Avatar size={48} src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(item.name)}`} style={{ border: '2px solid #FFF', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }} />
                     </Col>
-                    <Col span={15}>
-                      <Text strong style={{ fontSize: '15px', display: 'block', color: selectedId === item.id ? '#006CFF' : '#1F2937', fontFamily: 'Inter' }}>
+                    <Col span={14}>
+                      <Text strong style={{ fontSize: '14px', display: 'block', color: selectedId === item.id ? '#006CFF' : '#1F2937' }}>
                         {item.name}
                       </Text>
                       <Space size={4} style={{ marginTop: '2px' }}>
                         <GraduationCap size={12} color="#9CA3AF" />
-                        <Text type="secondary" style={{ fontSize: '12px', fontFamily: 'Inter' }}>{item.university || 'N/A'}</Text>
+                        <Text type="secondary" style={{ fontSize: '12px' }}>{item.university || 'N/A'}</Text>
                       </Space>
-                    </Col>
-                    <Col span={5} style={{ textAlign: 'right' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                        <Text strong style={{ fontSize: '18px', color: '#006CFF', fontFamily: 'Inter' }}>{item.dynamicScore}</Text>
-                        <Tag color={item.isRural ? 'green' : 'blue'} style={{ fontSize: '10px', marginRight: 0, borderRadius: '4px', border: 'none' }}>
-                          {item.isRural ? 'RURAL' : 'CITY'}
+                      <div style={{ marginTop: 4 }}>
+                        <Tag color={STATUS_COLORS[item.status]} style={{ fontSize: '10px', borderRadius: '4px', border: 'none' }}>
+                          {item.status.replace('_', ' ').toUpperCase()}
                         </Tag>
+                        {item.isRural && <Tag color="green" style={{ fontSize: '10px', borderRadius: '4px', border: 'none' }}>RURAL</Tag>}
                       </div>
+                    </Col>
+                    <Col span={6} style={{ textAlign: 'right' }}>
+                      <Text strong style={{ fontSize: '20px', color: getScoreColor(item.compositeScore) }}>
+                        {Math.round(item.compositeScore)}
+                      </Text>
+                      <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>/100</Text>
                     </Col>
                   </Row>
                 </List.Item>
@@ -147,113 +193,274 @@ const Candidates = () => {
             />
           </Col>
 
-          {/* ПРАВАЯ КОЛОНКА: ДЕТАЛИ */}
+          {/* RIGHT: Candidate Detail */}
           <Col span={15} style={{ height: 'calc(100vh - 120px)', overflowY: 'auto', background: '#FFFFFF' }}>
             {selectedCandidate ? (
-              <div style={{ padding: '40px' }}>
-                {/* Header профиля */}
-                <Row justify="space-between" align="top" style={{ marginBottom: '32px' }}>
-                  <Space size={24}>
-                    <Avatar size={100} src={selectedCandidate.avatarUrl} style={{ border: '4px solid #F0F7FF', boxShadow: '0 10px 20px rgba(0,0,0,0.05)' }} />
+              <div style={{ padding: '36px' }}>
+                {/* Profile Header */}
+                <Row justify="space-between" align="top" style={{ marginBottom: '28px' }}>
+                  <Space size={20}>
+                    <Avatar size={90} src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(selectedCandidate.name)}`} style={{ border: '4px solid #F0F7FF', boxShadow: '0 10px 20px rgba(0,0,0,0.05)' }} />
                     <div>
-                      <Title level={2} style={{ margin: 0, fontWeight: 700, fontFamily: 'Inter', letterSpacing: '-0.5px' }}>
+                      <Title level={3} style={{ margin: 0, fontWeight: 700, letterSpacing: '-0.5px' }}>
                         {selectedCandidate.name}
                       </Title>
-                      <Space size="large" style={{ marginTop: '8px' }}>
-                        <Space><MapPin size={16} color="#006CFF" /><Text type="secondary">{selectedCandidate.city}, KZ</Text></Space>
-                        <Space><GraduationCap size={16} color="#006CFF" /><Text type="secondary">{selectedCandidate.university}</Text></Space>
+                      <Space size="large" style={{ marginTop: '6px' }}>
+                        <Space><MapPin size={14} color="#006CFF" /><Text type="secondary">{selectedCandidate.city}, KZ</Text></Space>
+                        <Space><GraduationCap size={14} color="#006CFF" /><Text type="secondary">{selectedCandidate.university}</Text></Space>
+                        {selectedCandidate.gpa && <Text type="secondary">GPA: {selectedCandidate.gpa}</Text>}
                       </Space>
+                      <div style={{ marginTop: 6 }}>
+                        <Tag color={STATUS_COLORS[selectedCandidate.status]} style={{ borderRadius: 4 }}>
+                          {selectedCandidate.status.replace('_', ' ').toUpperCase()}
+                        </Tag>
+                        {selectedCandidate.isRural && <Tag color="green">RURAL BONUS</Tag>}
+                        <Text type="secondary" style={{ marginLeft: 8, fontSize: 12 }}>
+                          Composite Score: <Text strong style={{ color: getScoreColor(selectedCandidate.compositeScore), fontSize: 16 }}>{Math.round(selectedCandidate.compositeScore)}</Text>/100
+                        </Text>
+                      </div>
                     </div>
-                  </Space>
-                  <Space>
-                    <Button icon={<FileText size={18} />} size="large" style={{ borderRadius: '10px', fontFamily: 'Inter' }}>View Essay</Button>
-                    <Button type="text" icon={<MoreVertical size={20} />} />
                   </Space>
                 </Row>
 
-                <Divider style={{ margin: '24px 0' }} />
+                <Divider style={{ margin: '20px 0' }} />
 
-                <Row gutter={40}>
-                  {/* Левая часть карточки */}
-                  <Col span={11}>
-                    <div style={{ background: '#F0FDF4', padding: '24px', borderRadius: '16px', marginBottom: '24px', border: '1px solid #DCFCE7' }}>
-                      <Title level={5} style={{ color: '#166534', marginBottom: '16px', fontFamily: 'Inter', display: 'flex', alignItems: 'center' }}>
-                        <ShieldCheck size={20} style={{ marginRight: '8px' }} /> AI Assessment
-                      </Title>
-                      <Paragraph style={{ fontSize: '14px', lineHeight: '1.6', color: '#166534', fontFamily: 'Inter' }}>
-                        Кандидат демонстрирует исключительный потенциал в области <strong>Leadership</strong>. Анализ эссе подтверждает высокую социальную ответственность и четкие цели.
-                      </Paragraph>
-                      <Space wrap style={{ marginTop: '12px' }}>
-                        <Tag color="success" icon={<CheckCircle2 size={10} />}>Community Leader</Tag>
-                        <Tag color="success" icon={<CheckCircle2 size={10} />}>High Motivation</Tag>
-                      </Space>
-                    </div>
+                {/* AI Assessment Summary */}
+                {selectedCandidate.aiSummary && (
+                  <div style={{
+                    background: selectedCandidate.compositeScore >= 70 ? '#F0FDF4' : selectedCandidate.compositeScore >= 50 ? '#FFFBEB' : '#FEF2F2',
+                    padding: '20px',
+                    borderRadius: '14px',
+                    marginBottom: '24px',
+                    border: `1px solid ${selectedCandidate.compositeScore >= 70 ? '#DCFCE7' : selectedCandidate.compositeScore >= 50 ? '#FEF3C7' : '#FECACA'}`
+                  }}>
+                    <Title level={5} style={{
+                      color: selectedCandidate.compositeScore >= 70 ? '#166534' : selectedCandidate.compositeScore >= 50 ? '#92400E' : '#991B1B',
+                      marginBottom: '10px', display: 'flex', alignItems: 'center'
+                    }}>
+                      <ShieldCheck size={18} style={{ marginRight: '8px' }} /> AI Assessment
+                    </Title>
+                    <Paragraph style={{
+                      fontSize: '14px', lineHeight: '1.6',
+                      color: selectedCandidate.compositeScore >= 70 ? '#166534' : selectedCandidate.compositeScore >= 50 ? '#92400E' : '#991B1B',
+                      margin: 0
+                    }}>
+                      {selectedCandidate.aiSummary}
+                    </Paragraph>
+                  </div>
+                )}
 
-                    <Title level={5} style={{ fontFamily: 'Inter', marginBottom: '16px', fontWeight: 600 }}>Key Achievements</Title>
-                    <Space direction="vertical" style={{ width: '100%' }} size="middle">
-                      <Card bodyStyle={{ padding: '12px 16px' }} style={{ borderRadius: '12px', background: '#F9FAFB', border: 'none' }}>
-                        <Space><Award size={16} color="#006CFF" /><Text strong style={{ fontFamily: 'Inter' }}>Subject Olympiad Winner</Text></Space>
+                {/* AI Flags */}
+                {selectedCandidate.aiFlags && (
+                  <Row gutter={16} style={{ marginBottom: 24 }}>
+                    <Col span={8}>
+                      <Card size="small" style={{ borderRadius: 12, textAlign: 'center' }}>
+                        <Bot size={16} color={getAiWrittenColor(selectedCandidate.aiFlags.aiWrittenProbability)} />
+                        <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>AI-Written Probability</div>
+                        <Progress
+                          percent={Math.round(selectedCandidate.aiFlags.aiWrittenProbability * 100)}
+                          size="small"
+                          strokeColor={getAiWrittenColor(selectedCandidate.aiFlags.aiWrittenProbability)}
+                          format={p => `${p}%`}
+                        />
                       </Card>
-                      <Card bodyStyle={{ padding: '12px 16px' }} style={{ borderRadius: '12px', background: '#F9FAFB', border: 'none' }}>
-                        <Space><CheckCircle2 size={16} color="#006CFF" /><Text strong style={{ fontFamily: 'Inter' }}>Volunteering (2+ years)</Text></Space>
+                    </Col>
+                    <Col span={8}>
+                      <Card size="small" style={{ borderRadius: 12, textAlign: 'center' }}>
+                        <CheckCircle2 size={16} color="#10B981" />
+                        <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>Consistency Score</div>
+                        <Progress
+                          percent={Math.round(selectedCandidate.aiFlags.consistencyScore * 100)}
+                          size="small"
+                          strokeColor="#10B981"
+                          format={p => `${p}%`}
+                        />
                       </Card>
+                    </Col>
+                    <Col span={8}>
+                      <Card size="small" style={{ borderRadius: 12, textAlign: 'center' }}>
+                        <AlertTriangle size={16} color={selectedCandidate.aiFlags.redFlags.length > 0 ? '#EF4444' : '#10B981'} />
+                        <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>Red Flags</div>
+                        <Text strong style={{
+                          fontSize: 20,
+                          color: selectedCandidate.aiFlags.redFlags.length > 0 ? '#EF4444' : '#10B981'
+                        }}>
+                          {selectedCandidate.aiFlags.redFlags.length}
+                        </Text>
+                      </Card>
+                    </Col>
+                  </Row>
+                )}
+
+                {/* Red Flags Detail */}
+                {selectedCandidate.aiFlags?.redFlags && selectedCandidate.aiFlags.redFlags.length > 0 && (
+                  <Card size="small" style={{ borderRadius: 12, marginBottom: 24, borderColor: '#FECACA', background: '#FEF2F2' }}>
+                    <Space direction="vertical" size={4}>
+                      {selectedCandidate.aiFlags.redFlags.map((flag, i) => (
+                        <Text key={i} style={{ color: '#991B1B', fontSize: 13 }}>
+                          <AlertTriangle size={12} style={{ marginRight: 6 }} />{flag}
+                        </Text>
+                      ))}
                     </Space>
+                  </Card>
+                )}
+
+                <Row gutter={28}>
+                  {/* Left: Achievements + Evidence */}
+                  <Col span={11}>
+                    {/* Achievements */}
+                    <Title level={5} style={{ marginBottom: '12px', fontWeight: 600 }}>Achievements</Title>
+                    <Space direction="vertical" style={{ width: '100%', marginBottom: 24 }} size="small">
+                      {selectedCandidate.achievements.length > 0 ? selectedCandidate.achievements.map((a, i) => (
+                        <Card key={i} bodyStyle={{ padding: '10px 14px' }} style={{ borderRadius: '10px', background: '#F9FAFB', border: 'none' }}>
+                          <Space>
+                            <span>{ACHIEVEMENT_ICONS[a.type] || '📌'}</span>
+                            <div>
+                              <Text strong style={{ fontSize: 13 }}>{a.title}</Text>
+                              {a.description && <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>{a.description}</Text>}
+                            </div>
+                          </Space>
+                        </Card>
+                      )) : (
+                        <Text type="secondary">No achievements listed</Text>
+                      )}
+                    </Space>
+
+                    {/* Skills */}
+                    {selectedCandidate.skills.length > 0 && (
+                      <>
+                        <Title level={5} style={{ marginBottom: 8, fontWeight: 600 }}>Skills</Title>
+                        <Space wrap style={{ marginBottom: 24 }}>
+                          {selectedCandidate.skills.map((skill, i) => (
+                            <Tag key={i} color="blue" style={{ borderRadius: 4 }}>{skill}</Tag>
+                          ))}
+                        </Space>
+                      </>
+                    )}
+
+                    {/* Key Evidence */}
+                    {selectedCandidate.aiScores && (
+                      <>
+                        <Title level={5} style={{ marginBottom: 12, fontWeight: 600 }}>
+                          <TrendingUp size={16} style={{ marginRight: 6 }} />Key Evidence from Essay
+                        </Title>
+                        <Space direction="vertical" style={{ width: '100%' }} size="small">
+                          {Object.entries(selectedCandidate.aiScores)
+                            .sort(([, a], [, b]) => b.score - a.score)
+                            .slice(0, 3)
+                            .map(([key, val]) => (
+                              val.evidence?.[0] && (
+                                <Card key={key} size="small" style={{ borderRadius: 10, borderLeft: `3px solid ${getScoreColor(val.score)}` }}>
+                                  <Tag color={getScoreColor(val.score)} style={{ marginBottom: 6, fontSize: 10 }}>
+                                    {key.replace(/([A-Z])/g, ' $1').trim()} — {val.score}
+                                  </Tag>
+                                  <Paragraph italic style={{ fontSize: 12, margin: 0, color: '#374151' }}>
+                                    "{val.evidence[0].quote}"
+                                  </Paragraph>
+                                  <Text type="secondary" style={{ fontSize: 11 }}>{val.evidence[0].explanation}</Text>
+                                </Card>
+                              )
+                            ))}
+                        </Space>
+                      </>
+                    )}
                   </Col>
 
-                  {/* Правая часть (График) */}
+                  {/* Right: Radar Chart + Dimension Scores */}
                   <Col span={13}>
-                    <Card 
-                      title={<Text strong style={{ fontSize: '16px', fontFamily: 'Inter' }}>Competency Map</Text>} 
-                      variant="borderless" 
-                      style={{ border: '1px solid #F0F0F0', borderRadius: '16px', height: '100%' }}
+                    <Card
+                      title={<Text strong style={{ fontSize: '15px' }}>Competency Map</Text>}
+                      variant="borderless"
+                      style={{ border: '1px solid #F0F0F0', borderRadius: '14px' }}
                     >
-                      <div style={{ height: '280px', width: '100%' }}>
+                      <div style={{ height: '260px', width: '100%' }}>
                         <ResponsiveContainer width="100%" height="100%">
-                          <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+                          <RadarChart cx="50%" cy="50%" outerRadius="78%" data={radarData}>
                             <PolarGrid stroke="#E5E7EB" />
-                            <PolarAngleAxis dataKey="subject" tick={{ fontSize: 12, fill: '#6B7280', fontFamily: 'Inter' }} />
+                            <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: '#6B7280' }} />
                             <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                            <RadarArea 
-                              name="Candidate" 
-                              dataKey="A" 
-                              stroke="#006CFF" 
-                              fill="#006CFF" 
-                              fillOpacity={0.12} 
-                              dot={{ r: 4, fill: '#006CFF', strokeWidth: 2 }} 
-                            />
+                            <RadarArea name="Candidate" dataKey="A" stroke="#006CFF" fill="#006CFF" fillOpacity={0.12} dot={{ r: 3, fill: '#006CFF', strokeWidth: 2 }} />
                           </RadarChart>
                         </ResponsiveContainer>
                       </div>
+
+                      {/* Dimension Breakdown */}
+                      {selectedCandidate.aiScores && (
+                        <div style={{ marginTop: 12 }}>
+                          {Object.entries(selectedCandidate.aiScores).map(([key, val]) => (
+                            <div key={key} style={{ display: 'flex', alignItems: 'center', marginBottom: 6, gap: 8 }}>
+                              <Text style={{ fontSize: 12, width: 110, color: '#6B7280' }}>
+                                {key.replace(/([A-Z])/g, ' $1').trim()}
+                              </Text>
+                              <Progress
+                                percent={val.score}
+                                size="small"
+                                style={{ flex: 1 }}
+                                strokeColor={getScoreColor(val.score)}
+                                format={() => <Text style={{ fontSize: 11 }}>{val.score}</Text>}
+                              />
+                              <Badge
+                                count={val.confidence >= 0.9 ? 'HIGH' : val.confidence >= 0.7 ? 'MED' : 'LOW'}
+                                style={{
+                                  backgroundColor: val.confidence >= 0.9 ? '#10B981' : val.confidence >= 0.7 ? '#F59E0B' : '#EF4444',
+                                  fontSize: 9, padding: '0 4px'
+                                }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </Card>
                   </Col>
                 </Row>
 
-                {/* Footer с кнопками */}
-                <div style={{ 
-                  marginTop: '48px', 
-                  padding: '24px', 
-                  background: '#F9FAFB', 
-                  borderRadius: '16px',
-                  display: 'flex', 
+                {/* Reviewer Notes */}
+                <div style={{ marginTop: 24 }}>
+                  <Title level={5} style={{ fontWeight: 600, marginBottom: 8 }}>Reviewer Notes</Title>
+                  <TextArea
+                    value={reviewNotes}
+                    onChange={e => setReviewNotes(e.target.value)}
+                    rows={3}
+                    placeholder="Add your assessment notes for this candidate..."
+                    style={{ borderRadius: 8, marginBottom: 8 }}
+                  />
+                  <Button size="small" onClick={handleSaveNotes}>Save Notes</Button>
+                </div>
+
+                {/* Action Footer */}
+                <div style={{
+                  marginTop: '28px',
+                  padding: '20px',
+                  background: '#F9FAFB',
+                  borderRadius: '14px',
+                  display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center'
                 }}>
-                  <Text type="secondary" style={{ fontFamily: 'Inter' }}>Review this candidate for the next stage</Text>
+                  <Text type="secondary">Review this candidate for the next stage</Text>
                   <Space size="middle">
-                    <Button 
-                      danger 
-                      icon={<XCircle size={18} />} 
+                    <Button
+                      danger
+                      icon={<XCircle size={16} />}
                       size="large"
-                      style={{ borderRadius: '10px', fontWeight: 600, padding: '0 24px', height: '48px' }}
+                      style={{ borderRadius: '10px', fontWeight: 600, padding: '0 24px', height: '44px' }}
                       onClick={() => handleStatusChange(selectedCandidate.id, 'declined')}
                     >
                       Decline
                     </Button>
-                    <Button 
-                      type="primary" 
-                      icon={<Send size={18} />} 
+                    <Button
+                      style={{ borderRadius: '10px', fontWeight: 600, padding: '0 24px', height: '44px', borderColor: '#F59E0B', color: '#F59E0B' }}
+                      icon={<FileText size={16} />}
                       size="large"
-                      style={{ background: '#006CFF', borderRadius: '10px', fontWeight: 600, padding: '0 32px', height: '48px' }}
+                      onClick={() => handleStatusChange(selectedCandidate.id, 'under_review')}
+                    >
+                      Mark for Review
+                    </Button>
+                    <Button
+                      type="primary"
+                      icon={<Send size={16} />}
+                      size="large"
+                      style={{ background: '#006CFF', borderRadius: '10px', fontWeight: 600, padding: '0 28px', height: '44px' }}
                       onClick={() => handleStatusChange(selectedCandidate.id, 'interview')}
                     >
                       Approve for Interview
@@ -263,7 +470,7 @@ const Candidates = () => {
               </div>
             ) : (
               <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                <Empty description="Please select a candidate from the left panel" />
+                <Empty description="Select a candidate from the list" />
               </div>
             )}
           </Col>
