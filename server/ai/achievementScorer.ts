@@ -21,6 +21,5 @@ export function calculateAchievementScore(achievements: Achievement[]): number {
     }
   }
 
-  // Cap at 50 to keep achievements as a bonus, not the whole score
   return Math.min(total, 50);
 }

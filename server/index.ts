@@ -9,6 +9,8 @@ import { seedDatabase } from './seed.js';
 import candidatesRouter from './routes/candidates.js';
 import statsRouter from './routes/stats.js';
 import configRouter from './routes/config.js';
+import sjtRouter from './routes/sjt.js';
+import nudgeRouter from './routes/nudge.js';
 import pool from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -30,7 +32,7 @@ try {
   }
 } catch { /* .env file not found */ }
 
-console.log('GEMINI_API_KEY loaded:', !!process.env.GEMINI_API_KEY);
+console.log('GROQ_API_KEY loaded:', !!process.env.GROQ_API_KEY);
 
 const app = express();
 app.use(cors());
@@ -51,6 +53,8 @@ app.use('/uploads', express.static(uploadsDir));
 app.use('/api/candidates', candidatesRouter);
 app.use('/api/stats', statsRouter);
 app.use('/api/scoring-config', configRouter);
+app.use('/api/sjt', sjtRouter);
+app.use('/api/nudge', nudgeRouter);
 
 // Apply route mapping
 app.post('/api/apply', (req, res, next) => {
@@ -86,7 +90,7 @@ app.get('/api/audit-log', async (req, res) => {
 
 // Health check
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', aiAvailable: !!process.env.GEMINI_API_KEY });
+  res.json({ status: 'ok', aiAvailable: !!process.env.GROQ_API_KEY });
 });
 
 const PORT = parseInt(process.env.PORT || '5000');
@@ -103,7 +107,7 @@ async function start() {
   API Base:         http://localhost:${PORT}/api
   Candidates:       http://localhost:${PORT}/api/candidates
   Static Assets:    http://localhost:${PORT}/uploads  <-- ПРОВЕРЬ ТУТ
-  AI Available:     ${!!process.env.GEMINI_API_KEY ? 'Yes' : 'No'}
+  AI Available:     ${!!process.env.GROQ_API_KEY ? 'Yes' : 'No'}
       `);
       console.log(`Проверь свою картинку тут: http://localhost:${PORT}/uploads/1774736949109-461126575-POSTER-LOA.png`);
     });
