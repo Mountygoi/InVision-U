@@ -3,13 +3,29 @@ import { Row, Col, List, Avatar, Tag, Button, Typography, Space, Empty, message,
 import { ShieldCheck, FileText, Send, XCircle, MapPin, GraduationCap, CheckCircle2, AlertTriangle, Bot, TrendingUp } from 'lucide-react';
 import axios from 'axios';
 import { RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, PolarRadiusAxis, Radar as RadarArea } from 'recharts';
-import AppHeader from '../layout/AppHeader';
 import searchIcon from '../assets/icons/search.svg';
 import type { Candidate } from '../types';
+
+const getAvatar = (item: Candidate) => {
+  // Если в базе есть ссылка на фото, используем её
+  if (item.avatarUrl) {
+    return item.avatarUrl;
+  }
+  // Если нет - используем генератор по имени
+  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(item.name)}`;
+};
 
 const { Title, Text, Paragraph } = Typography;
 const { Content } = Layout;
 const { TextArea } = Input;
+
+// 1. ИСПРАВЛЕНИЕ: Интерфейс для параметров запроса (вместо any)
+interface FetchCandidatesParams {
+  sort: string;
+  order: string;
+  search?: string;
+  status?: string;
+}
 
 const STATUS_COLORS: Record<string, string> = {
   new: 'blue',
@@ -38,7 +54,8 @@ const Candidates = () => {
   const fetchCandidates = useCallback(async () => {
     try {
       setLoading(true);
-      const params: any = { sort: 'composite_score', order: 'desc' };
+      // 2. ИСПРАВЛЕНИЕ: Используем типизированный объект параметров
+      const params: FetchCandidatesParams = { sort: 'composite_score', order: 'desc' };
       if (searchQuery) params.search = searchQuery;
       if (statusFilter !== 'all') params.status = statusFilter;
 
@@ -78,7 +95,10 @@ const Candidates = () => {
         reviewedBy: 'admin'
       });
       message.success('Review notes saved');
-    } catch (err) {
+      fetchCandidates();
+    } catch (error) {
+      // 3. ИСПРАВЛЕНИЕ: Используем ошибку в логе, чтобы линтер не ругался
+      console.error('Save notes error:', error);
       message.error('Error saving notes');
     }
   };
@@ -106,9 +126,8 @@ const Candidates = () => {
 
   return (
     <Layout style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif', background: '#FFFFFF' }}>
-      <AppHeader />
 
-      <Content style={{ padding: '24px', marginTop: '72px' }}>
+      <Content style={{ padding: '24px' }}>
         <Row gutter={0} style={{
           background: '#FFFFFF',
           borderRadius: '16px',
@@ -164,7 +183,7 @@ const Candidates = () => {
                 >
                   <Row align="middle" gutter={12} style={{ width: '100%' }}>
                     <Col span={4}>
-                      <Avatar size={48} src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(item.name)}`} style={{ border: '2px solid #FFF', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }} />
+                      <Avatar size={48} src={getAvatar(item)} style={{ border: '2px solid #FFF', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }} />
                     </Col>
                     <Col span={14}>
                       <Text strong style={{ fontSize: '14px', display: 'block', color: selectedId === item.id ? '#006CFF' : '#1F2937' }}>
@@ -197,10 +216,9 @@ const Candidates = () => {
           <Col span={15} style={{ height: 'calc(100vh - 120px)', overflowY: 'auto', background: '#FFFFFF' }}>
             {selectedCandidate ? (
               <div style={{ padding: '36px' }}>
-                {/* Profile Header */}
                 <Row justify="space-between" align="top" style={{ marginBottom: '28px' }}>
                   <Space size={20}>
-                    <Avatar size={90} src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(selectedCandidate.name)}`} style={{ border: '4px solid #F0F7FF', boxShadow: '0 10px 20px rgba(0,0,0,0.05)' }} />
+                    <Avatar size={90} src={getAvatar(selectedCandidate)} style={{ border: '4px solid #F0F7FF', boxShadow: '0 10px 20px rgba(0,0,0,0.05)' }} />
                     <div>
                       <Title level={3} style={{ margin: 0, fontWeight: 700, letterSpacing: '-0.5px' }}>
                         {selectedCandidate.name}
@@ -323,11 +341,10 @@ const Candidates = () => {
                 <Row gutter={28}>
                   {/* Left: Achievements + Evidence */}
                   <Col span={11}>
-                    {/* Achievements */}
                     <Title level={5} style={{ marginBottom: '12px', fontWeight: 600 }}>Achievements</Title>
                     <Space direction="vertical" style={{ width: '100%', marginBottom: 24 }} size="small">
                       {selectedCandidate.achievements.length > 0 ? selectedCandidate.achievements.map((a, i) => (
-                        <Card key={i} bodyStyle={{ padding: '10px 14px' }} style={{ borderRadius: '10px', background: '#F9FAFB', border: 'none' }}>
+                        <Card key={i} styles={{ body: { padding: '10px 14px' } }} style={{ borderRadius: '10px', background: '#F9FAFB', border: 'none' }}>
                           <Space>
                             <span>{ACHIEVEMENT_ICONS[a.type] || '📌'}</span>
                             <div>
@@ -341,44 +358,28 @@ const Candidates = () => {
                       )}
                     </Space>
 
-                    {/* Skills */}
-                    {selectedCandidate.skills.length > 0 && (
-                      <>
-                        <Title level={5} style={{ marginBottom: 8, fontWeight: 600 }}>Skills</Title>
-                        <Space wrap style={{ marginBottom: 24 }}>
-                          {selectedCandidate.skills.map((skill, i) => (
-                            <Tag key={i} color="blue" style={{ borderRadius: 4 }}>{skill}</Tag>
-                          ))}
-                        </Space>
-                      </>
-                    )}
-
-                    {/* Key Evidence */}
-                    {selectedCandidate.aiScores && (
-                      <>
-                        <Title level={5} style={{ marginBottom: 12, fontWeight: 600 }}>
-                          <TrendingUp size={16} style={{ marginRight: 6 }} />Key Evidence from Essay
-                        </Title>
-                        <Space direction="vertical" style={{ width: '100%' }} size="small">
-                          {Object.entries(selectedCandidate.aiScores)
-                            .sort(([, a], [, b]) => b.score - a.score)
-                            .slice(0, 3)
-                            .map(([key, val]) => (
-                              val.evidence?.[0] && (
-                                <Card key={key} size="small" style={{ borderRadius: 10, borderLeft: `3px solid ${getScoreColor(val.score)}` }}>
-                                  <Tag color={getScoreColor(val.score)} style={{ marginBottom: 6, fontSize: 10 }}>
-                                    {key.replace(/([A-Z])/g, ' $1').trim()} — {val.score}
-                                  </Tag>
-                                  <Paragraph italic style={{ fontSize: 12, margin: 0, color: '#374151' }}>
-                                    "{val.evidence[0].quote}"
-                                  </Paragraph>
-                                  <Text type="secondary" style={{ fontSize: 11 }}>{val.evidence[0].explanation}</Text>
-                                </Card>
-                              )
-                            ))}
-                        </Space>
-                      </>
-                    )}
+                    <Title level={5} style={{ marginBottom: 12, fontWeight: 600 }}>
+                      <TrendingUp size={16} style={{ marginRight: 6 }} />Key Evidence from Essay
+                    </Title>
+                    <Space direction="vertical" style={{ width: '100%' }} size="small">
+                      {Object.entries(selectedCandidate.aiScores || {})
+                        .sort(([, a], [, b]) => (b as { score: number }).score - (a as { score: number }).score)
+                        .slice(0, 3)
+                        .map(([key, val]) => {
+                          const scoreVal = val as { score: number; evidence?: { quote: string; explanation: string }[] };
+                          return scoreVal.evidence?.[0] && (
+                            <Card key={key} size="small" style={{ borderRadius: 10, borderLeft: `3px solid ${getScoreColor(scoreVal.score)}` }}>
+                              <Tag color={getScoreColor(scoreVal.score)} style={{ marginBottom: 6, fontSize: 10 }}>
+                                {key.replace(/([A-Z])/g, ' $1').trim()} — {scoreVal.score}
+                              </Tag>
+                              <Paragraph italic style={{ fontSize: 12, margin: 0, color: '#374151' }}>
+                                "{scoreVal.evidence[0].quote}"
+                              </Paragraph>
+                              <Text type="secondary" style={{ fontSize: 11 }}>{scoreVal.evidence[0].explanation}</Text>
+                            </Card>
+                          );
+                        })}
+                    </Space>
                   </Col>
 
                   {/* Right: Radar Chart + Dimension Scores */}
@@ -390,8 +391,8 @@ const Candidates = () => {
                     >
                       {radarData.length > 0 ? (
                         <>
-                          <div style={{ height: '260px', width: '100%' }}>
-                            <ResponsiveContainer width="100%" height="100%">
+                          <div style={{ height: '260px', width: '100%', minWidth: 0 }}>
+                            <ResponsiveContainer width="99%" height="100%">
                               <RadarChart cx="50%" cy="50%" outerRadius="78%" data={radarData}>
                                 <PolarGrid stroke="#E5E7EB" />
                                 <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: '#6B7280' }} />
@@ -439,20 +440,18 @@ const Candidates = () => {
                   </Col>
                 </Row>
 
-                {/* Reviewer Notes */}
                 <div style={{ marginTop: 24 }}>
                   <Title level={5} style={{ fontWeight: 600, marginBottom: 8 }}>Reviewer Notes</Title>
                   <TextArea
                     value={reviewNotes}
                     onChange={e => setReviewNotes(e.target.value)}
                     rows={3}
-                    placeholder="Add your assessment notes for this candidate..."
+                    placeholder="Add assessment notes..."
                     style={{ borderRadius: 8, marginBottom: 8 }}
                   />
                   <Button size="small" onClick={handleSaveNotes}>Save Notes</Button>
                 </div>
 
-                {/* Action Footer */}
                 <div style={{
                   marginTop: '28px',
                   padding: '20px',
@@ -462,33 +461,29 @@ const Candidates = () => {
                   justifyContent: 'space-between',
                   alignItems: 'center'
                 }}>
-                  <Text type="secondary">Review this candidate for the next stage</Text>
                   <Space size="middle">
                     <Button
                       danger
                       icon={<XCircle size={16} />}
-                      size="large"
-                      style={{ borderRadius: '10px', fontWeight: 600, padding: '0 24px', height: '44px' }}
+                      style={{ borderRadius: '10px', fontWeight: 600, height: '44px' }}
                       onClick={() => handleStatusChange(selectedCandidate.id, 'declined')}
                     >
                       Decline
                     </Button>
                     <Button
-                      style={{ borderRadius: '10px', fontWeight: 600, padding: '0 24px', height: '44px', borderColor: '#F59E0B', color: '#F59E0B' }}
+                      style={{ borderRadius: '10px', fontWeight: 600, height: '44px', borderColor: '#F59E0B', color: '#F59E0B' }}
                       icon={<FileText size={16} />}
-                      size="large"
                       onClick={() => handleStatusChange(selectedCandidate.id, 'under_review')}
                     >
-                      Mark for Review
+                      Mark Review
                     </Button>
                     <Button
                       type="primary"
                       icon={<Send size={16} />}
-                      size="large"
-                      style={{ background: '#006CFF', borderRadius: '10px', fontWeight: 600, padding: '0 28px', height: '44px' }}
+                      style={{ background: '#006CFF', borderRadius: '10px', fontWeight: 600, height: '44px' }}
                       onClick={() => handleStatusChange(selectedCandidate.id, 'interview')}
                     >
-                      Approve for Interview
+                      Approve Interview
                     </Button>
                   </Space>
                 </div>

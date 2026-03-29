@@ -1,28 +1,34 @@
 import multer from 'multer';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
+// Используем process.cwd(), чтобы путь всегда считался от корня папки /server
+// Это гарантирует, что папка 'uploads' будет находиться там же, где ее ищет index.ts
 const storage = multer.diskStorage({
-  destination: path.join(__dirname, '..', 'uploads'),
+  destination: (_req, _file, cb) => {
+    const rootDir = process.cwd();
+    const uploadPath = path.join(rootDir, 'uploads');
+    cb(null, uploadPath);
+  },
   filename: (_req, file, cb) => {
+    // Чистим имя файла от пробелов, чтобы ссылки в браузере не бились
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + '-' + file.originalname);
+    const cleanFileName = file.originalname.replace(/\s+/g, '_');
+    cb(null, uniqueSuffix + '-' + cleanFileName);
   },
 });
 
 export const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB макс
   fileFilter: (_req, file, cb) => {
-    const allowed = ['.pdf', '.txt', '.doc', '.docx'];
+    // Список разрешенных расширений
+    const allowed = ['.pdf', '.txt', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.webp'];
     const ext = path.extname(file.originalname).toLowerCase();
+    
     if (allowed.includes(ext)) {
       cb(null, true);
     } else {
-      cb(new Error('Only PDF, TXT, DOC, DOCX files are allowed'));
+      cb(new Error('Only Documents (PDF, DOCX) and Images (JPG, PNG) are allowed') as any);
     }
   },
 });

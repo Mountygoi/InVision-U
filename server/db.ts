@@ -4,16 +4,17 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const pool = new pg.Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432'),
-  database: process.env.DB_NAME || 'invision_u',
-  user: process.env.DB_USER || 'invision',
-  password: process.env.DB_PASSWORD || 'invision_pass',
+  host: process.env.DB_HOST || '127.0.0.1',
+  port: parseInt(process.env.DB_PORT || '5433'), 
+  database: process.env.DB_NAME || 'invision_u', 
+  user: 'invision',        // МЕНЯЕМ ОБРАТНО НА ТВОЙ ЛОГИН
+  password: 'invision_pass', // МЕНЯЕМ ОБРАТНО НА ТВОЙ ПАРОЛЬ
 });
 
 export async function initDatabase(): Promise<void> {
-  const client = await pool.connect();
+  let client;
   try {
+    client = await pool.connect();
     await client.query(`
       CREATE TABLE IF NOT EXISTS candidates (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -61,9 +62,12 @@ export async function initDatabase(): Promise<void> {
         updated_at TIMESTAMPTZ DEFAULT NOW()
       );
     `);
-    console.log('Database tables initialized');
+    console.log('✅ Database tables initialized successfully');
+  } catch (err) {
+    console.error('❌ Database init error:', err);
+    throw err;
   } finally {
-    client.release();
+    if (client) client.release();
   }
 }
 

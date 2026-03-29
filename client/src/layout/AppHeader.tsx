@@ -1,7 +1,7 @@
-import { Layout, Menu, Input, Avatar, Space, Typography } from 'antd';
+import { Layout, Menu, Avatar, Space, Typography, Dropdown } from 'antd';
 import { NavLink, useLocation } from 'react-router-dom';
+import { DownOutlined } from '@ant-design/icons';
 import logoSvg from '../assets/icons/logo.svg';
-import searchSvg from '../assets/icons/search.svg';
 
 const { Header } = Layout;
 const { Text } = Typography;
@@ -10,48 +10,106 @@ const AppHeader = () => {
   const location = useLocation();
 
   const menuItems = [
-    { key: '/', label: <NavLink to="/">Dashboard</NavLink> },
-    { key: '/candidates', label: <NavLink to="/candidates">Candidates</NavLink> },
-    { key: '/scheduler', label: <NavLink to="/scheduler">Scheduler</NavLink> },
-    { key: '/settings', label: <NavLink to="/settings">Settings</NavLink> },
+    { key: '/admin', label: <NavLink to="/admin">Dashboard</NavLink> },
+    { key: '/admin/candidates', label: <NavLink to="/admin/candidates">Candidates</NavLink> },
+    { key: '/admin/settings', label: <NavLink to="/admin/settings">Settings</NavLink> },
+    { key: '/admin/scheduler', label: <NavLink to="/admin/scheduler">Interviews</NavLink> },
+    { key: '/admin/reviews', label: <NavLink to="/admin/reviews">Reviews</NavLink> },
   ];
+
+  const profileMenu = {
+    items: [
+      { key: 'profile', label: 'Profile Settings' },
+      { key: 'logout', label: 'Sign Out', danger: true },
+    ],
+  };
 
   return (
     <Header style={{ 
       background: '#fff', 
-      padding: '0 24px', 
-      height: '72px', 
+      padding: '0 100px', // УВЕЛИЧЕННЫЙ ОТСТУП ОТ КРАЕВ ЭКРАНА (чтобы не прижималось)
+      height: '80px', 
       display: 'flex', 
       alignItems: 'center', 
+      justifyContent: 'space-between',
       borderBottom: '1px solid #F0F0F0',
       position: 'fixed', 
       width: '100%', 
       zIndex: 1000,
-      fontFamily: 'Inter, sans-serif'
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', marginRight: '40px' }}>
-        <img src={logoSvg} alt="logo" style={{ width: '32px', height: '32px', marginRight: '10px' }} />
-        <Text strong style={{ fontSize: '18px', color: '#006CFF', fontFamily: 'Inter' }}>nVision U</Text>
+      {/* LEFT: Логотип */}
+      <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+        <img src={logoSvg} alt="nVision U" style={{ height: '50px' }} />
       </div>
 
+      {/* CENTER: Меню с отступами по 100px */}
       <Menu 
         mode="horizontal" 
         selectedKeys={[location.pathname]} 
         items={menuItems} 
-        style={{ flex: 1, border: 'none', height: '100%', lineHeight: '72px', fontFamily: 'Inter', fontWeight: 500 }} 
+        style={{ 
+          flex: 1, 
+          border: 'none', 
+          display: 'flex', 
+          justifyContent: 'center',
+          fontSize: '16px',
+          fontWeight: 500,
+          background: 'transparent'
+        }} 
       />
 
-      <Space size="large">
-        <Input 
-          placeholder="Search candidates..." 
-          prefix={<img src={searchSvg} alt="search" style={{ width: '16px', height: '16px' }} />} 
-          style={{ width: '280px', borderRadius: '8px', background: '#F5F5F5', border: 'none', height: '40px', fontFamily: 'Inter' }}
-        />
-        <Space>
-          <Avatar src="https://api.dicebear.com/7.x/notionists/svg?seed=Admin" size={40} />
-          <Text strong style={{fontFamily: 'Inter'}}>Admin</Text>
-        </Space>
-      </Space>
+      {/* RIGHT: Профиль админа с запасом места */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', flexShrink: 0 }}>
+        <Dropdown menu={profileMenu} trigger={['click']}>
+          <Space style={{ cursor: 'pointer' }} size={12}>
+            <Avatar 
+              src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin" 
+              size={46} 
+              style={{ border: '2px solid #F0F7FF' }}
+            />
+            <Space direction="vertical" size={0} style={{ lineHeight: '1.2' }}>
+              <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>Admin:</Text>
+              <Text strong style={{ fontSize: '14px', whiteSpace: 'nowrap' }}>
+                Bolatovich N. <DownOutlined style={{ fontSize: '10px' }} />
+              </Text>
+            </Space>
+          </Space>
+        </Dropdown>
+      </div>
+
+      <style>{`
+        /* Устанавливаем 100px между названиями (50px + 50px) */
+        .ant-menu-horizontal .ant-menu-item {
+          padding: 0 50px !important; 
+          margin: 0 !important;
+        }
+        
+        /* Фикс высоты для центрирования синей линии */
+        .ant-menu-horizontal {
+          line-height: 78px !important;
+        }
+
+        /* Цвет и стиль активного пункта */
+        .ant-menu-item-selected {
+          color: #006CFF !important;
+        }
+
+        .ant-menu-item-selected::after {
+          border-bottom-width: 3px !important;
+          border-bottom-color: #006CFF !important;
+          bottom: 0px !important;
+        }
+
+        /* Плавность */
+        .ant-menu-item::after {
+          transition: all 0.2s ease !important;
+        }
+
+        /* Убираем лишние ховер-эффекты фона */
+        .ant-menu-light .ant-menu-item:hover {
+          color: #006CFF !important;
+        }
+      `}</style>
     </Header>
   );
 };

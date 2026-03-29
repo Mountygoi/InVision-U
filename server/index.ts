@@ -14,7 +14,11 @@ import pool from './db.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load .env manually to ensure it works with all Node/tsx versions
+// 1. ИСПРАВЛЕНИЕ: Используем абсолютный путь от корня процесса для надежности
+const rootDir = process.cwd();
+const uploadsDir = path.join(rootDir, 'uploads');
+
+// Load .env manually
 try {
   const envPath = path.resolve(__dirname, '.env');
   const envContent = fs.readFileSync(envPath, 'utf8');
@@ -24,7 +28,8 @@ try {
       process.env[key] = value;
     }
   }
-} catch { /* .env file not found, using system env vars */ }
+} catch { /* .env file not found */ }
+
 console.log('ANTHROPIC_API_KEY loaded:', !!process.env.GEMINI_API_KEY);
 
 const app = express();
@@ -32,11 +37,14 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve uploaded files
-const uploadsDir = path.join(__dirname, 'uploads');
+// 2. ИСПРАВЛЕНИЕ: Проверяем и создаем папку, выводим путь в консоль для проверки
+console.log(`📁 Попытка раздачи статики из: ${uploadsDir}`);
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log('✅ Папка uploads создана');
 }
+
+// РАЗДАЧА ФАЙЛОВ (теперь по абсолютному пути)
 app.use('/uploads', express.static(uploadsDir));
 
 // Routes
@@ -44,7 +52,7 @@ app.use('/api/candidates', candidatesRouter);
 app.use('/api/stats', statsRouter);
 app.use('/api/scoring-config', configRouter);
 
-// Apply route is on candidatesRouter but mapped to /api/apply for backward compat
+// Apply route mapping
 app.post('/api/apply', (req, res, next) => {
   req.url = '/apply';
   candidatesRouter(req, res, next);
@@ -60,7 +68,7 @@ app.get('/api/audit-log', async (req, res) => {
        ORDER BY al.created_at DESC
        LIMIT 50`
     );
-    res.json(result.rows.map(r => ({
+    res.json(result.rows.map((r: any) => ({
       id: r.id,
       candidateId: r.candidate_id,
       candidateName: r.candidate_name,
@@ -92,13 +100,12 @@ async function start() {
       console.log(`
   InVision U API Server
   =====================
-  API Base:        http://localhost:${PORT}/api
-  Candidates:      http://localhost:${PORT}/api/candidates
-  Stats:           http://localhost:${PORT}/api/stats
-  Scoring Config:  http://localhost:${PORT}/api/scoring-config
-  Health:          http://localhost:${PORT}/api/health
-  AI Available:    ${!!process.env.GEMINI_API_KEY ? 'Yes' : 'No (set ANTHROPIC_API_KEY in .env)'}
+  API Base:         http://localhost:${PORT}/api
+  Candidates:       http://localhost:${PORT}/api/candidates
+  Static Assets:    http://localhost:${PORT}/uploads  <-- ПРОВЕРЬ ТУТ
+  AI Available:     ${!!process.env.GEMINI_API_KEY ? 'Yes' : 'No'}
       `);
+      console.log(`Проверь свою картинку тут: http://localhost:${PORT}/uploads/1774736949109-461126575-POSTER-LOA.png`);
     });
   } catch (err) {
     console.error('Failed to start server:', err);

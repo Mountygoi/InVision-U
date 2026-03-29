@@ -1,11 +1,23 @@
 import { useState } from 'react';
-import { Form, Input, Button, Upload, Select, message, Card, Typography, Row, Col, InputNumber, Space, Tag } from 'antd';
-import { UploadOutlined, UserOutlined, BookOutlined, EnvironmentOutlined, PlusOutlined, DeleteOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons';
+import { Form, Input, Button, Upload, Select, message, Card, Typography, Row, Col, InputNumber, Space, Tag, Modal, Divider } from 'antd';
+import { 
+  UploadOutlined, UserOutlined, BookOutlined, EnvironmentOutlined, 
+  PlusOutlined, DeleteOutlined, MailOutlined, PhoneOutlined, 
+  CopyOutlined, CheckCircleFilled, CameraOutlined 
+} from '@ant-design/icons';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
+
+// ФУНКЦИЯ-ПОМОЩНИК: Чтобы Ant Design корректно забирал файл из компонента Upload
+const normFile = (e: any) => {
+  if (Array.isArray(e)) {
+    return e;
+  }
+  return e?.fileList;
+};
 
 interface AchievementEntry {
   type: 'olympiad' | 'volunteering' | 'project' | 'award';
@@ -44,6 +56,12 @@ const StudentForm = () => {
     }
   };
 
+  // Функция для копирования пароля
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    message.success('Password copied to clipboard!');
+  };
+
   const onFinish = async (values: any) => {
     setSubmitting(true);
     try {
@@ -55,32 +73,81 @@ const StudentForm = () => {
       if (values.university) formData.append('university', values.university);
       if (values.gpa) formData.append('gpa', values.gpa.toString());
       if (values.yearOfStudy) formData.append('yearOfStudy', values.yearOfStudy.toString());
+      
+      // Навыки и достижения
       formData.append('achievements', JSON.stringify(achievements.filter(a => a.title)));
       formData.append('skills', JSON.stringify(skills));
 
+      // ДОБАВЛЕНО: Файл аватара
+      const avatarFile = values.avatar?.[0]?.originFileObj;
+      if (avatarFile) {
+        formData.append('avatar', avatarFile);
+      }
+
       const hasEssayText = values.essayText?.trim();
-      const hasEssayFile = values.essayFile?.fileList?.[0]?.originFileObj;
+      const hasEssayFile = values.essayFile?.[0]?.originFileObj;
 
       if (!hasEssayText && !hasEssayFile) {
-        message.error('Please provide a motivation essay — either upload a PDF or write it directly. The AI needs your essay to evaluate your potential.');
+        message.error('Please provide a motivation essay — either upload a PDF or write it directly.');
         setSubmitting(false);
         return;
       }
 
-      if (hasEssayText) {
-        formData.append('essayText', values.essayText.trim());
-      }
+      if (hasEssayText) formData.append('essayText', values.essayText.trim());
+      if (hasEssayFile) formData.append('essay', hasEssayFile);
 
-      if (hasEssayFile) {
-        formData.append('essay', values.essayFile.fileList[0].originFileObj);
-      }
-
-      await axios.post('http://localhost:5000/api/apply', formData, {
+      // ОТПРАВКА
+      const response = await axios.post('http://localhost:5000/api/apply', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      message.success('Application submitted successfully! Our AI will analyze your profile shortly.');
-      setTimeout(() => navigate('/candidates'), 1500);
+      console.log("ПОЛНЫЙ ОТВЕТ СЕРВЕРА:", response.data);
+      const { tempPassword } = response.data;
+
+      // МОДАЛЬНОЕ ОКНО С ПАРОЛЕМ
+      Modal.confirm({
+        title: <Title level={4}><CheckCircleFilled style={{ color: '#52c41a' }} /> Application Submitted!</Title>,
+        icon: null,
+        width: 500,
+        content: (
+          <div style={{ marginTop: '20px' }}>
+            <Text>Your application has been received. We've generated a <b>temporary password</b> so you can track your status in the personal cabinet:</Text>
+            
+            <div style={{ 
+              background: '#F0F7FF', 
+              padding: '20px', 
+              borderRadius: '12px', 
+              textAlign: 'center', 
+              margin: '20px 0',
+              border: '2px dashed #006CFF',
+              position: 'relative'
+            }}>
+              <Title level={2} style={{ margin: 0, color: '#006CFF', letterSpacing: '4px' }}>
+                {tempPassword}
+              </Title>
+              <Button 
+                type="link" 
+                icon={<CopyOutlined />} 
+                onClick={() => copyToClipboard(tempPassword)}
+                style={{ marginTop: '8px' }}
+              >
+                Copy Password
+              </Button>
+            </div>
+            
+            <Text type="secondary" style={{ fontSize: '12px' }}>
+              * Make sure to save this password. You can change it later in your dashboard settings.
+            </Text>
+          </div>
+        ),
+        okText: 'Go to My Status',
+        cancelButtonProps: { style: { display: 'none' } }, 
+        onOk: () => {
+          localStorage.setItem('userEmail', values.email);
+          navigate('/status');
+        },
+      });
+
     } catch (err) {
       console.error('Submit error:', err);
       message.error('Failed to submit application. Please make sure the backend is running.');
@@ -118,6 +185,31 @@ const StudentForm = () => {
         </div>
 
         <Form form={form} layout="vertical" onFinish={onFinish} requiredMark={false} autoComplete="off">
+          
+          {/* Section: Profile Photo */}
+          <Title level={5} style={{ marginBottom: 16, color: '#006CFF' }}>Profile Photo</Title>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '32px' }}>
+            <Form.Item 
+              name="avatar" 
+              valuePropName="fileList" 
+              getValueFromEvent={normFile}
+            >
+              <Upload 
+                listType="picture-circle" 
+                maxCount={1} 
+                beforeUpload={() => false}
+                accept="image/*"
+              >
+                <div style={{ textAlign: 'center' }}>
+                  <CameraOutlined style={{ fontSize: '24px', color: '#006CFF' }} />
+                  <div style={{ marginTop: 8, fontSize: '12px' }}>Upload</div>
+                </div>
+              </Upload>
+            </Form.Item>
+          </div>
+
+          <Divider />
+
           {/* Personal Info */}
           <Title level={5} style={{ marginBottom: 16, color: '#006CFF' }}>Personal Information</Title>
           <Row gutter={24}>
@@ -127,7 +219,7 @@ const StudentForm = () => {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="email" label={<Text strong>Email</Text>} rules={[{ type: 'email', message: 'Please enter a valid email' }]}>
+              <Form.Item name="email" label={<Text strong>Email</Text>} rules={[{ type: 'email', required: true, message: 'Please enter a valid email' }]}>
                 <Input prefix={<MailOutlined style={{ color: '#bfbfbf' }} />} placeholder="aisha@example.com" style={{ height: '45px', borderRadius: '8px' }} />
               </Form.Item>
             </Col>
@@ -135,7 +227,7 @@ const StudentForm = () => {
 
           <Row gutter={24}>
             <Col span={8}>
-              <Form.Item name="phone" label={<Text strong>Phone</Text>}>
+              <Form.Item name="phone" label={<Text strong>Phone</Text>} rules={[{ required: true, message: 'Phone is required for status tracking' }]}>
                 <Input prefix={<PhoneOutlined style={{ color: '#bfbfbf' }} />} placeholder="+7 701 123 4567" style={{ height: '45px', borderRadius: '8px' }} />
               </Form.Item>
             </Col>
@@ -248,8 +340,13 @@ const StudentForm = () => {
             Upload a PDF or write your essay directly. Our AI will evaluate your leadership potential, motivation, resilience, and more.
           </Text>
 
-          <Form.Item name="essayFile" label={<Text strong>Upload Essay (PDF)</Text>}>
-            <Upload beforeUpload={() => false} maxCount={1} accept=".pdf,.txt,.doc,.docx">
+          <Form.Item 
+            name="essayFile" 
+            label={<Text strong>Upload Essay (PDF)</Text>}
+            valuePropName="fileList"
+            getValueFromEvent={normFile}
+          >
+            <Upload beforeUpload={() => false} maxCount={1} accept=".pdf">
               <Button icon={<UploadOutlined />} style={{ width: '100%', height: '45px', borderRadius: '8px', borderStyle: 'dashed' }}>
                 Upload PDF
               </Button>
@@ -259,7 +356,7 @@ const StudentForm = () => {
           <Form.Item name="essayText" label={<Text strong>Or write your essay here</Text>}>
             <TextArea
               rows={8}
-              placeholder="Tell us about yourself, your journey, your goals, and why you want to join InVision U. What challenges have you overcome? What impact do you want to make?"
+              placeholder="Tell us about yourself..."
               style={{ borderRadius: '8px', fontSize: '14px' }}
             />
           </Form.Item>

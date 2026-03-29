@@ -21,6 +21,9 @@ async function extractPdfText(filePath: string): Promise<string> {
   }
 }
 
+// НОВОЕ: Генерация временного пароля (6 символов, верхний регистр)
+const generateTempPassword = () => Math.random().toString(36).slice(-6).toUpperCase();
+
 const router = Router();
 
 // Helper: get current weights
@@ -34,13 +37,13 @@ router.get('/', async (req, res) => {
   try {
     const { search, status, sort = 'composite_score', order = 'desc' } = req.query;
 
-    let query = 'SELECT id, name, email, university, city, region, is_rural, gpa, year_of_study, achievements, skills, ai_scores, ai_summary, ai_flags, ai_model_version, ai_analyzed_at, composite_score, achievement_score, status, reviewer_notes, created_at, updated_at FROM candidates WHERE 1=1';
+    let query = 'SELECT id, name, email, password, avatar_url, university, city, region, is_rural, gpa, year_of_study, achievements, skills, ai_scores, ai_summary, ai_flags, ai_model_version, ai_analyzed_at, composite_score, achievement_score, status, reviewer_notes, created_at, updated_at, interview_time FROM candidates WHERE 1=1';
     const params: any[] = [];
     let paramIdx = 1;
 
     if (search) {
-      query += ` AND (name ILIKE $${paramIdx} OR university ILIKE $${paramIdx})`;
-      params.push(`%${search}%`);
+      query += ` AND (email = $${paramIdx} OR name ILIKE $${paramIdx} OR university ILIKE $${paramIdx})`;
+      params.push(search.toString().includes('@') ? search : `%${search}%`);
       paramIdx++;
     }
 
@@ -57,11 +60,12 @@ router.get('/', async (req, res) => {
 
     const result = await pool.query(query, params);
 
-    // Transform snake_case to camelCase for frontend
     const candidates = result.rows.map(row => ({
       id: row.id,
       name: row.name,
       email: row.email,
+      password: row.password,
+      avatarUrl: row.avatar_url, // Добавлено поле аватарки
       university: row.university,
       city: row.city,
       region: row.region,
@@ -81,6 +85,7 @@ router.get('/', async (req, res) => {
       reviewerNotes: row.reviewer_notes,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
+      interviewTime: row.interview_time,
     }));
 
     res.json(candidates);
@@ -104,6 +109,7 @@ router.get('/:id', async (req, res) => {
       name: row.name,
       email: row.email,
       phone: row.phone,
+      avatarUrl: row.avatar_url, // Добавлено поле аватарки
       university: row.university,
       city: row.city,
       region: row.region,
@@ -127,6 +133,7 @@ router.get('/:id', async (req, res) => {
       reviewedAt: row.reviewed_at,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
+      interviewTime: row.interview_time,
     });
   } catch (err) {
     console.error('Error fetching candidate:', err);
@@ -135,13 +142,29 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/apply - Submit new application
-router.post('/apply', upload.single('essay'), async (req, res) => {
+// ИСПРАВЛЕНО: Теперь принимаем несколько полей (essay и avatar)
+router.post('/apply', upload.fields([
+  { name: 'essay', maxCount: 1 },
+  { name: 'avatar', maxCount: 1 }
+]), async (req, res) => {
   try {
     const { name, email, phone, university, city, region, gpa, yearOfStudy, achievements, skills, essayText } = req.body;
 
     if (!name || !city) {
       return res.status(400).json({ error: 'Name and city are required' });
     }
+
+    const tempPassword = generateTempPassword();
+
+    // Получаем доступ к файлам
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+    const essayFile = files['essay'] ? files['essay'][0] : null;
+    const avatarFile = files['avatar'] ? files['avatar'][0] : null;
+
+    // Ссылка на фото для сохранения в БД
+    const avatarUrl = avatarFile 
+      ? `http://localhost:5000/uploads/${avatarFile.filename}` 
+      : null;
 
     const ruralCities = ['Qyzylorda', 'Atyrau', 'Aktau', 'Turkistan', 'Taraz', 'Oral', 'Kostanay', 'Petropavl'];
     const isRural = ruralCities.includes(city);
@@ -150,16 +173,14 @@ router.post('/apply', upload.single('essay'), async (req, res) => {
     const parsedSkills: string[] = skills ? JSON.parse(skills) : [];
     const achievementScore = calculateAchievementScore(parsedAchievements);
 
-    // Get essay text from file or direct input
     let finalEssayText = essayText || '';
-    const essayFilePath = req.file?.path || null;
+    const essayFilePath = essayFile?.path || null;
 
-    if (req.file && !finalEssayText) {
-      const pdfText = await extractPdfText(req.file.path);
+    if (essayFile && !finalEssayText) {
+      const pdfText = await extractPdfText(essayFile.path);
       if (pdfText) finalEssayText = pdfText;
     }
 
-    // Calculate initial composite score (without AI)
     const weights = await getWeights();
     const initialCompositeScore = calculateCompositeScore(null, achievementScore, isRural, weights);
 
@@ -168,8 +189,8 @@ router.post('/apply', upload.single('essay'), async (req, res) => {
         name, email, phone, university, city, region, is_rural,
         gpa, year_of_study, achievements, skills,
         essay_text, essay_file_path,
-        composite_score, achievement_score, status
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'new')
+        composite_score, achievement_score, status, password, avatar_url
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'new', $16, $17)
       RETURNING id`,
       [
         name, email || null, phone || null, university || null,
@@ -177,30 +198,73 @@ router.post('/apply', upload.single('essay'), async (req, res) => {
         gpa ? parseFloat(gpa) : null, yearOfStudy ? parseInt(yearOfStudy) : null,
         JSON.stringify(parsedAchievements), parsedSkills,
         finalEssayText || null, essayFilePath,
-        initialCompositeScore, achievementScore,
+        initialCompositeScore, achievementScore, tempPassword, avatarUrl
       ]
     );
 
     const candidateId = result.rows[0].id;
 
-    // Audit log
     await pool.query(
       'INSERT INTO audit_log (candidate_id, action, new_value) VALUES ($1, $2, $3)',
       [candidateId, 'application_submitted', name]
     );
 
-    // Trigger async AI analysis if essay exists and API is available
     if (finalEssayText && isAIAvailable()) {
       analyzeAndUpdate(candidateId, finalEssayText, name, parsedAchievements, university || '', city, weights).catch(err => {
         console.error('Async AI analysis failed:', err);
       });
     }
 
-    console.log(`New application: ${name} from ${city}`);
-    res.status(201).json({ id: candidateId, message: 'Application submitted successfully' });
+    console.log(`New application: ${name} (Pass: ${tempPassword}, Avatar: ${!!avatarUrl})`);
+    
+    res.status(201).json({ 
+      id: candidateId, 
+      tempPassword: tempPassword,
+      message: 'Application submitted successfully' 
+    });
   } catch (err) {
     console.error('Error submitting application:', err);
     res.status(500).json({ error: 'Failed to submit application' });
+  }
+});
+
+// PATCH /api/candidates/:id/password - Change password
+router.patch('/:id/password', async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+    if (!newPassword) return res.status(400).json({ error: 'New password is required' });
+
+    await pool.query(
+      'UPDATE candidates SET password = $1, updated_at = NOW() WHERE id = $2',
+      [newPassword, req.params.id]
+    );
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (err) {
+    console.error('Error updating password:', err);
+    res.status(500).json({ error: 'Failed to update password' });
+  }
+});
+
+// PATCH /api/candidates/:id/schedule - Set interview time
+router.patch('/:id/schedule', async (req, res) => {
+  try {
+    const { interviewTime } = req.body;
+    
+    await pool.query(
+      'UPDATE candidates SET interview_time = $1, updated_at = NOW() WHERE id = $2',
+      [interviewTime, req.params.id]
+    );
+
+    await pool.query(
+      'INSERT INTO audit_log (candidate_id, action, new_value) VALUES ($1, $2, $3)',
+      [req.params.id, 'interview_scheduled', interviewTime]
+    );
+
+    res.json({ message: 'Interview time scheduled successfully' });
+  } catch (err) {
+    console.error('Error scheduling interview:', err);
+    res.status(500).json({ error: 'Failed to schedule interview' });
   }
 });
 
@@ -228,7 +292,6 @@ router.post('/:id/analyze', async (req, res) => {
     res.json({ message: 'Analysis complete', ...updated.rows[0] });
   } catch (err: any) {
     console.error('Error analyzing candidate:', err?.message || err);
-    console.error('Full error:', JSON.stringify(err, null, 2));
     res.status(500).json({ error: 'Failed to analyze candidate', details: err?.message || String(err) });
   }
 });

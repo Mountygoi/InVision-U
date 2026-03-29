@@ -46,6 +46,7 @@ export interface ScoringWeights {
 export interface Candidate {
   id: string;
   name: string;
+  avatarUrl?: string; // <--- ОБЯЗАТЕЛЬНО
   email?: string;
   phone?: string;
   university?: string;
