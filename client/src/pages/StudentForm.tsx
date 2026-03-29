@@ -1,10 +1,13 @@
 import { useState } from 'react';
-import { Form, Input, Button, Upload, Select, message, Card, Typography, Row, Col, InputNumber, Space, Tag, Modal, Divider } from 'antd';
-import { 
-  UploadOutlined, UserOutlined, BookOutlined, EnvironmentOutlined, 
-  PlusOutlined, DeleteOutlined, MailOutlined, PhoneOutlined, 
-  CopyOutlined, CheckCircleFilled, CameraOutlined 
+import { Form, Input, Button, Upload, Select, message, Card, Typography, Row, Col, InputNumber, Space, Tag, Modal, Divider, Alert, Spin } from 'antd';
+import {
+  UploadOutlined, UserOutlined, BookOutlined, EnvironmentOutlined,
+  PlusOutlined, DeleteOutlined, MailOutlined, PhoneOutlined,
+  CameraOutlined, BulbOutlined,
+  RocketOutlined, StarOutlined, EditOutlined, TrophyOutlined
 } from '@ant-design/icons';
+
+
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
@@ -34,6 +37,81 @@ const StudentForm = () => {
   const [achievements, setAchievements] = useState<AchievementEntry[]>([]);
   const [skills, setSkills] = useState<string[]>([]);
   const [skillInput, setSkillInput] = useState('');
+  const [nudgeLoading, setNudgeLoading] = useState(false);
+  const [nudgeQuestions, setNudgeQuestions] = useState<{ id: string; type: string; question: string; hint: string; priority: string }[]>([]);
+  const [nudgeAnswers, setNudgeAnswers] = useState<Record<string, string>>({});
+  const [nudgeStrength, setNudgeStrength] = useState<string>('');
+  const [nudgeEncouragement, setNudgeEncouragement] = useState('');
+  const [nudgeVisible, setNudgeVisible] = useState(false);
+
+  const handleGetAIFeedback = async () => {
+    const values = form.getFieldsValue();
+    const essayText = values.essayText?.trim() || '';
+    const hasContent = essayText || achievements.length > 0 || skills.length > 0;
+
+    if (!hasContent) {
+      message.warning('Сначала добавьте контент — эссе, достижения или навыки — чтобы AI мог дать обратную связь.');
+      return;
+    }
+
+    setNudgeLoading(true);
+    try {
+      const res = await axios.post('http://localhost:5000/api/nudge', {
+        essayText,
+        achievements: achievements.filter(a => a.title),
+        skills,
+        name: values.name || '',
+        city: values.city || '',
+      });
+      setNudgeQuestions(res.data.questions || []);
+      setNudgeAnswers({});
+      setNudgeStrength(res.data.overallStrength || 'moderate');
+      setNudgeEncouragement(res.data.encouragement || '');
+      setNudgeVisible(true);
+    } catch (err: any) {
+      const errMsg = err?.response?.data?.error || 'Не удалось получить обратную связь от AI';
+      message.error(errMsg);
+    } finally {
+      setNudgeLoading(false);
+    }
+  };
+
+  
+  const handleSaveAnswers = () => {
+  const answered = Object.entries(nudgeAnswers).filter(([, v]) => v.trim());
+  if (answered.length === 0) {
+    message.info('Вы не ответили ни на один вопрос. Пропускаем.');
+    setNudgeVisible(false);
+    return;
+  }
+
+  // НИЧЕГО не добавляем в essayText, просто закрываем блок
+  setNudgeVisible(false);
+  message.success(`${answered.length} ответов сохранено!`);
+};
+
+    const handleApplyAnswers = () => {
+  const answered = Object.entries(nudgeAnswers).filter(([, v]) => v.trim());
+  if (answered.length === 0) {
+    message.info('Вы не ответили ни на один вопрос. Пропускаем.');
+    setNudgeVisible(false);
+    return;
+  }
+  
+  const currentEssay = form.getFieldValue('essayText') || '';
+  const additions = answered.map(([qId, answer]) => {
+    const q = nudgeQuestions.find(nq => nq.id === qId);
+    return `**${q?.question}**\n${answer.trim()}`;
+  }).join('\n\n');
+
+  const newEssay = currentEssay.trim()
+    ? `${currentEssay.trim()}\n\n${additions}`
+    : additions;
+
+  form.setFieldValue('essayText', newEssay);
+  setNudgeVisible(false);
+  message.success(`${answered.length} ответов добавлено в эссе!`);
+};
 
   const addAchievement = () => {
     setAchievements([...achievements, { type: 'project', title: '', description: '', year: null }]);
@@ -56,6 +134,7 @@ const StudentForm = () => {
     }
   };
 
+  
   // Функция для копирования пароля
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -63,98 +142,44 @@ const StudentForm = () => {
   };
 
   const onFinish = async (values: any) => {
-    setSubmitting(true);
-    try {
-      const formData = new FormData();
-      formData.append('name', values.name);
-      formData.append('city', values.city);
-      if (values.email) formData.append('email', values.email);
-      if (values.phone) formData.append('phone', values.phone);
-      if (values.university) formData.append('university', values.university);
-      if (values.gpa) formData.append('gpa', values.gpa.toString());
-      if (values.yearOfStudy) formData.append('yearOfStudy', values.yearOfStudy.toString());
-      
-      // Навыки и достижения
-      formData.append('achievements', JSON.stringify(achievements.filter(a => a.title)));
-      formData.append('skills', JSON.stringify(skills));
+  setSubmitting(true);
 
-      // ДОБАВЛЕНО: Файл аватара
-      const avatarFile = values.avatar?.[0]?.originFileObj;
-      if (avatarFile) {
-        formData.append('avatar', avatarFile);
-      }
-
-      const hasEssayText = values.essayText?.trim();
-      const hasEssayFile = values.essayFile?.[0]?.originFileObj;
-
-      if (!hasEssayText && !hasEssayFile) {
-        message.error('Please provide a motivation essay — either upload a PDF or write it directly.');
-        setSubmitting(false);
-        return;
-      }
-
-      if (hasEssayText) formData.append('essayText', values.essayText.trim());
-      if (hasEssayFile) formData.append('essay', hasEssayFile);
-
-      // ОТПРАВКА
-      const response = await axios.post('http://localhost:5000/api/apply', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+  try {
+    // Сформировать массив ответов с вопросами
+    const nudgeAnswersList = Object.entries(nudgeAnswers)
+      .filter(([, v]) => v.trim())
+      .map(([id, answer]) => {
+        const q = nudgeQuestions.find(x => x.id === id);
+        return {
+          questionId: id,
+          question: q?.question,
+          type: q?.type,
+          answer: answer.trim(),
+        };
       });
 
-      console.log("ПОЛНЫЙ ОТВЕТ СЕРВЕРА:", response.data);
-      const { tempPassword } = response.data;
+    const applicationPayload = {
+      ...values,
+      achievements: achievements.filter(a => a.title),
+      skills,
+      nudgeAnswers: nudgeAnswersList,
+    };
 
-      // МОДАЛЬНОЕ ОКНО С ПАРОЛЕМ
-      Modal.confirm({
-        title: <Title level={4}><CheckCircleFilled style={{ color: '#52c41a' }} /> Application Submitted!</Title>,
-        icon: null,
-        width: 500,
-        content: (
-          <div style={{ marginTop: '20px' }}>
-            <Text>Your application has been received. We've generated a <b>temporary password</b> so you can track your status in the personal cabinet:</Text>
-            
-            <div style={{ 
-              background: '#F0F7FF', 
-              padding: '20px', 
-              borderRadius: '12px', 
-              textAlign: 'center', 
-              margin: '20px 0',
-              border: '2px dashed #006CFF',
-              position: 'relative'
-            }}>
-              <Title level={2} style={{ margin: 0, color: '#006CFF', letterSpacing: '4px' }}>
-                {tempPassword}
-              </Title>
-              <Button 
-                type="link" 
-                icon={<CopyOutlined />} 
-                onClick={() => copyToClipboard(tempPassword)}
-                style={{ marginTop: '8px' }}
-              >
-                Copy Password
-              </Button>
-            </div>
-            
-            <Text type="secondary" style={{ fontSize: '12px' }}>
-              * Make sure to save this password. You can change it later in your dashboard settings.
-            </Text>
-          </div>
-        ),
-        okText: 'Go to My Status',
-        cancelButtonProps: { style: { display: 'none' } }, 
-        onOk: () => {
-          localStorage.setItem('userEmail', values.email);
-          navigate('/status');
-        },
-      });
+    // 1) для SJT
+    localStorage.setItem('applicationData', JSON.stringify(applicationPayload));
 
-    } catch (err) {
-      console.error('Submit error:', err);
-      message.error('Failed to submit application. Please make sure the backend is running.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
+    // 2) сохранить в базе (НО НЕ анализировать пока)
+    await axios.post('http://localhost:5000/api/apply', applicationPayload);
+
+    message.success('✅ Данные сохранены! Переходим к SJT тесту...');
+    navigate('/sjt-test');
+  } catch (err) {
+    console.error('Application submit error:', err);
+    message.error('Ошибка сохранения заявки. Попробуйте еще раз.');
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   return (
     <div style={{
@@ -361,10 +386,140 @@ const StudentForm = () => {
             />
           </Form.Item>
 
+          {/* AI Nudge Button */}
+          <div style={{
+            background: 'linear-gradient(135deg, #F0F7FF 0%, #E8F4FD 100%)',
+            borderRadius: '14px',
+            padding: '20px 24px',
+            marginBottom: '24px',
+            border: '1px solid #D6E8FF',
+          }}>
+            <Row justify="space-between" align="middle">
+              <Col>
+                <Space>
+                  <BulbOutlined style={{ fontSize: 20, color: '#006CFF' }} />
+                  <div>
+                    <Text strong style={{ fontSize: 14, color: '#1F2937' }}>AI Application Assistant</Text>
+                    <br />
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      Get personalized tips to strengthen your application before submitting
+                    </Text>
+                  </div>
+                </Space>
+              </Col>
+              <Col>
+                <Button
+                  type="primary"
+                  ghost
+                  icon={nudgeLoading ? undefined : <BulbOutlined />}
+                  loading={nudgeLoading}
+                  onClick={handleGetAIFeedback}
+                  style={{ borderRadius: '10px', fontWeight: 600, height: '40px' }}
+                >
+                  {nudgeLoading ? 'Analyzing...' : 'Get AI Feedback'}
+                </Button>
+              </Col>
+            </Row>
+
+            {/* AI Questions */}
+            {nudgeVisible && nudgeQuestions.length > 0 && (
+              <div style={{ marginTop: 20 }}>
+                <Divider style={{ margin: '16px 0 12px' }} />
+
+                {/* Strength indicator */}
+                <div style={{ marginBottom: 16, textAlign: 'center' }}>
+                  <Tag
+                    color={nudgeStrength === 'strong' ? 'green' : nudgeStrength === 'moderate' ? 'orange' : 'red'}
+                    style={{ fontSize: 13, padding: '4px 16px', borderRadius: 20 }}
+                  >
+                    {nudgeStrength === 'strong' ? '💪 Strong Draft' : nudgeStrength === 'moderate' ? '📝 Good Start — answer questions below to improve!' : '🚀 Let us help you — answer these questions!'}
+                  </Tag>
+                </div>
+
+                {/* Questions with answer fields */}
+                <Space direction="vertical" style={{ width: '100%' }} size={16}>
+                  {nudgeQuestions.map((q, i) => {
+                    const iconMap: Record<string, any> = {
+                      essay: <EditOutlined style={{ color: '#006CFF' }} />,
+                      achievements: <TrophyOutlined style={{ color: '#F59E0B' }} />,
+                      skills: <StarOutlined style={{ color: '#10B981' }} />,
+                      general: <RocketOutlined style={{ color: '#8B5CF6' }} />,
+                    };
+                    const priorityColor = q.priority === 'high' ? '#006CFF' : q.priority === 'medium' ? '#F59E0B' : '#9CA3AF';
+
+                    return (
+                      <div key={q.id} style={{
+                        background: '#FFFFFF',
+                        borderRadius: '12px',
+                        padding: '16px 20px',
+                        boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+                        borderLeft: `4px solid ${priorityColor}`,
+                      }}>
+                        <Space align="start" style={{ marginBottom: 10 }}>
+                          <div style={{ marginTop: 2 }}>{iconMap[q.type] || <BulbOutlined />}</div>
+                          <div>
+                            <Text strong style={{ fontSize: 14, color: '#1F2937', display: 'block' }}>
+                              {i + 1}. {q.question}
+                            </Text>
+                            <Text type="secondary" style={{ fontSize: 11 }}>
+                              {q.hint}
+                            </Text>
+                          </div>
+                        </Space>
+                        <TextArea
+                          rows={2}
+                          placeholder="Your answer (or skip)..."
+                          value={nudgeAnswers[q.id] || ''}
+                          onChange={e => setNudgeAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
+                          style={{ borderRadius: '8px', fontSize: '13px', resize: 'vertical' }}
+                        />
+                      </div>
+                    );
+                  })}
+                </Space>
+
+                {/* Action buttons */}
+                <Row justify="space-between" align="middle" style={{ marginTop: 16 }}>
+                  <Col>
+                    <Button type="text" size="small" onClick={() => setNudgeVisible(false)} style={{ color: '#9CA3AF' }}>
+                      Skip all
+                    </Button>
+                  </Col>
+                  <Col>
+                  
+                  <Button
+  type="primary"
+  onClick={handleSaveAnswers}
+  icon={<EditOutlined />}
+  style={{ borderRadius: '10px', fontWeight: 600, background: '#006CFF' }}
+>
+  Save answers
+</Button>
+                  </Col>
+                </Row>
+
+                {/* Encouragement */}
+                {nudgeEncouragement && (
+                  <div style={{
+                    marginTop: 12,
+                    padding: '10px 16px',
+                    background: '#F0FDF4',
+                    borderRadius: '10px',
+                    border: '1px solid #DCFCE7',
+                    textAlign: 'center'
+                  }}>
+                    <Text style={{ color: '#166534', fontSize: 12 }}>
+                      {nudgeEncouragement}
+                    </Text>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           <Form.Item style={{ marginTop: '30px' }}>
             <Button
               type="primary"
-              htmlType="submit"
               block
               loading={submitting}
               style={{
@@ -373,7 +528,7 @@ const StudentForm = () => {
                 boxShadow: '0 4px 12px rgba(0, 108, 255, 0.2)'
               }}
             >
-              {submitting ? 'Submitting & Analyzing...' : 'Submit Application'}
+              {submitting ? 'Submitting ...' : 'Next: Situational Test'}
             </Button>
           </Form.Item>
         </Form>

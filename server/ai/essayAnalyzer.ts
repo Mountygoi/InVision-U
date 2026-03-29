@@ -186,7 +186,8 @@ export async function analyzeEssay(
   candidateName: string,
   achievements: Achievement[],
   university: string,
-  city: string
+  city: string,
+  nudgeAnswersText?: string
 ): Promise<AIAnalysisResult> {
   if (!process.env.GROQ_API_KEY) {
     throw new Error('GROQ_API_KEY is not set');
@@ -196,13 +197,18 @@ export async function analyzeEssay(
     ? achievements.map(a => `${a.type}: ${a.title}${a.description ? ' - ' + a.description : ''}`).join('; ')
     : 'None listed';
 
+    const extraPart = nudgeAnswersText?.trim()
+    ? `\nДОПОЛНИТЕЛЬНЫЕ ОТВЕТЫ КАНДИДАТА НА УТОЧНЯЮЩИЕ ВОПРОСЫ:\n${nudgeAnswersText.trim()}`
+    : '';
+
   const userMessage = buildEssayAnalysisPrompt(
-    essayText,
+    essayText + extraPart,
     candidateName,
     achievementsStr,
     university,
     city
   );
+
 
   const responseText = await callGroq(ESSAY_ANALYSIS_SYSTEM_PROMPT, userMessage);
 

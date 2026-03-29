@@ -7,6 +7,7 @@ import StudentForm from './pages/StudentForm';
 import Scheduler from './pages/Scheduler';
 import StudentStatus from './pages/StudentStatus'; // Твой личный кабинет
 import Login from './pages/Login';                 // Твоя страница входа
+import SJTTest from './pages/SJTTest';             // Ситуационный тест
 
 function App() {
   return (
@@ -22,6 +23,9 @@ function App() {
         
         {/* Страница статуса (Личный кабинет) */}
         <Route path="/status" element={<StudentStatus />} />
+
+        {/* Ситуационный тест (SJT) */}
+        <Route path="/test" element={<SJTTest />} />
 
         {/* --- РОУТЫ АДМИН ПАНЕЛИ (С префиксом /admin) --- */}
         <Route

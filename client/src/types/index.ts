@@ -42,10 +42,17 @@ export interface ScoringWeights {
   ruralBonus: number;
 }
 
+export interface NudgeAnswer {
+  questionId: string;
+  question?: string;
+  type?: 'essay' | 'achievements' | 'skills' | 'general';
+  answer: string;
+}
+
 export interface Candidate {
   id: string;
   name: string;
-  avatarUrl?: string; // <--- ОБЯЗАТЕЛЬНО
+  avatarUrl?: string;
   email?: string;
   phone?: string;
   university?: string;
@@ -57,6 +64,8 @@ export interface Candidate {
   achievements: Achievement[];
   skills: string[];
   essayText?: string;
+  // 👉 ДОБАВЬ ЭТО ПОЛЕ:
+  nudgeAnswers?: NudgeAnswer[];
   aiScores?: AIScores;
   aiSummary?: string;
   aiFlags?: AIFlags;
