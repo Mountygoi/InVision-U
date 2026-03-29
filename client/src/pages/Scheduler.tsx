@@ -29,16 +29,28 @@ const Scheduler = () => {
   const [isSlotsModalVisible, setIsSlotsModalVisible] = useState(false);
   const [viewCandidate, setViewCandidate] = useState<Candidate | null>(null);
 
+  // ФУНКЦИЯ-ПОМОЩНИК: Приводит любой формат даты к единому виду "DD MMMM YYYY at HH:mm"
+  // Это решает проблему несовпадения строк при сравнении (ISO vs String)
+  const getNormalizedTime = (timeStr: string | undefined) => {
+    if (!timeStr) return null;
+    // Если это формат ISO (содержит T или Z), парсим его напрямую
+    if (timeStr.includes('T') || timeStr.includes('Z')) {
+      return dayjs(timeStr).format('DD MMMM YYYY [at] HH:mm');
+    }
+    // Если это уже твой строковый формат, возвращаем как есть
+    return timeStr;
+  };
+
   const fetchCandidates = useCallback(async () => {
     setLoading(true);
     try {
       const res = await axios.get('http://localhost:5000/api/candidates');
-      // Фильтруем тех, кто на этапе интервью, и маппим URL аватарки
+      // ИСПРАВЛЕНИЕ: Фильтруем тех, кто на интервью ИЛИ уже имеет назначенное время
       const interviewCandidates = res.data
-        .filter((c: any) => c.status === 'interview')
+        .filter((c: any) => c.status === 'interview' || c.interviewTime)
         .map((c: any) => ({
           ...c,
-          avatarUrl: c.avatarUrl || c.avatar_url // Поддержка обоих форматов ключа
+          avatarUrl: c.avatarUrl || c.avatar_url 
         }));
       setCandidates(interviewCandidates);
     } catch (error) {
@@ -61,7 +73,12 @@ const Scheduler = () => {
 
   const dateCellRender = (value: dayjs.Dayjs) => {
     const dateStr = value.format('DD MMMM YYYY');
-    const count = candidates.filter(c => c.interviewTime?.includes(dateStr)).length;
+    // Считаем кандидатов через нормализованное время
+    const count = candidates.filter(c => {
+      const norm = getNormalizedTime(c.interviewTime);
+      return norm && norm.includes(dateStr);
+    }).length;
+    
     return count > 0 ? (
       <div style={{ marginTop: '4px' }}>
         <CustomBadge text={`${count} slots`} />
@@ -78,20 +95,22 @@ const Scheduler = () => {
 
   const pendingCandidates = candidates.filter(c => !c.interviewTime);
 
-  // Обновленная функция для аватарок
   const getAvatar = (c: Candidate) => {
     return c.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(c.name)}`;
   };
 
   return (
-    <Content style={{ 
-      padding: '24px', 
-      background: '#F8FAFC', 
-      height: 'calc(100vh - 72px)', 
-      overflow: 'hidden', 
-      display: 'flex',
-      flexDirection: 'column'
-    }}>
+   <Content style={{ 
+  padding: '24px', 
+  background: '#F8FAFC', 
+  height: 'calc(100vh - 80px)', 
+  /* Мы убрали marginTop, так как fixed header может перекрывать контент. 
+     Если контент залез под хедер, верни marginTop, но уменьши его до '80px'. 
+     Если же над календарем висит ПУСТОЙ БЕЛЫЙ БЛОК — значит marginTop лишний. */
+  overflow: 'hidden', 
+  display: 'flex',
+  flexDirection: 'column'
+}}>
       <style>{`
         body { overflow: hidden !important; }
         .ant-layout { overflow: hidden !important; }
@@ -143,7 +162,6 @@ const Scheduler = () => {
                     className="candidate-item-hover"
                   >
                     <Space size={16}>
-                      {/* Используем фото из базы */}
                       <Avatar size={48} src={getAvatar(c)} style={{ border: '2px solid #E2E8F0' }} />
                       <div>
                         <Text strong style={{ display: 'block', fontSize: '14px' }}>{c.name}</Text>
@@ -201,7 +219,11 @@ const Scheduler = () => {
         <div className="custom-scroll" style={{ maxHeight: '450px', overflowY: 'auto', paddingRight: '8px' }}>
           {daySlots.map((time) => {
             const dateStr = selectedDate.format('DD MMMM YYYY');
-            const candidate = candidates.find(c => c.interviewTime === `${dateStr} at ${time}`);
+            const targetFullString = `${dateStr} at ${time}`;
+            
+            // Ищем кандидата, сравнивая с нормализованным временем
+            const candidate = candidates.find(c => getNormalizedTime(c.interviewTime) === targetFullString);
+            
             return (
               <div key={time} style={{ 
                 display: 'flex', alignItems: 'center', padding: '14px 18px', marginBottom: '10px', 
@@ -244,7 +266,6 @@ const Scheduler = () => {
           <div style={{ overflow: 'hidden', borderRadius: '16px' }}>
             <div style={{ background: 'linear-gradient(135deg, #006CFF 0%, #00D8E6 100%)', padding: '40px', color: '#fff' }}>
               <Row align="middle" gutter={24}>
-                {/* Фото в модальном профиле */}
                 <Col><Avatar size={90} src={getAvatar(viewCandidate)} style={{ border: '4px solid rgba(255,255,255,0.3)' }} /></Col>
                 <Col>
                   <Title level={2} style={{ color: '#fff', margin: 0 }}>{viewCandidate.name}</Title>
