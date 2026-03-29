@@ -10,15 +10,10 @@ export interface Achievement {
   level?: 'national' | 'regional' | 'city' | 'school';
 }
 
-export interface AIEvidence {
-  quote: string;
-  explanation: string;
-}
-
 export interface CompetencyScore {
   score: number;        // 0-100
-  confidence: number;   // 0.0-1.0
-  evidence: AIEvidence[];
+  evidence: string;     // quote from essay
+  confidence?: number;  // 0.0-1.0 (optional, from seed data)
 }
 
 export interface AIScores {
@@ -31,9 +26,13 @@ export interface AIScores {
 }
 
 export interface AIFlags {
-  aiWrittenProbability: number;   // 0.0-1.0
-  consistencyScore: number;       // 0.0-1.0
-  redFlags: string[];
+  is_ai_generated: number;        // 0.0-1.0
+  generic_content: boolean;
+  high_potential_outlier: boolean;
+  // Legacy fields from seed data
+  aiWrittenProbability?: number;
+  consistencyScore?: number;
+  redFlags?: string[];
 }
 
 export interface AIAnalysisResult {

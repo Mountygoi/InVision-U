@@ -14,7 +14,7 @@ function callGemini(prompt: string, systemInstruction: string): Promise<string> 
     const body = JSON.stringify({
       system_instruction: { parts: [{ text: systemInstruction }] },
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.3, maxOutputTokens: 3000 },
+      generationConfig: { temperature: 0.3, maxOutputTokens: 3000, responseMimeType: 'application/json' },
     });
 
     const url = new URL(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`);
@@ -36,7 +36,18 @@ function callGemini(prompt: string, systemInstruction: string): Promise<string> 
           if (parsed.error) {
             return reject(new Error(`Gemini API error: ${parsed.error.message}`));
           }
-          const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+          const parts = parsed.candidates?.[0]?.content?.parts || [];
+          // Gemini 2.5 thinking models return multiple parts - find the text part (not thought)
+          let text = '';
+          for (const part of parts) {
+            if (part.text && !part.thought) {
+              text = part.text;
+              break;
+            }
+          }
+          if (!text && parts.length > 0) {
+            text = parts[parts.length - 1].text || '';
+          }
           if (!text) {
             return reject(new Error('No text in Gemini response'));
           }
@@ -74,27 +85,16 @@ export async function analyzeEssay(
 
   const responseText = await callGemini(userMessage, ESSAY_ANALYSIS_SYSTEM_PROMPT);
 
-  // Extract JSON from response (handle markdown code blocks and thinking tokens)
+  // Extract JSON from response
   let jsonStr = responseText.trim();
 
-  // Try extracting from code block first
-  const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (jsonMatch) {
-    jsonStr = jsonMatch[1].trim();
+  // Strategy: find the outermost { ... } in the response
+  const firstBrace = jsonStr.indexOf('{');
+  const lastBrace = jsonStr.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    jsonStr = jsonStr.substring(firstBrace, lastBrace + 1);
   }
 
-  // If still not valid JSON, try finding the JSON object directly
-  if (!jsonStr.startsWith('{')) {
-    const braceStart = jsonStr.indexOf('{');
-    const braceEnd = jsonStr.lastIndexOf('}');
-    if (braceStart !== -1 && braceEnd !== -1) {
-      jsonStr = jsonStr.substring(braceStart, braceEnd + 1);
-    }
-  }
-
-  console.log('Parsing AI response, first 500 chars:', jsonStr.substring(0, 500));
-
-  // Try to fix common JSON issues from LLMs
   // Remove trailing commas before ] or }
   jsonStr = jsonStr.replace(/,\s*([}\]])/g, '$1');
 
@@ -103,13 +103,17 @@ export async function analyzeEssay(
     parsed = JSON.parse(jsonStr);
   } catch (e: any) {
     console.error('JSON parse error:', e.message);
-    console.error('Full JSON string:', jsonStr.substring(0, 2000));
-    // Try more aggressive cleanup: remove control characters
-    jsonStr = jsonStr.replace(/[\x00-\x1f\x7f]/g, (ch) => {
-      if (ch === '\n' || ch === '\r' || ch === '\t') return ch;
-      return '';
-    });
-    parsed = JSON.parse(jsonStr);
+    const match = e.message.match(/position (\d+)/);
+    if (match) {
+      const pos = parseInt(match[1]);
+      console.error('Context around error:', jsonStr.substring(Math.max(0, pos - 100), pos + 100));
+    }
+    jsonStr = jsonStr.replace(/(?<=:\s*"[^"]*)\n/g, '\\n');
+    try {
+      parsed = JSON.parse(jsonStr);
+    } catch {
+      throw e;
+    }
   }
 
   const scores = parsed.scores as AIScores;

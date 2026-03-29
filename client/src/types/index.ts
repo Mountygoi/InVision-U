@@ -1,12 +1,7 @@
-export interface AIEvidence {
-  quote: string;
-  explanation: string;
-}
-
 export interface CompetencyScore {
   score: number;
-  confidence: number;
-  evidence: AIEvidence[];
+  evidence: string;
+  confidence?: number;
 }
 
 export interface AIScores {
@@ -19,9 +14,13 @@ export interface AIScores {
 }
 
 export interface AIFlags {
-  aiWrittenProbability: number;
-  consistencyScore: number;
-  redFlags: string[];
+  is_ai_generated: number;
+  generic_content: boolean;
+  high_potential_outlier: boolean;
+  // Legacy from seed data
+  aiWrittenProbability?: number;
+  consistencyScore?: number;
+  redFlags?: string[];
 }
 
 export interface Achievement {
