@@ -1,19 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Layout, Row, Col, Card, Avatar, Tag, Button, Typography, Calendar, Space, message, Modal, List, Divider, Empty, Statistic, Badge } from 'antd';
-import { Video, RefreshCw, Mail, BookOpen, Calendar as CalIcon, MapPin, ChevronRight, Star, Clock, Phone, FileText, User } from 'lucide-react';
+import { Layout, Row, Col, Card, Avatar, Tag, Button, Typography, Calendar, Space, message, Modal, List, Divider, Empty, Statistic, Badge, Select, Input, InputNumber, Progress } from 'antd';
+import { Video, RefreshCw, Mail, BookOpen, Calendar as CalIcon, MapPin, ChevronRight, Star, Clock, Phone, FileText, User, Users, ShieldAlert, AlertTriangle, Lightbulb, Heart, ShieldCheck } from 'lucide-react';
 import axios from 'axios';
 import dayjs from 'dayjs';
-import VideoConference from '../components/VideoConference'; // Импортируем новый компонент
+import VideoConference from '../components/VideoConference';
 
 const { Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
+const { TextArea } = Input;
 
 interface Candidate {
   id: string;
   name: string;
   university: string;
   status: string;
-  avatarUrl?: string; // Поле для фото из базы
+  avatarUrl?: string; 
   interviewTime?: string;
   email: string;
   phone?: string;
@@ -24,30 +25,50 @@ interface Candidate {
 }
 
 const Scheduler = () => {
+    const [evaluatingId, setEvaluatingId] = useState<string | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs>(dayjs());
   const [isSlotsModalVisible, setIsSlotsModalVisible] = useState(false);
   const [viewCandidate, setViewCandidate] = useState<Candidate | null>(null);
-  const [activeCall, setActiveCall] = useState<Candidate | null>(null); // Состояние для активного звонка
+  const [activeCall, setActiveCall] = useState<Candidate | null>(null); 
 
-  // ФУНКЦИЯ-ПОМОЩНИК: Приводит любой формат даты к единому виду "DD MMMM YYYY at HH:mm"
-  // Это решает проблему несовпадения строк при сравнении (ISO vs String)
+  // Состояния для Глубокой Оценки (Scorecard)
+  const [isEvalModalOpen, setIsEvalModalOpen] = useState(false);
+const [evalData, setEvalData] = useState({ 
+  panelType: 'Technical',
+  techNotes: '', 
+  softNotes: '' 
+});  
+  // РАСШИРЕННЫЕ КРИТЕРИИ (8 параметров для элитной школы)
+ const [scores, setScores] = useState<Record<string, number>>({
+  logic: 5, academic: 5, problemSolving: 5, criticalThinking: 5,      // Panel A
+  communication: 5, curiosity: 5, teamFit: 5, emotionalIntel: 5       // Panel B
+});
   const getNormalizedTime = (timeStr: string | undefined) => {
     if (!timeStr) return null;
-    // Если это формат ISO (содержит T или Z), парсим его напрямую
     if (timeStr.includes('T') || timeStr.includes('Z')) {
       return dayjs(timeStr).format('DD MMMM YYYY [at] HH:mm');
     }
-    // Если это уже твой строковый формат, возвращаем как есть
     return timeStr;
   };
+
+  // Расчет итогового балла на основе критериев выбранной роли
+  const calculateTotalScore = () => {
+  const isTech = evalData.panelType === 'Technical';
+  // Берем только те оценки, которые относятся к текущей панели
+  const vals = isTech 
+    ? [scores.logic, scores.academic, scores.problemSolving, scores.criticalThinking]
+    : [scores.communication, scores.curiosity, scores.teamFit, scores.emotionalIntel];
+
+  const sum = vals.reduce((a, b) => (a || 0) + (b || 0), 0);
+  return Math.round((sum / (vals.length * 10)) * 100);
+};
 
   const fetchCandidates = useCallback(async () => {
     setLoading(true);
     try {
       const res = await axios.get('http://localhost:5000/api/candidates');
-      // ИСПРАВЛЕНИЕ: Фильтруем тех, кто на интервью ИЛИ уже имеет назначенное время
       const interviewCandidates = res.data
         .filter((c: any) => c.status === 'interview' || c.interviewTime)
         .map((c: any) => ({
@@ -67,6 +88,53 @@ const Scheduler = () => {
     fetchCandidates();
   }, [fetchCandidates]);
 
+  const handleScoreSubmit = async (passedId?: string) => {
+  console.log("--- Начало сабмита ---");
+  
+  // ПРАВКА: берем ID из нашего нового надежного стейта
+  const id = evaluatingId; 
+
+  console.log("ID из стейта оценивания:", id);
+
+  if (!id) {
+    console.error("Ошибка: ID не найден в стейте оценивания!");
+    message.error("Критическая ошибка: ID потерян");
+    return;
+  }
+
+  try {
+    const finalScore = calculateTotalScore();
+    const payload: any = {
+      status: finalScore < 45 ? 'arbitration' : 'interview'
+    };
+
+    if (evalData.panelType === 'Technical') {
+      payload.tech_score = finalScore;
+      payload.tech_notes = evalData.techNotes; 
+    } else {
+      payload.soft_score = finalScore;
+      payload.soft_notes = evalData.softNotes; 
+    }
+
+    console.log("Отправка на сервер по ID:", id);
+
+    const response = await axios.patch(
+      `http://localhost:5000/api/candidates/${id}/status`, 
+      payload
+    );
+
+    if (response.status === 200) {
+      message.success('Оценка сохранена!');
+      setIsEvalModalOpen(false);
+      setEvaluatingId(null); // Очищаем после успеха
+      setViewCandidate(null);
+      fetchCandidates();
+    }
+  } catch (err: any) {
+    console.error("Ошибка запроса:", err.message);
+    message.error("Сервер недоступен или ошибка в базе");
+  }
+};
   const daySlots: string[] = [];
   for (let hour = 10; hour <= 17; hour++) {
     daySlots.push(`${hour}:00`);
@@ -75,7 +143,6 @@ const Scheduler = () => {
 
   const dateCellRender = (value: dayjs.Dayjs) => {
     const dateStr = value.format('DD MMMM YYYY');
-    // Считаем кандидатов через нормализованное время
     const count = candidates.filter(c => {
       const norm = getNormalizedTime(c.interviewTime);
       return norm && norm.includes(dateStr);
@@ -101,16 +168,44 @@ const Scheduler = () => {
     return c.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(c.name)}`;
   };
 
+  // ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ ОТРИСОВКИ КРИТЕРИЕВ
+  const renderCriterion = (label: string, key: string, desc: string, icon: any) => (
+    <div style={{ marginBottom: 20, padding: '12px', background: '#F9FAFB', borderRadius: '12px', border: '1px solid #F1F5F9' }}>
+      <Row justify="space-between" align="middle" style={{ marginBottom: 8 }}>
+        <Space>
+          {icon}
+          <div>
+            <Text strong style={{ fontSize: 13, display: 'block' }}>{label}</Text>
+            <Text type="secondary" style={{ fontSize: 11 }}>{desc}</Text>
+          </div>
+        </Space>
+        <Text strong style={{ color: '#006CFF', fontSize: 16 }}>{scores[key]}</Text>
+      </Row>
+      <Row gutter={12} align="middle">
+        <Col flex="auto">
+          <Progress 
+            percent={scores[key] * 10} 
+            showInfo={false} 
+            strokeWidth={8}
+            strokeColor={scores[key] > 7 ? '#10B981' : scores[key] > 4 ? '#F59E0B' : '#EF4444'} 
+          />
+        </Col>
+        <Col>
+          <InputNumber min={1} max={10} size="small" value={scores[key]} onChange={(v) => setScores({...scores, [key]: v || 1})} />
+        </Col>
+      </Row>
+    </div>
+  );
+
   return (
     <Content style={{ 
-  padding: '24px', 
-  background: '#F8FAFC', 
-  // Если хедер fixed, оставляем 80px. Если обычный — можно поставить 0 или padding
-  height: 'calc(100vh - 64px)', 
-  overflow: 'hidden', 
-  display: 'flex',
-  flexDirection: 'column'
-}}>
+      padding: '24px', 
+      background: '#F8FAFC', 
+      height: 'calc(100vh - 64px)', 
+      overflow: 'hidden', 
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
       <style>{`
         body { overflow: hidden !important; }
         .ant-layout { overflow: hidden !important; }
@@ -213,15 +308,13 @@ const Scheduler = () => {
         open={isSlotsModalVisible}
         onCancel={() => setIsSlotsModalVisible(false)}
         footer={null}
-        width={550}
+        width={580}
         centered
       >
         <div className="custom-scroll" style={{ maxHeight: '450px', overflowY: 'auto', paddingRight: '8px' }}>
           {daySlots.map((time) => {
             const dateStr = selectedDate.format('DD MMMM YYYY');
             const targetFullString = `${dateStr} at ${time}`;
-            
-            // Ищем кандидата, сравнивая с нормализованным временем
             const candidate = candidates.find(c => getNormalizedTime(c.interviewTime) === targetFullString);
             
             return (
@@ -235,28 +328,23 @@ const Scheduler = () => {
                 <div style={{ flex: 1 }}>
                   {candidate ? (
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Text 
-                        strong 
-                        style={{ cursor: 'pointer', color: '#1E293B', textDecoration: 'underline' }} 
-                        onClick={() => setViewCandidate(candidate)}
-                      >
-                        {candidate.name}
-                      </Text>
+                      <div>
+                        <Text strong style={{ cursor: 'pointer', color: '#1E293B', textDecoration: 'underline' }} onClick={() => setViewCandidate(candidate)}>
+                          {candidate.name}
+                        </Text>
+                        <div style={{ marginTop: 4 }}>
+                          <Tag icon={<Users size={10} />} color="processing" style={{ fontSize: 10 }}>Panel A: Academic</Tag>
+                          <Tag icon={<Users size={10} />} color="warning" style={{ fontSize: 10 }}>Panel B: Psych</Tag>
+                        </div>
+                      </div>
                       <Button 
                         type="primary" 
                         size="small" 
                         icon={<Video size={14} />} 
-                        style={{ 
-                          borderRadius: '8px', 
-                          background: '#10B981', 
-                          borderColor: '#10B981' 
-                        }}
-                        onClick={() => {
-                          setActiveCall(candidate);
-                          setIsSlotsModalVisible(false);
-                        }}
+                        style={{ borderRadius: '8px', background: '#10B981', borderColor: '#10B981' }}
+                        onClick={() => { setActiveCall(candidate); setIsSlotsModalVisible(false); }}
                       >
-                        Join Call
+                        Join Panel
                       </Button>
                     </div>
                   ) : <Text type="secondary" italic style={{ fontSize: '13px' }}>Available</Text>}
@@ -271,7 +359,21 @@ const Scheduler = () => {
       <Modal 
         open={!!viewCandidate} 
         onCancel={() => setViewCandidate(null)} 
-        footer={null} 
+        // Modal 2 Footer
+footer={[
+  <Button key="close" onClick={() => setViewCandidate(null)}>Close</Button>,
+  <Button 
+  key="eval" 
+  type="primary" 
+  onClick={() => {
+    console.log("Запоминаю ID:", viewCandidate?.id);
+    setEvaluatingId(viewCandidate?.id || null); // Сохраняем ID в отдельную память
+    setIsEvalModalOpen(true);
+  }}
+>
+  Evaluate Child
+</Button>
+]} 
         width={650} 
         centered
         zIndex={2000}
@@ -291,46 +393,93 @@ const Scheduler = () => {
                 </Col>
               </Row>
             </div>
-            
             <div style={{ padding: '32px' }}>
               <Row gutter={[24, 24]}>
-                <Col span={12}>
-                  <Statistic title="Scholarship GPA" value={viewCandidate.gpa || 0} precision={2} prefix={<Star size={18} color="#F59E0B" fill="#F59E0B" />} />
-                </Col>
+                <Col span={12}><Statistic title="Internal GPA" value={viewCandidate.gpa || 0} precision={2} prefix={<Star size={18} color="#F59E0B" fill="#F59E0B" />} /></Col>
                 <Col span={12}>
                    <div style={{ background: '#F8FAFC', padding: '12px', borderRadius: '12px' }}>
-                      <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>CONTACT DETAILS</Text>
-                      <Text style={{ fontSize: '14px', display: 'block', marginTop: '4px' }}><Mail size={12} /> {viewCandidate.email}</Text>
-                      <Text style={{ fontSize: '14px', display: 'block' }}><Phone size={12} /> {viewCandidate.phone || '+7 (707) 123 45 67'}</Text>
+                      <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>CONTACTS</Text>
+                      <Text style={{ fontSize: '13px', display: 'block', marginTop: '4px' }}>{viewCandidate.email}</Text>
+                      <Text style={{ fontSize: '13px', display: 'block' }}>{viewCandidate.phone || '+7 (707) 123 45 67'}</Text>
                    </div>
                 </Col>
-                <Col span={24}>
-                  <Divider style={{ margin: '8px 0' }} />
-                  <Title level={5}><FileText size={18} /> Candidate Bio & Goals</Title>
-                  <Paragraph type="secondary" style={{ fontSize: '14px', lineHeight: '1.6' }}>
-                    {viewCandidate.bio || "Motivated student seeking an opportunity to apply technical skills in a professional environment."}
-                  </Paragraph>
-                </Col>
-                <Col span={24}>
-                  <Title level={5}><User size={18} /> Technical Expertise</Title>
-                  <Space wrap>
-                    {(viewCandidate.skills || ['React', 'Node.js', 'PostgreSQL']).map(skill => (
-                      <Tag key={skill} style={{ borderRadius: '8px', padding: '4px 12px', background: '#F1F5F9', border: 'none', fontWeight: 500 }}>{skill}</Tag>
-                    ))}
-                  </Space>
-                </Col>
               </Row>
-              <div style={{ marginTop: '40px' }}>
-                <Button block type="primary" size="large" onClick={() => setViewCandidate(null)} style={{ height: '50px', borderRadius: '14px', fontWeight: 700, fontSize: '16px' }}>
-                  Close Profile
-                </Button>
-              </div>
             </div>
           </div>
         )}
       </Modal>
 
-      {/* MODAL 3: Video Call Embed */}
+      {/* MODAL 4: РАСШИРЕННЫЙ SCORECARD (8 КРИТЕРИЕВ) */}
+      <Modal
+  title={<Space><ShieldCheck size={20} color="#006CFF" /> <Text strong>Evidence-Based Scorecard: {viewCandidate?.name}</Text></Space>}
+  open={isEvalModalOpen}
+  onCancel={() => setIsEvalModalOpen(false)}
+  // ИСПРАВЛЕНИЕ: Используем стрелочную функцию, чтобы пробросить ID
+  onOk={() => {
+    console.log("ID из модалки:", viewCandidate?.id); // Добавь этот лог для проверки
+    handleScoreSubmit(viewCandidate?.id);
+  }} 
+  okText="Submit Scorecard"
+  centered
+  width={650}
+>
+        <Space direction="vertical" style={{ width: '100%', padding: '10px 0' }} size="large">
+          <Card size="small" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+            <Text type="secondary" style={{ fontSize: '11px' }}>ТЕКУЩАЯ КОМИССИЯ:</Text>
+            <Select style={{ width: '100%', marginTop: 8 }} value={evalData.panelType} onChange={v => setEvalData({...evalData, panelType: v})}>
+              <Select.Option value="Technical">Академическая панель (Panel A)</Select.Option>
+              <Select.Option value="SoftSkills">Психологическая панель (Panel B)</Select.Option>
+            </Select>
+          </Card>
+
+          <div style={{ padding: '0 5px' }}>
+            {evalData.panelType === 'Technical' ? (
+              <>
+                {renderCriterion('Логика и Алгоритмы', 'logic', 'Способность находить закономерности.', <Lightbulb size={16} color="#006CFF"/>)}
+                {renderCriterion('Академическая база', 'academic', 'Математика и общая эрудиция.', <BookOpen size={16} color="#006CFF"/>)}
+                {renderCriterion('Problem Solving', 'problemSolving', 'Поиск решений в нестандартных ситуациях.', <ShieldCheck size={16} color="#006CFF"/>)}
+                {renderCriterion('Критическое мышление', 'criticalThinking', 'Умение анализировать информацию.', <Star size={16} color="#006CFF"/>)}
+              </>
+            ) : (
+              <>
+                {renderCriterion('Коммуникация', 'communication', 'Навыки общения и вежливость.', <Users size={16} color="#722ed1"/>)}
+                {renderCriterion('Curiosity (Интерес)', 'curiosity', 'Тяга к знаниям и активность.', <Lightbulb size={16} color="#722ed1"/>)}
+                {renderCriterion('Team Spirit', 'teamFit', 'Умение работать в группе.', <Heart size={16} color="#722ed1"/>)}
+                {renderCriterion('Эмоциональный интеллект', 'emotionalIntel', 'Понимание своих и чужих эмоций.', <ShieldAlert size={16} color="#722ed1"/>)}
+              </>
+            )}
+          </div>
+
+          <div style={{ background: '#F0F7FF', padding: '20px', borderRadius: '16px', textAlign: 'center', border: '1px dashed #006CFF' }}>
+            <Statistic title="Прогноз успешности ученика (AI Model)" value={calculateTotalScore()} suffix="%" valueStyle={{ color: '#006CFF', fontWeight: 800 }} />
+            {calculateTotalScore() < 45 && (
+              <Tag color="error" style={{ marginTop: 10 }} icon={<AlertTriangle size={12} />}>
+                Arbitration Check Required
+              </Tag>
+            )}
+          </div>
+
+          <div>
+            <Text strong>Обоснование оценки:</Text>
+<TextArea 
+  rows={4} 
+  style={{ marginTop: 8 }} 
+  placeholder="Опишите конкретные примеры поведения ребенка..." 
+  // Показываем нужные заметки в зависимости от активной панели
+  value={evalData.panelType === 'Technical' ? evalData.techNotes : evalData.softNotes} 
+  onChange={e => {
+    const val = e.target.value;
+    setEvalData(prev => ({
+      ...prev,
+      // Динамически обновляем либо techNotes, либо softNotes
+      [prev.panelType === 'Technical' ? 'techNotes' : 'softNotes']: val
+    }));
+  }} 
+/>          </div>
+        </Space>
+      </Modal>
+
+      {/* MODAL 3: Video Call */}
       <Modal
         open={!!activeCall}
         onCancel={() => setActiveCall(null)}
@@ -342,8 +491,8 @@ const Scheduler = () => {
       >
         {activeCall && (
           <VideoConference 
-            roomName={`nVisionU-Interview-${activeCall.id}`}
-            userName="Admin: Bolatovich N."
+            roomName={`nVisionU-School-Interview-${activeCall.id}`}
+            userName="Expert Evaluator"
             onClose={() => setActiveCall(null)}
           />
         )}
@@ -353,7 +502,6 @@ const Scheduler = () => {
   );
 };
 
-// Вспомогательный компонент Badge
 const CustomBadge = ({ text }: { text: string }) => (
   <span style={{ fontSize: '10px', background: '#006CFF', color: '#fff', padding: '2px 8px', borderRadius: '6px', fontWeight: 700 }}>
     {text}

@@ -300,37 +300,77 @@ router.post('/:id/analyze', async (req, res) => {
   }
 });
 
-// PATCH /api/candidates/:id/status - Update status
+// PATCH /api/candidates/:id/status - Update status AND scores
 router.patch('/:id/status', async (req, res) => {
   try {
-    const { status } = req.body;
-    const validStatuses = ['new', 'under_review', 'interview', 'accepted', 'declined', 'waitlisted'];
-    if (!validStatuses.includes(status)) {
+    const { id } = req.params;
+    const { 
+      status, 
+      tech_score, 
+      soft_score, 
+      tech_notes, 
+      soft_notes, 
+      reviewer_notes 
+    } = req.body;
+
+    // 1. Проверка валидности статуса (добавляем 'arbitration')
+    const validStatuses = ['new', 'under_review', 'interview', 'accepted', 'declined', 'waitlisted', 'arbitration'];
+    if (status && !validStatuses.includes(status)) {
       return res.status(400).json({ error: 'Invalid status' });
     }
 
-    const current = await pool.query('SELECT status FROM candidates WHERE id = $1', [req.params.id]);
+    // 2. Получаем текущие данные для лога
+    const current = await pool.query('SELECT status, tech_score, soft_score FROM candidates WHERE id = $1', [id]);
     if (current.rows.length === 0) {
       return res.status(404).json({ error: 'Candidate not found' });
     }
 
-    await pool.query(
-      'UPDATE candidates SET status = $1, updated_at = NOW() WHERE id = $2',
-      [status, req.params.id]
-    );
+    // 3. ОБНОВЛЕНИЕ БАЗЫ (используем COALESCE, чтобы не затирать существующие данные)
+    const updateQuery = `
+      UPDATE candidates SET 
+        status = COALESCE($1, status),
+        tech_score = COALESCE($2, tech_score),
+        soft_score = COALESCE($3, soft_score),
+        tech_notes = COALESCE($4, tech_notes),
+        soft_notes = COALESCE($5, soft_notes),
+        reviewer_notes = COALESCE($6, reviewer_notes),
+        updated_at = NOW()
+      WHERE id = $7 RETURNING *`;
 
+    const result = await pool.query(updateQuery, [status, tech_score, soft_score, tech_notes, soft_notes, reviewer_notes, id]);
+    let updatedCandidate = result.rows[0];
+
+    // 4. ЛОГИКА АВТО-АРБИТРАЖА (Киллер-фича для хакатона)
+    // Проверяем разрыв, если обе оценки теперь в наличии
+    if (updatedCandidate.tech_score !== null && updatedCandidate.soft_score !== null) {
+      const diff = Math.abs(updatedCandidate.tech_score - updatedCandidate.soft_score);
+      if (diff > 40 && updatedCandidate.status !== 'arbitration') {
+        const arbResult = await pool.query(
+          "UPDATE candidates SET status = 'arbitration', updated_at = NOW() WHERE id = $1 RETURNING *",
+          [id]
+        );
+        updatedCandidate = arbResult.rows[0];
+        
+        // Логируем триггер арбитража
+        await pool.query(
+          'INSERT INTO audit_log (candidate_id, action, new_value) VALUES ($1, $2, $3)',
+          [id, 'auto_arbitration_triggered', `Gap: ${diff}`]
+        );
+      }
+    }
+
+    // 5. Запись в обычный Audit Log
     await pool.query(
       'INSERT INTO audit_log (candidate_id, action, old_value, new_value) VALUES ($1, $2, $3, $4)',
-      [req.params.id, 'status_change', current.rows[0].status, status]
+      [id, 'status_or_score_change', current.rows[0].status, updatedCandidate.status]
     );
 
-    res.json({ message: `Status updated to ${status}` });
+    res.json(updatedCandidate);
   } catch (err) {
-    console.error('Error updating status:', err);
-    res.status(500).json({ error: 'Failed to update status' });
+    console.error('Error updating candidate status/scores:', err);
+    res.status(500).json({ error: 'Failed to update' });
   }
 });
-
 // PATCH /api/candidates/:id/review - Add reviewer notes
 router.patch('/:id/review', async (req, res) => {
   try {
