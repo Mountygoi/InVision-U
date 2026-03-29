@@ -64,7 +64,6 @@ export interface Candidate {
   achievements: Achievement[];
   skills: string[];
   essayText?: string;
-  // 👉 ДОБАВЬ ЭТО ПОЛЕ:
   nudgeAnswers?: NudgeAnswer[];
   aiScores?: AIScores;
   aiSummary?: string;
