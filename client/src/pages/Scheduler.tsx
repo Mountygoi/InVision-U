@@ -103,14 +103,14 @@ const Scheduler = () => {
 
   return (
     <Content style={{ 
-      padding: '24px', 
-      background: '#F8FAFC', 
-      height: 'calc(100vh - 80px)', 
-      marginTop: '80px',
-      overflow: 'hidden', 
-      display: 'flex',
-      flexDirection: 'column'
-    }}>
+  padding: '24px', 
+  background: '#F8FAFC', 
+  // Если хедер fixed, оставляем 80px. Если обычный — можно поставить 0 или padding
+  height: 'calc(100vh - 64px)', 
+  overflow: 'hidden', 
+  display: 'flex',
+  flexDirection: 'column'
+}}>
       <style>{`
         body { overflow: hidden !important; }
         .ant-layout { overflow: hidden !important; }
@@ -243,22 +243,21 @@ const Scheduler = () => {
                         {candidate.name}
                       </Text>
                       <Button 
-  type="primary" 
-  icon={<Video size={14} />} 
-  style={{ 
-    borderRadius: '8px', 
-    background: '#10B981', 
-    borderColor: '#10B981' 
-  }}
-  onClick={() => {
-    // Устанавливаем активный звонок, что откроет Modal 3 с MiroTalk
-    setActiveCall(candidate);
-    // Закрываем маленькое окошко со слотами, чтобы не мешало
-    setIsSlotsModalVisible(false);
-  }}
->
-  Join Call
-</Button>
+                        type="primary" 
+                        size="small" 
+                        icon={<Video size={14} />} 
+                        style={{ 
+                          borderRadius: '8px', 
+                          background: '#10B981', 
+                          borderColor: '#10B981' 
+                        }}
+                        onClick={() => {
+                          setActiveCall(candidate);
+                          setIsSlotsModalVisible(false);
+                        }}
+                      >
+                        Join Call
+                      </Button>
                     </div>
                   ) : <Text type="secondary" italic style={{ fontSize: '13px' }}>Available</Text>}
                 </div>

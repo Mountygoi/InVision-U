@@ -30,7 +30,7 @@ try {
   }
 } catch { /* .env file not found */ }
 
-console.log('ANTHROPIC_API_KEY loaded:', !!process.env.GEMINI_API_KEY);
+console.log('GEMINI_API_KEY loaded:', !!process.env.GEMINI_API_KEY);
 
 const app = express();
 app.use(cors());

@@ -284,59 +284,53 @@ const Candidates = () => {
                 )}
 
                 {/* AI Flags */}
-                {selectedCandidate.aiFlags && (
-                  <Row gutter={16} style={{ marginBottom: 24 }}>
-                    <Col span={8}>
-                      <Card size="small" style={{ borderRadius: 12, textAlign: 'center' }}>
-                        <Bot size={16} color={getAiWrittenColor(selectedCandidate.aiFlags.aiWrittenProbability)} />
-                        <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>AI-Written Probability</div>
-                        <Progress
-                          percent={Math.round(selectedCandidate.aiFlags.aiWrittenProbability * 100)}
-                          size="small"
-                          strokeColor={getAiWrittenColor(selectedCandidate.aiFlags.aiWrittenProbability)}
-                          format={p => `${p}%`}
-                        />
-                      </Card>
-                    </Col>
-                    <Col span={8}>
-                      <Card size="small" style={{ borderRadius: 12, textAlign: 'center' }}>
-                        <CheckCircle2 size={16} color="#10B981" />
-                        <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>Consistency Score</div>
-                        <Progress
-                          percent={Math.round(selectedCandidate.aiFlags.consistencyScore * 100)}
-                          size="small"
-                          strokeColor="#10B981"
-                          format={p => `${p}%`}
-                        />
-                      </Card>
-                    </Col>
-                    <Col span={8}>
-                      <Card size="small" style={{ borderRadius: 12, textAlign: 'center' }}>
-                        <AlertTriangle size={16} color={selectedCandidate.aiFlags.redFlags.length > 0 ? '#EF4444' : '#10B981'} />
-                        <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>Red Flags</div>
-                        <Text strong style={{
-                          fontSize: 20,
-                          color: selectedCandidate.aiFlags.redFlags.length > 0 ? '#EF4444' : '#10B981'
-                        }}>
-                          {selectedCandidate.aiFlags.redFlags.length}
-                        </Text>
-                      </Card>
-                    </Col>
-                  </Row>
-                )}
-
-                {/* Red Flags Detail */}
-                {selectedCandidate.aiFlags?.redFlags && selectedCandidate.aiFlags.redFlags.length > 0 && (
-                  <Card size="small" style={{ borderRadius: 12, marginBottom: 24, borderColor: '#FECACA', background: '#FEF2F2' }}>
-                    <Space direction="vertical" size={4}>
-                      {selectedCandidate.aiFlags.redFlags.map((flag, i) => (
-                        <Text key={i} style={{ color: '#991B1B', fontSize: 13 }}>
-                          <AlertTriangle size={12} style={{ marginRight: 6 }} />{flag}
-                        </Text>
-                      ))}
-                    </Space>
-                  </Card>
-                )}
+                {selectedCandidate.aiFlags && (() => {
+                  const flags = selectedCandidate.aiFlags;
+                  const aiProb = flags.is_ai_generated ?? flags.aiWrittenProbability ?? 0;
+                  return (
+                    <Row gutter={16} style={{ marginBottom: 24 }}>
+                      <Col span={8}>
+                        <Card size="small" style={{ borderRadius: 12, textAlign: 'center' }}>
+                          <Bot size={16} color={getAiWrittenColor(aiProb)} />
+                          <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>AI-Written Probability</div>
+                          <Progress
+                            percent={Math.round(aiProb * 100)}
+                            size="small"
+                            strokeColor={getAiWrittenColor(aiProb)}
+                            format={p => `${p}%`}
+                          />
+                        </Card>
+                      </Col>
+                      <Col span={8}>
+                        <Card size="small" style={{ borderRadius: 12, textAlign: 'center' }}>
+                          {flags.generic_content
+                            ? <AlertTriangle size={16} color="#EF4444" />
+                            : <CheckCircle2 size={16} color="#10B981" />
+                          }
+                          <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>Content Quality</div>
+                          <Text strong style={{
+                            fontSize: 16,
+                            color: flags.generic_content ? '#EF4444' : '#10B981'
+                          }}>
+                            {flags.generic_content ? 'Generic' : 'Authentic'}
+                          </Text>
+                        </Card>
+                      </Col>
+                      <Col span={8}>
+                        <Card size="small" style={{ borderRadius: 12, textAlign: 'center' }}>
+                          <TrendingUp size={16} color={flags.high_potential_outlier ? '#006CFF' : '#9CA3AF'} />
+                          <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>Potential</div>
+                          <Text strong style={{
+                            fontSize: 16,
+                            color: flags.high_potential_outlier ? '#006CFF' : '#6B7280'
+                          }}>
+                            {flags.high_potential_outlier ? 'Outlier' : 'Standard'}
+                          </Text>
+                        </Card>
+                      </Col>
+                    </Row>
+                  );
+                })()}
 
                 <Row gutter={28}>
                   {/* Left: Achievements + Evidence */}
@@ -366,16 +360,22 @@ const Candidates = () => {
                         .sort(([, a], [, b]) => (b as { score: number }).score - (a as { score: number }).score)
                         .slice(0, 3)
                         .map(([key, val]) => {
-                          const scoreVal = val as { score: number; evidence?: { quote: string; explanation: string }[] };
-                          return scoreVal.evidence?.[0] && (
+                          const scoreVal = val as { score: number; evidence?: any };
+                          // Handle both formats: string (new AI) and array (seed data)
+                          const evidenceText = typeof scoreVal.evidence === 'string'
+                            ? scoreVal.evidence
+                            : Array.isArray(scoreVal.evidence) && scoreVal.evidence.length > 0
+                              ? scoreVal.evidence[0].quote || ''
+                              : '';
+                          if (!evidenceText) return null;
+                          return (
                             <Card key={key} size="small" style={{ borderRadius: 10, borderLeft: `3px solid ${getScoreColor(scoreVal.score)}` }}>
                               <Tag color={getScoreColor(scoreVal.score)} style={{ marginBottom: 6, fontSize: 10 }}>
                                 {key.replace(/([A-Z])/g, ' $1').trim()} — {scoreVal.score}
                               </Tag>
                               <Paragraph italic style={{ fontSize: 12, margin: 0, color: '#374151' }}>
-                                "{scoreVal.evidence[0].quote}"
+                                "{evidenceText}"
                               </Paragraph>
-                              <Text type="secondary" style={{ fontSize: 11 }}>{scoreVal.evidence[0].explanation}</Text>
                             </Card>
                           );
                         })}
@@ -417,13 +417,15 @@ const Candidates = () => {
                                     strokeColor={getScoreColor(val.score)}
                                     format={() => <Text style={{ fontSize: 11 }}>{val.score}</Text>}
                                   />
-                                  <Badge
-                                    count={val.confidence >= 0.9 ? 'HIGH' : val.confidence >= 0.7 ? 'MED' : 'LOW'}
-                                    style={{
-                                      backgroundColor: val.confidence >= 0.9 ? '#10B981' : val.confidence >= 0.7 ? '#F59E0B' : '#EF4444',
-                                      fontSize: 9, padding: '0 4px'
-                                    }}
-                                  />
+                                  {val.confidence != null && (
+                                    <Badge
+                                      count={val.confidence >= 0.9 ? 'HIGH' : val.confidence >= 0.7 ? 'MED' : 'LOW'}
+                                      style={{
+                                        backgroundColor: val.confidence >= 0.9 ? '#10B981' : val.confidence >= 0.7 ? '#F59E0B' : '#EF4444',
+                                        fontSize: 9, padding: '0 4px'
+                                      }}
+                                    />
+                                  )}
                                 </div>
                               ))}
                             </div>

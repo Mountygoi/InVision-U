@@ -14,30 +14,23 @@ export const ESSAY_ANALYSIS_SYSTEM_PROMPT = `
 5. **Resilience (Path Traveled) - КРИТИЧЕСКИЙ ФАКТОР:** Какое расстояние человек прошел от стартовой точки? Кандидат из аула, выучивший Python по YouTube, получает здесь 100 баллов, в то время как ученик элитной школы с репетиторами — не более 60 при тех же знаниях.
 6. **Social Impact:** Хочет ли кандидат развивать свое комьюнити, город или Казахстан в целом?
 
-### ИНСТРУКЦИЯ ПО ВЫВОДУ (JSON):
-Ваш ответ должен быть СТРОГИМ JSON объектом со следующей структурой:
-{
-  "analysis_thought_process": "Здесь напишите краткое рассуждение (5-6 предложений). Сначала выделите сильные и слабые стороны, проверьте эссе на шаблонность, оцените искренность.",
-  "scores": {
-    "motivation": { "score": 0, "evidence": "цитата из текста" },
-    "leadership": { "score": 0, "evidence": "цитата из текста" },
-    "technicalPotential": { "score": 0, "evidence": "цитата из текста" },
-    "creativity": { "score": 0, "evidence": "цитата из текста" },
-    "resilience": { "score": 0, "evidence": "цитата из текста" },
-    "socialImpact": { "score": 0, "evidence": "цитата из текста" }
-  },
-  "flags": {
-    "is_ai_generated": 0.0, // Вероятность от 0 до 1
-    "generic_content": true/false, // Написано ли эссе "водой"
-    "high_potential_outlier": true/false // Является ли кандидат уникальным "скрытым талантом"
-  },
-  "summary": "Итоговое резюме для комиссии (2-3 предложения), почему мы должны или не должны брать этого человека."
-}
+### ИНСТРУКЦИЯ ПО ВЫВОДУ:
+ВАЖНО: Ваш ответ должен быть ТОЛЬКО валидным JSON объектом. Никакого текста до или после JSON. Никаких комментариев внутри JSON. Никаких markdown блоков. Все строки в JSON должны использовать двойные кавычки, а внутри строк кавычки должны быть экранированы как \\". Переносы строк внутри значений заменяйте пробелами. Структура:
+
+{"analysis_thought_process":"краткое рассуждение 5-6 предложений","scores":{"motivation":{"score":75,"evidence":"цитата из текста"},"leadership":{"score":60,"evidence":"цитата"},"technicalPotential":{"score":80,"evidence":"цитата"},"creativity":{"score":70,"evidence":"цитата"},"resilience":{"score":85,"evidence":"цитата"},"socialImpact":{"score":65,"evidence":"цитата"}},"flags":{"is_ai_generated":0.1,"generic_content":false,"high_potential_outlier":false},"summary":"Итоговое резюме для комиссии 2-3 предложения."}
+
+Поля:
+- scores: 6 измерений, каждое со score (0-100) и evidence (короткая цитата из эссе, макс 1 предложение)
+- flags.is_ai_generated: число от 0 до 1 (вероятность)
+- flags.generic_content: true или false
+- flags.high_potential_outlier: true или false
+- summary: 2-3 предложения
 
 ### ПРАВИЛА:
 - Будьте скептичны. Не ставьте 100 баллов без экстраординарных доказательств.
 - Оценивайте эссе в контексте города проживания.
 - Если текст похож на сгенерированный нейросетью, ставьте флаг is_ai_generated и снижайте баллы за Creativity.
+- ОТВЕЧАЙТЕ ТОЛЬКО JSON. Без пояснений, без markdown.
 `;
 
 export const buildEssayAnalysisPrompt = (
