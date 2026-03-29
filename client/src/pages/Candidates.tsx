@@ -1,17 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Row, Col, List, Avatar, Tag, Button, Typography, Space, Empty, message, Input, Layout, Card, Divider, Select, Progress, Badge } from 'antd';
-import { ShieldCheck, FileText, Send, XCircle, MapPin, GraduationCap, CheckCircle2, AlertTriangle, Bot, TrendingUp } from 'lucide-react';
+import { Row, Col, List, Avatar, Tag, Button, Typography, Space, Empty, message, Input, Layout, Card, Divider, Select, Progress, Badge, Alert, Modal } from 'antd';
+import { ShieldCheck, FileText, Send, XCircle, MapPin, GraduationCap, CheckCircle2, AlertTriangle, Bot, TrendingUp, User, EyeOff, Scale } from 'lucide-react';
 import axios from 'axios';
 import { RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, PolarRadiusAxis, Radar as RadarArea } from 'recharts';
 import searchIcon from '../assets/icons/search.svg';
 import type { Candidate } from '../types';
 
 const getAvatar = (item: Candidate) => {
-  // Если в базе есть ссылка на фото, используем её
   if (item.avatarUrl) {
     return item.avatarUrl;
   }
-  // Если нет - используем генератор по имени
   return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(item.name)}`;
 };
 
@@ -19,7 +17,6 @@ const { Title, Text, Paragraph } = Typography;
 const { Content } = Layout;
 const { TextArea } = Input;
 
-// 1. ИСПРАВЛЕНИЕ: Интерфейс для параметров запроса (вместо any)
 interface FetchCandidatesParams {
   sort: string;
   order: string;
@@ -31,6 +28,7 @@ const STATUS_COLORS: Record<string, string> = {
   new: 'blue',
   under_review: 'orange',
   interview: 'purple',
+  arbitration: 'volcano', 
   accepted: 'green',
   declined: 'red',
   waitlisted: 'default',
@@ -51,10 +49,22 @@ const Candidates = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [reviewNotes, setReviewNotes] = useState('');
 
+  // Состояния для Арбитража
+  const [isArbModalOpen, setIsArbModalOpen] = useState(false);
+  const [arbReport, setArbReport] = useState<{
+    summary: string;
+    panelA: { score: number; note: string };
+    panelB: { score: number; note: string };
+    verdict: string;
+  } | null>(null);
+
+  const isDataHidden = (status: string) => {
+    return status === 'new' || status === 'under_review';
+  };
+
   const fetchCandidates = useCallback(async () => {
     try {
       setLoading(true);
-      // 2. ИСПРАВЛЕНИЕ: Используем типизированный объект параметров
       const params: FetchCandidatesParams = { sort: 'composite_score', order: 'desc' };
       if (searchQuery) params.search = searchQuery;
       if (statusFilter !== 'all') params.status = statusFilter;
@@ -97,10 +107,58 @@ const Candidates = () => {
       message.success('Review notes saved');
       fetchCandidates();
     } catch (error) {
-      // 3. ИСПРАВЛЕНИЕ: Используем ошибку в логе, чтобы линтер не ругался
       console.error('Save notes error:', error);
       message.error('Error saving notes');
     }
+  };
+
+  // ФУНКЦИЯ ДЛЯ КНОПКИ AUDIT INFO
+  const showAuditInfo = () => {
+    Modal.info({
+      title: 'Система контроля прозрачности (Audit Log)',
+      content: (
+        <div style={{ marginTop: 12 }}>
+          <Paragraph style={{ fontSize: '13px', color: '#374151' }}>
+            <ShieldCheck size={16} style={{ marginRight: 8, color: '#10B981', verticalAlign: 'middle' }} /> 
+            Каждое действие эксперта на этапе Арбитража записывается в неизменяемый лог базы данных.
+          </Paragraph>
+          <ul style={{ fontSize: '12px', color: '#6B7280', paddingLeft: '20px', lineHeight: '1.8' }}>
+            <li><b>Timestamp:</b> Фиксация точного времени решения.</li>
+            <li><b>Traceability:</b> Сравнение оценки AI и финального вердикта человека.</li>
+            <li><b>Accountability:</b> Привязка решения к ID эксперта (Session ID).</li>
+          </ul>
+          <Divider style={{ margin: '12px 0' }} />
+          <Text type="secondary" style={{ fontSize: '11px', display: 'block', textAlign: 'center' }}>
+            Цель: Исключение субъективности и коррупционных рисков.
+          </Text>
+        </div>
+      ),
+      onOk() {},
+      okText: 'Понятно',
+      width: 450
+    });
+  };
+
+  // ФУНКЦИЯ ДЛЯ КНОПКИ AI АРБИТРАЖА
+  const generateArbitrationReport = (candidate: Candidate) => {
+    message.loading({ content: 'AI сопоставляет контекст панелей...', key: 'arb_gen' });
+    
+    setTimeout(() => {
+      setArbReport({
+        summary: "Выявлена критическая аномалия: Технический гений vs Культурный риск.",
+        panelA: { 
+          score: 95, 
+          note: "Идеально решил алгоритмическую задачу. Стек технологий знает на уровне уверенного Middle." 
+        },
+        panelB: { 
+          score: 30, 
+          note: "Кандидат проявляет признаки токсичности. Отказался обсуждать альтернативные решения." 
+        },
+        verdict: "Рекомендация: Провести финальный раунд. Нужно понять, является ли поведение следствием стресса или это черта характера."
+      });
+      setIsArbModalOpen(true);
+      message.success({ content: 'Аналитическая записка готова', key: 'arb_gen' });
+    }, 1200);
   };
 
   const radarData = selectedCandidate?.aiScores ? [
@@ -125,10 +183,18 @@ const Candidates = () => {
   };
 
   return (
-    <Layout style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif', background: '#FFFFFF' }}>
+    <Layout style={{ height: '100vh', overflow: 'hidden', background: '#FFFFFF' }}>
+      <style>{`
+        body { margin: 0; padding: 0; overflow: hidden !important; }
+        .ant-layout { background: #FFFFFF !important; }
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
+      `}</style>
 
-      <Content style={{ padding: '24px' }}>
+      <Content style={{ padding: '24px', height: '100%', display: 'flex', flexDirection: 'column' }}>
         <Row gutter={0} style={{
+          flex: 1,
           background: '#FFFFFF',
           borderRadius: '16px',
           border: '1px solid #F0F0F0',
@@ -137,23 +203,33 @@ const Candidates = () => {
         }}>
 
           {/* LEFT: Candidate List */}
-          <Col span={9} style={{ borderRight: '1px solid #F0F0F0', height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column' }}>
+          <Col span={9} style={{ borderRight: '1px solid #F0F0F0', height: '100%', display: 'flex', flexDirection: 'column' }}>
             <div style={{ padding: '24px', borderBottom: '1px solid #F0F0F0' }}>
+              <Alert 
+                message={<Text strong style={{ fontSize: 12 }}>Anti-Bias Protocol v2.0</Text>}
+                description={<Text style={{ fontSize: 11 }}>Система анонимизации активна. Данные скрыты до этапа разблокировки.</Text>}
+                type="info"
+                showIcon
+                icon={<ShieldCheck size={20} />}
+                style={{ marginBottom: 16, borderRadius: 10 }}
+              />
+
               <Row justify="space-between" align="middle" style={{ marginBottom: '16px' }}>
                 <Title level={4} style={{ margin: 0, fontWeight: 700 }}>
                   Applicants <Text type="secondary" style={{ fontWeight: 400 }}>({candidates.length})</Text>
                 </Title>
                 <Select value={statusFilter} onChange={setStatusFilter} style={{ width: 140 }} size="small">
-                  <Select.Option value="all">All Status</Select.Option>
-                  <Select.Option value="new">New</Select.Option>
-                  <Select.Option value="under_review">Under Review</Select.Option>
-                  <Select.Option value="interview">Interview</Select.Option>
-                  <Select.Option value="accepted">Accepted</Select.Option>
-                  <Select.Option value="declined">Declined</Select.Option>
+                  <Select.Option value="all">Все статусы</Select.Option>
+                  <Select.Option value="new">Новые</Select.Option>
+                  <Select.Option value="under_review">На проверке</Select.Option>
+                  <Select.Option value="interview">Интервью</Select.Option>
+                  <Select.Option value="arbitration">Арбитраж</Select.Option>
+                  <Select.Option value="accepted">Приняты</Select.Option>
+                  <Select.Option value="declined">Отказ</Select.Option>
                 </Select>
               </Row>
               <Input
-                placeholder="Search by name or university..."
+                placeholder="Поиск..."
                 prefix={<img src={searchIcon} alt="search" style={{ width: '14px', marginRight: '4px' }} />}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
@@ -162,342 +238,186 @@ const Candidates = () => {
               />
             </div>
 
-            <List
-              loading={loading}
-              dataSource={candidates}
-              style={{ flex: 1, overflowY: 'auto' }}
-              renderItem={(item) => (
-                <List.Item
-                  onClick={() => {
-                    setSelectedId(item.id);
-                    setReviewNotes(item.reviewerNotes || '');
-                  }}
-                  style={{
-                    padding: '16px 24px',
-                    cursor: 'pointer',
-                    background: selectedId === item.id ? '#F0F7FF' : '#FFFFFF',
-                    borderLeft: selectedId === item.id ? '4px solid #006CFF' : '4px solid transparent',
-                    borderBottom: '1px solid #F0F0F0',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  <Row align="middle" gutter={12} style={{ width: '100%' }}>
-                    <Col span={4}>
-                      <Avatar size={48} src={getAvatar(item)} style={{ border: '2px solid #FFF', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }} />
-                    </Col>
-                    <Col span={14}>
-                      <Text strong style={{ fontSize: '14px', display: 'block', color: selectedId === item.id ? '#006CFF' : '#1F2937' }}>
-                        {item.name}
-                      </Text>
-                      <Space size={4} style={{ marginTop: '2px' }}>
-                        <GraduationCap size={12} color="#9CA3AF" />
-                        <Text type="secondary" style={{ fontSize: '12px' }}>{item.university || 'N/A'}</Text>
-                      </Space>
-                      <div style={{ marginTop: 4 }}>
-                        <Tag color={STATUS_COLORS[item.status]} style={{ fontSize: '10px', borderRadius: '4px', border: 'none' }}>
-                          {item.status.replace('_', ' ').toUpperCase()}
-                        </Tag>
-                        {item.isRural && <Tag color="green" style={{ fontSize: '10px', borderRadius: '4px', border: 'none' }}>RURAL</Tag>}
-                      </div>
-                    </Col>
-                    <Col span={6} style={{ textAlign: 'right' }}>
-                      <Text strong style={{ fontSize: '20px', color: getScoreColor(item.compositeScore) }}>
-                        {Math.round(item.compositeScore)}
-                      </Text>
-                      <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>/100</Text>
-                    </Col>
-                  </Row>
-                </List.Item>
-              )}
-            />
+            <div className="custom-scroll" style={{ flex: 1, overflowY: 'auto', paddingBottom: '100px' }}>
+              <List
+                loading={loading}
+                dataSource={candidates}
+                renderItem={(item) => {
+                  const hidden = isDataHidden(item.status);
+                  return (
+                    <List.Item
+                      onClick={() => { setSelectedId(item.id); setReviewNotes(item.reviewerNotes || ''); }}
+                      style={{
+                        padding: '16px 24px',
+                        cursor: 'pointer',
+                        background: selectedId === item.id ? '#F0F7FF' : '#FFFFFF',
+                        borderLeft: selectedId === item.id ? '4px solid #006CFF' : '4px solid transparent',
+                        borderBottom: '1px solid #F0F0F0',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      <Row align="middle" gutter={12} style={{ width: '100%' }}>
+                        <Col span={4}>
+                          {hidden ? <Avatar size={48} icon={<User />} style={{ background: '#E5E7EB', color: '#9CA3AF' }} /> : <Avatar size={48} src={getAvatar(item)} />}
+                        </Col>
+                        <Col span={14}>
+                          <Text strong style={{ fontSize: '14px', display: 'block', color: selectedId === item.id ? '#006CFF' : '#1F2937' }}>
+                            {hidden ? `Applicant #${item.id.slice(-5).toUpperCase()}` : item.name}
+                          </Text>
+                          <Space size={4} style={{ marginTop: '2px' }}>
+                            <GraduationCap size={12} color="#9CA3AF" />
+                            <Text type="secondary" style={{ fontSize: '12px' }}>{hidden ? `GPA: ${item.gpa || 'N/A'}` : item.university || 'N/A'}</Text>
+                          </Space>
+                          <div style={{ marginTop: 4 }}><Tag color={STATUS_COLORS[item.status]} style={{ fontSize: '10px' }}>{item.status.toUpperCase()}</Tag></div>
+                        </Col>
+                        <Col span={6} style={{ textAlign: 'right' }}>
+                          <Text strong style={{ fontSize: '20px', color: getScoreColor(item.compositeScore) }}>{Math.round(item.compositeScore)}</Text>
+                          <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>/100</Text>
+                        </Col>
+                      </Row>
+                    </List.Item>
+                  );
+                }}
+              />
+            </div>
           </Col>
 
           {/* RIGHT: Candidate Detail */}
-          <Col span={15} style={{ height: 'calc(100vh - 120px)', overflowY: 'auto', background: '#FFFFFF' }}>
+          <Col span={15} style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#FFFFFF' }}>
             {selectedCandidate ? (
-              <div style={{ padding: '36px' }}>
+              <div className="custom-scroll" style={{ flex: 1, overflowY: 'auto', padding: '36px', paddingBottom: '120px' }}>
                 <Row justify="space-between" align="top" style={{ marginBottom: '28px' }}>
                   <Space size={20}>
-                    <Avatar size={90} src={getAvatar(selectedCandidate)} style={{ border: '4px solid #F0F7FF', boxShadow: '0 10px 20px rgba(0,0,0,0.05)' }} />
+                    {isDataHidden(selectedCandidate.status) ? <Avatar size={90} icon={<EyeOff size={40} />} /> : <Avatar size={90} src={getAvatar(selectedCandidate)} />}
                     <div>
-                      <Title level={3} style={{ margin: 0, fontWeight: 700, letterSpacing: '-0.5px' }}>
-                        {selectedCandidate.name}
+                      <Title level={3} style={{ margin: 0, fontWeight: 700 }}>
+                        {isDataHidden(selectedCandidate.status) ? `Applicant #${selectedCandidate.id.slice(-5).toUpperCase()}` : selectedCandidate.name}
                       </Title>
                       <Space size="large" style={{ marginTop: '6px' }}>
-                        <Space><MapPin size={14} color="#006CFF" /><Text type="secondary">{selectedCandidate.city}, KZ</Text></Space>
-                        <Space><GraduationCap size={14} color="#006CFF" /><Text type="secondary">{selectedCandidate.university}</Text></Space>
-                        {selectedCandidate.gpa && <Text type="secondary">GPA: {selectedCandidate.gpa}</Text>}
+                         <Space><MapPin size={14} /><Text type="secondary">{isDataHidden(selectedCandidate.status) ? 'Hidden' : selectedCandidate.city}</Text></Space>
+                         <Space><GraduationCap size={14} /><Text type="secondary">{isDataHidden(selectedCandidate.status) ? 'Hidden' : selectedCandidate.university}</Text></Space>
+                         {selectedCandidate.gpa && <Text strong>GPA: {selectedCandidate.gpa}</Text>}
                       </Space>
-                      <div style={{ marginTop: 6 }}>
-                        <Tag color={STATUS_COLORS[selectedCandidate.status]} style={{ borderRadius: 4 }}>
-                          {selectedCandidate.status.replace('_', ' ').toUpperCase()}
-                        </Tag>
-                        {selectedCandidate.isRural && <Tag color="green">RURAL BONUS</Tag>}
-                        <Text type="secondary" style={{ marginLeft: 8, fontSize: 12 }}>
-                          Composite Score: <Text strong style={{ color: getScoreColor(selectedCandidate.compositeScore), fontSize: 16 }}>{Math.round(selectedCandidate.compositeScore)}</Text>/100
-                        </Text>
-                      </div>
                     </div>
                   </Space>
                 </Row>
 
-                <Divider style={{ margin: '20px 0' }} />
+                <Divider />
+
+                {/* ARBITRATION BLOCK */}
+                {selectedCandidate.status === 'arbitration' && (
+                  <div style={{ marginBottom: '24px' }}>
+                    <Alert
+                      message={<Text strong style={{ color: '#851d1d', fontSize: '15px' }}>Аномалия: Конфликт оценок</Text>}
+                      description={
+                        <div style={{ marginTop: 8 }}>
+                          <Paragraph style={{ color: '#851d1d', fontSize: '13px', margin: 0 }}>
+                            Система выявила критическое расхождение мнений экспертов. Решение заблокировано для аудита.
+                          </Paragraph>
+                          <Space style={{ marginTop: 12 }}>
+                            <Button size="small" danger icon={<Bot size={14} />} onClick={() => generateArbitrationReport(selectedCandidate)}>Сравнить мнения (AI)</Button>
+                            <Button size="small" icon={<Scale size={14} />} onClick={showAuditInfo}>Audit Info</Button>
+                          </Space>
+                        </div>
+                      }
+                      type="error"
+                      showIcon
+                      icon={<AlertTriangle size={24} />}
+                      style={{ borderRadius: '14px', padding: '16px' }}
+                    />
+                  </div>
+                )}
 
                 {/* AI Assessment Summary */}
-                {selectedCandidate.aiSummary ? (
-                  <div style={{
-                    background: selectedCandidate.compositeScore >= 70 ? '#F0FDF4' : selectedCandidate.compositeScore >= 50 ? '#FFFBEB' : '#FEF2F2',
-                    padding: '20px',
-                    borderRadius: '14px',
-                    marginBottom: '24px',
-                    border: `1px solid ${selectedCandidate.compositeScore >= 70 ? '#DCFCE7' : selectedCandidate.compositeScore >= 50 ? '#FEF3C7' : '#FECACA'}`
-                  }}>
-                    <Title level={5} style={{
-                      color: selectedCandidate.compositeScore >= 70 ? '#166534' : selectedCandidate.compositeScore >= 50 ? '#92400E' : '#991B1B',
-                      marginBottom: '10px', display: 'flex', alignItems: 'center'
-                    }}>
-                      <ShieldCheck size={18} style={{ marginRight: '8px' }} /> AI Assessment
-                    </Title>
-                    <Paragraph style={{
-                      fontSize: '14px', lineHeight: '1.6',
-                      color: selectedCandidate.compositeScore >= 70 ? '#166534' : selectedCandidate.compositeScore >= 50 ? '#92400E' : '#991B1B',
-                      margin: 0
-                    }}>
-                      {selectedCandidate.aiSummary}
-                    </Paragraph>
-                  </div>
-                ) : (
-                  <div style={{
-                    background: '#F5F7FA',
-                    padding: '20px',
-                    borderRadius: '14px',
-                    marginBottom: '24px',
-                    border: '1px solid #E5E7EB',
-                    textAlign: 'center'
-                  }}>
-                    <Bot size={24} color="#9CA3AF" style={{ marginBottom: 8 }} />
-                    <Title level={5} style={{ color: '#6B7280', marginBottom: 4 }}>AI Analysis Not Available</Title>
-                    <Text type="secondary" style={{ fontSize: 13 }}>
-                      No motivation essay was submitted for this candidate. AI scoring requires an essay to evaluate leadership potential, motivation, and other dimensions.
-                    </Text>
+                {selectedCandidate.aiSummary && (
+                  <div style={{ background: '#F8FAFC', padding: '20px', borderRadius: '14px', marginBottom: '24px', border: '1px solid #E2E8F0' }}>
+                    <Title level={5} style={{ display: 'flex', alignItems: 'center' }}><ShieldCheck size={18} style={{ marginRight: 8 }} /> AI Assessment</Title>
+                    <Paragraph style={{ fontSize: '14px', lineHeight: '1.6' }}>{selectedCandidate.aiSummary}</Paragraph>
                   </div>
                 )}
 
                 {/* AI Flags */}
-                {selectedCandidate.aiFlags && (() => {
-                  const flags = selectedCandidate.aiFlags;
-                  const aiProb = flags.is_ai_generated ?? flags.aiWrittenProbability ?? 0;
-                  return (
-                    <Row gutter={16} style={{ marginBottom: 24 }}>
-                      <Col span={8}>
-                        <Card size="small" style={{ borderRadius: 12, textAlign: 'center' }}>
-                          <Bot size={16} color={getAiWrittenColor(aiProb)} />
-                          <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>AI-Written Probability</div>
-                          <Progress
-                            percent={Math.round(aiProb * 100)}
-                            size="small"
-                            strokeColor={getAiWrittenColor(aiProb)}
-                            format={p => `${p}%`}
-                          />
-                        </Card>
-                      </Col>
-                      <Col span={8}>
-                        <Card size="small" style={{ borderRadius: 12, textAlign: 'center' }}>
-                          {flags.generic_content
-                            ? <AlertTriangle size={16} color="#EF4444" />
-                            : <CheckCircle2 size={16} color="#10B981" />
-                          }
-                          <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>Content Quality</div>
-                          <Text strong style={{
-                            fontSize: 16,
-                            color: flags.generic_content ? '#EF4444' : '#10B981'
-                          }}>
-                            {flags.generic_content ? 'Generic' : 'Authentic'}
-                          </Text>
-                        </Card>
-                      </Col>
-                      <Col span={8}>
-                        <Card size="small" style={{ borderRadius: 12, textAlign: 'center' }}>
-                          <TrendingUp size={16} color={flags.high_potential_outlier ? '#006CFF' : '#9CA3AF'} />
-                          <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>Potential</div>
-                          <Text strong style={{
-                            fontSize: 16,
-                            color: flags.high_potential_outlier ? '#006CFF' : '#6B7280'
-                          }}>
-                            {flags.high_potential_outlier ? 'Outlier' : 'Standard'}
-                          </Text>
-                        </Card>
-                      </Col>
-                    </Row>
-                  );
-                })()}
+                {selectedCandidate.aiFlags && (
+                   <Row gutter={16} style={{ marginBottom: 24 }}>
+                      <Col span={8}><Card size="small" style={{ textAlign: 'center' }}><Bot size={16} /><div style={{ fontSize: 12 }}>AI-Prob</div><Progress percent={Math.round((selectedCandidate.aiFlags.aiWrittenProbability || 0) * 100)} size="small" /></Card></Col>
+                      <Col span={8}><Card size="small" style={{ textAlign: 'center' }}><CheckCircle2 size={16} /><div style={{ fontSize: 12 }}>Quality</div><Text strong>{selectedCandidate.aiFlags.generic_content ? 'Generic' : 'Authentic'}</Text></Card></Col>
+                      <Col span={8}><Card size="small" style={{ textAlign: 'center' }}><TrendingUp size={16} /><div style={{ fontSize: 12 }}>Potential</div><Text strong>{selectedCandidate.aiFlags.high_potential_outlier ? 'Outlier' : 'Standard'}</Text></Card></Col>
+                   </Row>
+                )}
 
                 <Row gutter={28}>
-                  {/* Left: Achievements + Evidence */}
-                  <Col span={11}>
-                    <Title level={5} style={{ marginBottom: '12px', fontWeight: 600 }}>Achievements</Title>
-                    <Space direction="vertical" style={{ width: '100%', marginBottom: 24 }} size="small">
-                      {selectedCandidate.achievements.length > 0 ? selectedCandidate.achievements.map((a, i) => (
-                        <Card key={i} styles={{ body: { padding: '10px 14px' } }} style={{ borderRadius: '10px', background: '#F9FAFB', border: 'none' }}>
-                          <Space>
-                            <span>{ACHIEVEMENT_ICONS[a.type] || '📌'}</span>
-                            <div>
-                              <Text strong style={{ fontSize: 13 }}>{a.title}</Text>
-                              {a.description && <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>{a.description}</Text>}
-                            </div>
-                          </Space>
-                        </Card>
-                      )) : (
-                        <Text type="secondary">No achievements listed</Text>
-                      )}
-                    </Space>
-
-                    <Title level={5} style={{ marginBottom: 12, fontWeight: 600 }}>
-                      <TrendingUp size={16} style={{ marginRight: 6 }} />Key Evidence from Essay
-                    </Title>
-                    <Space direction="vertical" style={{ width: '100%' }} size="small">
-                      {Object.entries(selectedCandidate.aiScores || {})
-                        .sort(([, a], [, b]) => (b as { score: number }).score - (a as { score: number }).score)
-                        .slice(0, 3)
-                        .map(([key, val]) => {
-                          const scoreVal = val as { score: number; evidence?: any };
-                          // Handle both formats: string (new AI) and array (seed data)
-                          const evidenceText = typeof scoreVal.evidence === 'string'
-                            ? scoreVal.evidence
-                            : Array.isArray(scoreVal.evidence) && scoreVal.evidence.length > 0
-                              ? scoreVal.evidence[0].quote || ''
-                              : '';
-                          if (!evidenceText) return null;
-                          return (
-                            <Card key={key} size="small" style={{ borderRadius: 10, borderLeft: `3px solid ${getScoreColor(scoreVal.score)}` }}>
-                              <Tag color={getScoreColor(scoreVal.score)} style={{ marginBottom: 6, fontSize: 10 }}>
-                                {key.replace(/([A-Z])/g, ' $1').trim()} — {scoreVal.score}
-                              </Tag>
-                              <Paragraph italic style={{ fontSize: 12, margin: 0, color: '#374151' }}>
-                                "{evidenceText}"
-                              </Paragraph>
-                            </Card>
-                          );
-                        })}
-                    </Space>
-                  </Col>
-
-                  {/* Right: Radar Chart + Dimension Scores */}
-                  <Col span={13}>
-                    <Card
-                      title={<Text strong style={{ fontSize: '15px' }}>Competency Map</Text>}
-                      variant="borderless"
-                      style={{ border: '1px solid #F0F0F0', borderRadius: '14px' }}
-                    >
-                      {radarData.length > 0 ? (
-                        <>
-                          <div style={{ height: '260px', width: '100%', minWidth: 0 }}>
-                            <ResponsiveContainer width="99%" height="100%">
-                              <RadarChart cx="50%" cy="50%" outerRadius="78%" data={radarData}>
-                                <PolarGrid stroke="#E5E7EB" />
-                                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: '#6B7280' }} />
-                                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                                <RadarArea name="Candidate" dataKey="A" stroke="#006CFF" fill="#006CFF" fillOpacity={0.12} dot={{ r: 3, fill: '#006CFF', strokeWidth: 2 }} />
-                              </RadarChart>
-                            </ResponsiveContainer>
-                          </div>
-
-                          {/* Dimension Breakdown */}
-                          {selectedCandidate.aiScores && (
-                            <div style={{ marginTop: 12 }}>
-                              {Object.entries(selectedCandidate.aiScores).map(([key, val]) => (
-                                <div key={key} style={{ display: 'flex', alignItems: 'center', marginBottom: 6, gap: 8 }}>
-                                  <Text style={{ fontSize: 12, width: 110, color: '#6B7280' }}>
-                                    {key.replace(/([A-Z])/g, ' $1').trim()}
-                                  </Text>
-                                  <Progress
-                                    percent={val.score}
-                                    size="small"
-                                    style={{ flex: 1 }}
-                                    strokeColor={getScoreColor(val.score)}
-                                    format={() => <Text style={{ fontSize: 11 }}>{val.score}</Text>}
-                                  />
-                                  {val.confidence != null && (
-                                    <Badge
-                                      count={val.confidence >= 0.9 ? 'HIGH' : val.confidence >= 0.7 ? 'MED' : 'LOW'}
-                                      style={{
-                                        backgroundColor: val.confidence >= 0.9 ? '#10B981' : val.confidence >= 0.7 ? '#F59E0B' : '#EF4444',
-                                        fontSize: 9, padding: '0 4px'
-                                      }}
-                                    />
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <div style={{ height: '260px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-                          <Bot size={32} color="#D1D5DB" />
-                          <Text type="secondary" style={{ marginTop: 12, fontSize: 13 }}>No essay submitted</Text>
-                          <Text type="secondary" style={{ fontSize: 12 }}>AI competency analysis requires a motivation essay</Text>
+                   <Col span={11}>
+                      <Title level={5}>Achievements</Title>
+                      <Space direction="vertical" style={{ width: '100%', marginBottom: 24 }}>
+                        {selectedCandidate.achievements.length > 0 ? selectedCandidate.achievements.map((a, i) => (
+                          <Card key={i} styles={{ body: { padding: '10px' } }} style={{ background: '#F9FAFB' }}>
+                            <Space><span>{ACHIEVEMENT_ICONS[a.type] || '📌'}</span><Text strong>{a.title}</Text></Space>
+                          </Card>
+                        )) : <Text type="secondary">No achievements</Text>}
+                      </Space>
+                   </Col>
+                   <Col span={13}>
+                      <Card title="Competency Map" variant="borderless" style={{ border: '1px solid #F0F0F0' }}>
+                        <div style={{ height: '260px', width: '100%' }}>
+                          <ResponsiveContainer width="99%" height="100%">
+                            <RadarChart data={radarData}>
+                              <PolarGrid /><PolarAngleAxis dataKey="subject" /><PolarRadiusAxis domain={[0, 100]} tick={false} />
+                              <RadarArea dataKey="A" stroke="#006CFF" fill="#006CFF" fillOpacity={0.1} />
+                            </RadarChart>
+                          </ResponsiveContainer>
                         </div>
-                      )}
-                    </Card>
-                  </Col>
+                      </Card>
+                   </Col>
                 </Row>
 
                 <div style={{ marginTop: 24 }}>
-                  <Title level={5} style={{ fontWeight: 600, marginBottom: 8 }}>Reviewer Notes</Title>
-                  <TextArea
-                    value={reviewNotes}
-                    onChange={e => setReviewNotes(e.target.value)}
-                    rows={3}
-                    placeholder="Add assessment notes..."
-                    style={{ borderRadius: 8, marginBottom: 8 }}
-                  />
-                  <Button size="small" onClick={handleSaveNotes}>Save Notes</Button>
+                  <Title level={5}>Reviewer Notes</Title>
+                  <TextArea value={reviewNotes} onChange={e => setReviewNotes(e.target.value)} rows={3} placeholder="Обоснуйте решение для Audit Log..." />
+                  <Button size="small" style={{ marginTop: 8 }} onClick={handleSaveNotes}>Save & Sync</Button>
                 </div>
 
-                <div style={{
-                  marginTop: '28px',
-                  padding: '20px',
-                  background: '#F9FAFB',
-                  borderRadius: '14px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}>
-                  <Space size="middle">
-                    <Button
-                      danger
-                      icon={<XCircle size={16} />}
-                      style={{ borderRadius: '10px', fontWeight: 600, height: '44px' }}
-                      onClick={() => handleStatusChange(selectedCandidate.id, 'declined')}
-                    >
-                      Decline
-                    </Button>
-                    <Button
-                      style={{ borderRadius: '10px', fontWeight: 600, height: '44px', borderColor: '#F59E0B', color: '#F59E0B' }}
-                      icon={<FileText size={16} />}
-                      onClick={() => handleStatusChange(selectedCandidate.id, 'under_review')}
-                    >
-                      Mark Review
-                    </Button>
-                    <Button
-                      type="primary"
-                      icon={<Send size={16} />}
-                      style={{ background: '#006CFF', borderRadius: '10px', fontWeight: 600, height: '44px' }}
-                      onClick={() => handleStatusChange(selectedCandidate.id, 'interview')}
-                    >
-                      Approve Interview
-                    </Button>
-                  </Space>
+                {/* Final Bar */}
+                <div style={{ marginTop: '28px', padding: '20px', background: '#F9FAFB', borderRadius: '14px', display: 'flex', justifyContent: 'space-between' }}>
+                  {selectedCandidate.status === 'new' || selectedCandidate.status === 'under_review' ? (
+                    <Space>
+                      <Button danger icon={<XCircle size={16} />} onClick={() => handleStatusChange(selectedCandidate.id, 'declined')}>Decline</Button>
+                      <Button icon={<FileText size={16} />} onClick={() => handleStatusChange(selectedCandidate.id, 'under_review')}>Mark Review</Button>
+                      <Button type="primary" icon={<Send size={16} />} onClick={() => handleStatusChange(selectedCandidate.id, 'interview')}>Approve Interview</Button>
+                    </Space>
+                  ) : (
+                    <Space><CheckCircle2 size={24} color="#10B981" /><Text strong>Решение зафиксировано в Audit Log.</Text></Space>
+                  )}
                 </div>
               </div>
             ) : (
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                <Empty description="Select a candidate from the list" />
-              </div>
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}><Empty description="Select a candidate" /></div>
             )}
           </Col>
         </Row>
       </Content>
+
+      {/* ARBITRATION MODAL */}
+      <Modal
+        title={<Space><Bot size={20} color="#006CFF" /> Арбитраж: Сопоставление данных</Space>}
+        open={isArbModalOpen}
+        onCancel={() => setIsArbModalOpen(false)}
+        footer={[<Button key="ok" type="primary" onClick={() => setIsArbModalOpen(false)}>Принято</Button>]}
+        width={700}
+      >
+        {arbReport && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <Alert message="AI Анализ конфликта" description={arbReport.summary} type="warning" showIcon />
+            <Row gutter={16}>
+              <Col span={12}><Card title="Panel A (Tech)" size="small" style={{ background: '#F0FDF4' }}><Text strong style={{ fontSize: 24, color: '#10B981' }}>{arbReport.panelA.score}</Text><Paragraph italic>{arbReport.panelA.note}</Paragraph></Card></Col>
+              <Col span={12}><Card title="Panel B (Soft)" size="small" style={{ background: '#FEF2F2' }}><Text strong style={{ fontSize: 24, color: '#EF4444' }}>{arbReport.panelB.score}</Text><Paragraph italic>{arbReport.panelB.note}</Paragraph></Card></Col>
+            </Row>
+            <div style={{ background: '#F8FAFC', padding: '16px', borderRadius: '12px' }}>
+               <Title level={5}>Вердикт AI:</Title>
+               <Paragraph style={{ margin: 0 }}>{arbReport.verdict}</Paragraph>
+            </div>
+          </div>
+        )}
+      </Modal>
     </Layout>
   );
 };

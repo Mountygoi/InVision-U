@@ -64,7 +64,7 @@ export interface Candidate {
   aiAnalyzedAt?: string;
   compositeScore: number;
   achievementScore: number;
-  status: 'new' | 'under_review' | 'interview' | 'accepted' | 'declined' | 'waitlisted';
+  status: 'new' | 'under_review' | 'interview' | 'accepted' | 'declined' | 'waitlisted'| 'arbitration';
   reviewerNotes?: string;
   createdAt: string;
   updatedAt: string;
