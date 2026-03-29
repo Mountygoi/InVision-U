@@ -165,14 +165,17 @@ const StudentForm = () => {
       nudgeAnswers: nudgeAnswersList,
     };
 
-    // 1) для SJT
-    localStorage.setItem('applicationData', JSON.stringify(applicationPayload));
+    // Сохранить в базе (БЕЗ AI анализа — он будет после SJT)
+    const res = await axios.post('http://localhost:5000/api/apply', applicationPayload);
+    const { id: candidateId, tempPassword } = res.data;
 
-    // 2) сохранить в базе (НО НЕ анализировать пока)
-    await axios.post('http://localhost:5000/api/apply', applicationPayload);
+    // Сохраняем ID и пароль для страницы статуса
+    localStorage.setItem('candidateId', candidateId);
+    localStorage.setItem('tempPassword', tempPassword);
+    localStorage.setItem('userEmail', values.email || '');
 
-    message.success('✅ Данные сохранены! Переходим к SJT тесту...');
-    navigate('/sjt-test');
+    message.success('Данные сохранены! Переходим к ситуационному тесту...');
+    navigate(`/test?candidateId=${candidateId}`);
   } catch (err) {
     console.error('Application submit error:', err);
     message.error('Ошибка сохранения заявки. Попробуйте еще раз.');
@@ -518,19 +521,23 @@ const StudentForm = () => {
           </div>
 
           <Form.Item style={{ marginTop: '30px' }}>
-            <Button
-              type="primary"
-              block
-              loading={submitting}
-              style={{
-                height: '50px', borderRadius: '12px', background: '#006CFF',
-                fontSize: '16px', fontWeight: 600,
-                boxShadow: '0 4px 12px rgba(0, 108, 255, 0.2)'
-              }}
-            >
-              {submitting ? 'Submitting ...' : 'Next: Situational Test'}
-            </Button>
-          </Form.Item>
+  <Button
+    type="primary"
+    htmlType="submit"          // ← добавили
+    block
+    loading={submitting}
+    style={{
+      height: '50px',
+      borderRadius: '12px',
+      background: '#006CFF',
+      fontSize: '16px',
+      fontWeight: 600,
+      boxShadow: '0 4px 12px rgba(0, 108, 255, 0.2)',
+    }}
+  >
+    {submitting ? 'Submitting ...' : 'Next: Situational Test'}
+  </Button>
+</Form.Item>
         </Form>
       </Card>
     </div>

@@ -50,6 +50,15 @@ export async function initDatabase(): Promise<void> {
         updated_at TIMESTAMPTZ DEFAULT NOW()
       );
 
+      -- Add columns if missing (safe for re-runs)
+      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS password TEXT;
+      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS interview_time TIMESTAMPTZ;
+      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS nudge_answers JSONB DEFAULT '[]';
+      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS sjt_answers JSONB;
+      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS sjt_scores JSONB;
+      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS sjt_summary TEXT;
+
       CREATE TABLE IF NOT EXISTS audit_log (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         candidate_id UUID REFERENCES candidates(id),
