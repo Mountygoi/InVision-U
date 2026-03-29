@@ -143,6 +143,7 @@ router.get('/:id', async (req, res) => {
 
 // POST /api/apply - Submit new application
 // ИСПРАВЛЕНО: Теперь принимаем несколько полей (essay и avatar)
+// POST /api/apply - Submit new application (2-STEP SAFE INSERT)
 router.post('/apply', upload.fields([
   { name: 'essay', maxCount: 1 },
   { name: 'avatar', maxCount: 1 }
@@ -155,16 +156,10 @@ router.post('/apply', upload.fields([
     }
 
     const tempPassword = generateTempPassword();
-
-    // Получаем доступ к файлам
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     const essayFile = files['essay'] ? files['essay'][0] : null;
     const avatarFile = files['avatar'] ? files['avatar'][0] : null;
-
-    // Ссылка на фото для сохранения в БД
-    const avatarUrl = avatarFile 
-      ? `http://localhost:5000/uploads/${avatarFile.filename}` 
-      : null;
+    const avatarUrl = avatarFile ? `http://localhost:5000/uploads/${avatarFile.filename}` : null;
 
     const ruralCities = ['Qyzylorda', 'Atyrau', 'Aktau', 'Turkistan', 'Taraz', 'Oral', 'Kostanay', 'Petropavl'];
     const isRural = ruralCities.includes(city);
@@ -182,46 +177,55 @@ router.post('/apply', upload.fields([
     }
 
     const weights = await getWeights();
-    const initialCompositeScore = calculateCompositeScore(null, achievementScore, isRural, weights);
+    let compositeScore = calculateCompositeScore(null, achievementScore, isRural, weights);
 
+    // STEP 1: ALWAYS INSERT BASIC FIELDS FIRST (SAFE)
     const result = await pool.query(
       `INSERT INTO candidates (
         name, email, phone, university, city, region, is_rural,
         gpa, year_of_study, achievements, skills,
-        essay_text, essay_file_path,
-        composite_score, achievement_score, status, password, avatar_url
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'new', $16, $17)
+        essay_text, essay_file_path, achievement_score,
+        status, password, avatar_url, composite_score
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
       RETURNING id`,
       [
         name, email || null, phone || null, university || null,
         city, region || city, isRural,
         gpa ? parseFloat(gpa) : null, yearOfStudy ? parseInt(yearOfStudy) : null,
         JSON.stringify(parsedAchievements), parsedSkills,
-        finalEssayText || null, essayFilePath,
-        initialCompositeScore, achievementScore, tempPassword, avatarUrl
+        finalEssayText || null, essayFilePath, achievementScore,
+        'new', tempPassword, avatarUrl, compositeScore
       ]
     );
 
     const candidateId = result.rows[0].id;
+    await pool.query('INSERT INTO audit_log (candidate_id, action, new_value) VALUES ($1, $2, $3)', 
+      [candidateId, 'application_submitted', name]);
 
-    await pool.query(
-      'INSERT INTO audit_log (candidate_id, action, new_value) VALUES ($1, $2, $3)',
-      [candidateId, 'application_submitted', name]
-    );
-
+    // STEP 2: IMMEDIATELY ADD AI ANALYSIS (if essay exists)
     if (finalEssayText && isAIAvailable()) {
-      analyzeAndUpdate(candidateId, finalEssayText, name, parsedAchievements, university || '', city, weights).catch(err => {
-        console.error('Async AI analysis failed:', err);
-      });
+      try {
+        console.log('🔥 Running AI analysis for:', name);
+        const analysis = await analyzeEssay(finalEssayText, name, parsedAchievements, university || '', city);
+        
+        const finalScore = calculateCompositeScore(analysis.scores, achievementScore, isRural, weights);
+
+        // UPDATE with AI results (100% safe - uses existing analyzeAndUpdate helper)
+        await analyzeAndUpdate(candidateId, finalEssayText, name, parsedAchievements, university || '', city, weights);
+        
+        console.log(`✅ AI SUCCESS for ${name} (Score: ${Math.round(finalScore)})`);
+      } catch (aiErr) {
+        console.error('❌ AI failed for', name, ':', aiErr);
+      }
     }
 
-    console.log(`New application: ${name} (Pass: ${tempPassword}, Avatar: ${!!avatarUrl})`);
-    
+    console.log(`New application: ${name} (ID: ${candidateId}, Pass: ${tempPassword})`);
     res.status(201).json({ 
       id: candidateId, 
-      tempPassword: tempPassword,
-      message: 'Application submitted successfully' 
+      tempPassword, 
+      message: finalEssayText ? 'Application submitted with AI analysis!' : 'Application submitted successfully' 
     });
+
   } catch (err) {
     console.error('Error submitting application:', err);
     res.status(500).json({ error: 'Failed to submit application' });
