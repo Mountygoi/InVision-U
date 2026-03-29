@@ -27,7 +27,7 @@ const AppHeader = () => {
   return (
     <Header style={{ 
       background: '#fff', 
-      padding: '0 100px', // УВЕЛИЧЕННЫЙ ОТСТУП ОТ КРАЕВ ЭКРАНА (чтобы не прижималось)
+      padding: '0 120px', // УВЕЛИЧИЛИ ОБЩИЙ ОТСТУП ОТ КРАЕВ ЭКРАНА
       height: '80px', 
       display: 'flex', 
       alignItems: 'center', 
@@ -42,7 +42,7 @@ const AppHeader = () => {
         <img src={logoSvg} alt="nVision U" style={{ height: '50px' }} />
       </div>
 
-      {/* CENTER: Меню с отступами по 100px */}
+      {/* CENTER: Меню с отступами между пунктами по 100px */}
       <Menu 
         mode="horizontal" 
         selectedKeys={[location.pathname]} 
@@ -58,8 +58,13 @@ const AppHeader = () => {
         }} 
       />
 
-      {/* RIGHT: Профиль админа с запасом места */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', flexShrink: 0 }}>
+      {/* RIGHT: Профиль админа с принудительным отступом справа */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'flex-end', 
+        flexShrink: 0,
+        marginRight: '20px' // ДОПОЛНИТЕЛЬНЫЙ ОТСТУП, чтобы не липло к краю
+      }}>
         <Dropdown menu={profileMenu} trigger={['click']}>
           <Space style={{ cursor: 'pointer' }} size={12}>
             <Avatar 
@@ -78,18 +83,16 @@ const AppHeader = () => {
       </div>
 
       <style>{`
-        /* Устанавливаем 100px между названиями (50px + 50px) */
+        /* Расстояние между названиями пунктов (50px + 50px = 100px) */
         .ant-menu-horizontal .ant-menu-item {
           padding: 0 50px !important; 
           margin: 0 !important;
         }
         
-        /* Фикс высоты для центрирования синей линии */
         .ant-menu-horizontal {
           line-height: 78px !important;
         }
 
-        /* Цвет и стиль активного пункта */
         .ant-menu-item-selected {
           color: #006CFF !important;
         }
@@ -100,14 +103,8 @@ const AppHeader = () => {
           bottom: 0px !important;
         }
 
-        /* Плавность */
         .ant-menu-item::after {
           transition: all 0.2s ease !important;
-        }
-
-        /* Убираем лишние ховер-эффекты фона */
-        .ant-menu-light .ant-menu-item:hover {
-          color: #006CFF !important;
         }
       `}</style>
     </Header>

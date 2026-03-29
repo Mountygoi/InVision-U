@@ -3,6 +3,7 @@ import { Layout, Row, Col, Card, Avatar, Tag, Button, Typography, Calendar, Spac
 import { Video, RefreshCw, Mail, BookOpen, Calendar as CalIcon, MapPin, ChevronRight, Star, Clock, Phone, FileText, User } from 'lucide-react';
 import axios from 'axios';
 import dayjs from 'dayjs';
+import VideoConference from '../components/VideoConference'; // Импортируем новый компонент
 
 const { Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
@@ -28,6 +29,7 @@ const Scheduler = () => {
   const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs>(dayjs());
   const [isSlotsModalVisible, setIsSlotsModalVisible] = useState(false);
   const [viewCandidate, setViewCandidate] = useState<Candidate | null>(null);
+  const [activeCall, setActiveCall] = useState<Candidate | null>(null); // Состояние для активного звонка
 
   // ФУНКЦИЯ-ПОМОЩНИК: Приводит любой формат даты к единому виду "DD MMMM YYYY at HH:mm"
   // Это решает проблему несовпадения строк при сравнении (ISO vs String)
@@ -100,13 +102,11 @@ const Scheduler = () => {
   };
 
   return (
-   <Content style={{ 
+    <Content style={{ 
   padding: '24px', 
   background: '#F8FAFC', 
-  height: 'calc(100vh - 80px)', 
-  /* Мы убрали marginTop, так как fixed header может перекрывать контент. 
-     Если контент залез под хедер, верни marginTop, но уменьши его до '80px'. 
-     Если же над календарем висит ПУСТОЙ БЕЛЫЙ БЛОК — значит marginTop лишний. */
+  // Если хедер fixed, оставляем 80px. Если обычный — можно поставить 0 или padding
+  height: 'calc(100vh - 64px)', 
   overflow: 'hidden', 
   display: 'flex',
   flexDirection: 'column'
@@ -242,7 +242,22 @@ const Scheduler = () => {
                       >
                         {candidate.name}
                       </Text>
-                      <Button type="primary" size="small" icon={<Video size={14} />} style={{ borderRadius: '8px' }}>Join</Button>
+                      <Button 
+                        type="primary" 
+                        size="small" 
+                        icon={<Video size={14} />} 
+                        style={{ 
+                          borderRadius: '8px', 
+                          background: '#10B981', 
+                          borderColor: '#10B981' 
+                        }}
+                        onClick={() => {
+                          setActiveCall(candidate);
+                          setIsSlotsModalVisible(false);
+                        }}
+                      >
+                        Join Call
+                      </Button>
                     </div>
                   ) : <Text type="secondary" italic style={{ fontSize: '13px' }}>Available</Text>}
                 </div>
@@ -312,6 +327,25 @@ const Scheduler = () => {
               </div>
             </div>
           </div>
+        )}
+      </Modal>
+
+      {/* MODAL 3: Video Call Embed */}
+      <Modal
+        open={!!activeCall}
+        onCancel={() => setActiveCall(null)}
+        footer={null}
+        width={1000}
+        centered
+        destroyOnClose
+        styles={{ body: { padding: 0, overflow: 'hidden', borderRadius: '12px' } }}
+      >
+        {activeCall && (
+          <VideoConference 
+            roomName={`nVisionU-Interview-${activeCall.id}`}
+            userName="Admin: Bolatovich N."
+            onClose={() => setActiveCall(null)}
+          />
         )}
       </Modal>
 

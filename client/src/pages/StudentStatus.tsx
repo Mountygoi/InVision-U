@@ -8,11 +8,13 @@ import {
   FileTextOutlined,
   UserOutlined,
   LogoutOutlined,
-  ScheduleOutlined
+  ScheduleOutlined,
+  VideoCameraOutlined 
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import dayjs from 'dayjs';
+import VideoConference from '../components/VideoConference'; // Импорт MiroTalk
 
 const { Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
@@ -34,7 +36,8 @@ const StudentStatus = () => {
   const [selectedDate, setSelectedDate] = useState<any>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [isScheduling, setIsScheduling] = useState(false);
-  const [bookedSlots, setBookedSlots] = useState<string[]>([]); // Состояние для занятых слотов
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+  const [activeCall, setActiveCall] = useState<any>(null); // Состояние для MiroTalk
 
   const email = localStorage.getItem('userEmail');
 
@@ -47,16 +50,13 @@ const StudentStatus = () => {
     return slots;
   };
 
-  // Загрузка занятых слотов для выбранной даты
   const fetchBookedSlots = async (date: any) => {
     try {
       const dateStr = date.format('DD MMMM YYYY');
       const res = await axios.get('http://localhost:5000/api/candidates');
-      // Ищем всех кандидатов, у которых интервью в этот день
       const booked = res.data
         .filter((c: any) => c.interviewTime && c.interviewTime.includes(dateStr))
         .map((c: any) => {
-          // Извлекаем только время (например, "14:30") из строки "25 March 2026 at 14:30"
           const parts = c.interviewTime.split(' at ');
           return parts.length > 1 ? parts[1] : null;
         })
@@ -92,9 +92,7 @@ const StudentStatus = () => {
   const handleScheduleConfirm = async () => {
     if (!selectedDate || !selectedTime) return;
     setIsScheduling(true);
-    
     const finalSlot = `${selectedDate.format('DD MMMM YYYY')} at ${selectedTime}`;
-    
     try {
       await axios.patch(`http://localhost:5000/api/candidates/${candidate.id}/schedule`, {
         interviewTime: finalSlot
@@ -183,12 +181,9 @@ const StudentStatus = () => {
                         onChange={(date) => { 
                           setSelectedDate(date); 
                           setSelectedTime(null); 
-                          if(date) fetchBookedSlots(date); // Подгружаем занятые слоты
+                          if(date) fetchBookedSlots(date);
                         }}
                       />
-                    </div>
-                    <div style={{ marginTop: '10px' }}>
-                        <Text type="secondary" style={{ fontSize: '12px' }}>Pick an available day from the calendar</Text>
                     </div>
                   </Col>
                   
@@ -207,14 +202,12 @@ const StudentStatus = () => {
                                 key={time}
                                 type={selectedTime === time ? 'primary' : 'default'}
                                 onClick={() => !isBooked && setSelectedTime(time)}
-                                disabled={isBooked} // Кнопка недоступна, если слот занят
+                                disabled={isBooked}
                                 style={{ 
                                   borderRadius: '10px', 
                                   height: '45px', 
                                   width: '105px',
-                                  fontWeight: selectedTime === time ? 'bold' : 'normal',
-                                  textDecoration: isBooked ? 'line-through' : 'none',
-                                  opacity: isBooked ? 0.5 : 1
+                                  fontWeight: selectedTime === time ? 'bold' : 'normal'
                                 }}
                               >
                                 {time}
@@ -255,7 +248,30 @@ const StudentStatus = () => {
                 <Result
                   status="success"
                   title={<span style={{ color: '#065F46', fontWeight: 700 }}>Interview Confirmed!</span>}
-                  subTitle={<Text style={{ color: '#065F46' }}>We are waiting for you on <b>{candidate.interviewTime}</b>. Meeting details sent to email.</Text>}
+                  subTitle={
+                    <div style={{ color: '#065F46' }}>
+                      <Paragraph>We are waiting for you on <b>{candidate.interviewTime}</b>.</Paragraph>
+                      <Paragraph>You can join the video call directly using the button below:</Paragraph>
+                      
+                      <Button 
+                        type="primary" 
+                        size="large" 
+                        icon={<VideoCameraOutlined />} 
+                        style={{ 
+                          background: '#10B981', 
+                          borderColor: '#10B981', 
+                          borderRadius: '12px', 
+                          height: '50px', 
+                          padding: '0 30px',
+                          fontWeight: 'bold',
+                          marginTop: '10px'
+                        }}
+                        onClick={() => setActiveCall(candidate)} // ОТКРЫВАЕТ МОДАЛКУ
+                      >
+                        Join Video Interview
+                      </Button>
+                    </div>
+                  }
                   extra={<Button type="dashed" onClick={() => {
                     setCandidate({...candidate, interviewTime: null});
                     setSelectedDate(null);
@@ -271,7 +287,7 @@ const StudentStatus = () => {
               style={{ borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}
             >
               <Paragraph style={{ fontSize: '15px', color: '#475569', lineHeight: '1.6' }}>
-                {candidate.aiSummary || "Our neural network is currently evaluating your motivation essay and achievements. Please check back in 2-3 minutes."}
+                {candidate.aiSummary || "Our neural network is currently evaluating your motivation essay and achievements."}
               </Paragraph>
               <Divider />
               <Row gutter={16}>
@@ -316,6 +332,25 @@ const StudentStatus = () => {
               style={{ marginTop: '10px', borderRadius: '8px' }}
             />
           </div>
+        </Modal>
+
+        {/* МОДАЛКА ДЛЯ ВИДЕОСВЯЗИ */}
+        <Modal
+          open={!!activeCall}
+          onCancel={() => setActiveCall(null)}
+          footer={null}
+          width={1000}
+          centered
+          destroyOnClose
+          styles={{ body: { padding: 0, overflow: 'hidden', borderRadius: '12px' } }}
+        >
+          {activeCall && (
+            <VideoConference 
+              roomName={`nVisionU-Interview-${activeCall.id}`}
+              userName={candidate.name}
+              onClose={() => setActiveCall(null)}
+            />
+          )}
         </Modal>
 
       </Content>
