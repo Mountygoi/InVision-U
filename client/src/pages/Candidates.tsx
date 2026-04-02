@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Row, Col, List, Avatar, Tag, Button, Typography, Space, Empty, message, Input, Layout, Card, Divider, Select, Progress, Badge, Alert, Modal } from 'antd';
+import { Row, Col, Avatar, Tag, Button, Typography, Space, Empty, message, Input, Layout, Card, Divider, Select, Progress, Badge, Alert, Modal } from 'antd';
 import { ShieldCheck, FileText, Send, XCircle, MapPin, GraduationCap, CheckCircle2, AlertTriangle, Bot, TrendingUp, User, EyeOff, Scale } from 'lucide-react';
 import axios from 'axios';
 import { RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, PolarRadiusAxis, Radar as RadarArea } from 'recharts';
@@ -205,8 +205,8 @@ const Candidates = () => {
           {/* LEFT: Candidate List */}
           <Col span={9} style={{ borderRight: '1px solid #F0F0F0', height: '100%', display: 'flex', flexDirection: 'column' }}>
             <div style={{ padding: '24px', borderBottom: '1px solid #F0F0F0' }}>
-              <Alert 
-                message={<Text strong style={{ fontSize: 12 }}>Anti-Bias Protocol v2.0</Text>}
+              <Alert
+                title={<Text strong style={{ fontSize: 12 }}>Anti-Bias Protocol v2.0</Text>}
                 description={<Text style={{ fontSize: 11 }}>Система анонимизации активна. Данные скрыты до этапа разблокировки.</Text>}
                 type="info"
                 showIcon
@@ -239,13 +239,16 @@ const Candidates = () => {
             </div>
 
             <div className="custom-scroll" style={{ flex: 1, overflowY: 'auto', paddingBottom: '100px' }}>
-              <List
-                loading={loading}
-                dataSource={candidates}
-                renderItem={(item) => {
+              {loading ? (
+                <div style={{ padding: '40px', textAlign: 'center' }}>
+                  <span>Loading...</span>
+                </div>
+              ) : (
+                candidates.map((item) => {
                   const hidden = isDataHidden(item.status);
                   return (
-                    <List.Item
+                    <div
+                      key={item.id}
                       onClick={() => { setSelectedId(item.id); setReviewNotes(item.reviewerNotes || ''); }}
                       style={{
                         padding: '16px 24px',
@@ -253,7 +256,7 @@ const Candidates = () => {
                         background: selectedId === item.id ? '#F0F7FF' : '#FFFFFF',
                         borderLeft: selectedId === item.id ? '4px solid #006CFF' : '4px solid transparent',
                         borderBottom: '1px solid #F0F0F0',
-                        transition: 'all 0.2s ease'
+                        transition: 'all 0.2s ease',
                       }}
                     >
                       <Row align="middle" gutter={12} style={{ width: '100%' }}>
@@ -275,10 +278,10 @@ const Candidates = () => {
                           <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>/100</Text>
                         </Col>
                       </Row>
-                    </List.Item>
+                    </div>
                   );
-                }}
-              />
+                })
+              )}
             </div>
           </Col>
 
@@ -308,7 +311,7 @@ const Candidates = () => {
                 {selectedCandidate.status === 'arbitration' && (
                   <div style={{ marginBottom: '24px' }}>
                     <Alert
-                      message={<Text strong style={{ color: '#851d1d', fontSize: '15px' }}>Аномалия: Конфликт оценок</Text>}
+                      title={<Text strong style={{ color: '#851d1d', fontSize: '15px' }}>Аномалия: Конфликт оценок</Text>}
                       description={
                         <div style={{ marginTop: 8 }}>
                           <Paragraph style={{ color: '#851d1d', fontSize: '13px', margin: 0 }}>
@@ -337,18 +340,167 @@ const Candidates = () => {
                 )}
 
                 {/* AI Flags */}
-                {selectedCandidate.aiFlags && (
-                   <Row gutter={16} style={{ marginBottom: 24 }}>
-                      <Col span={8}><Card size="small" style={{ textAlign: 'center' }}><Bot size={16} /><div style={{ fontSize: 12 }}>AI-Prob</div><Progress percent={Math.round((selectedCandidate.aiFlags.aiWrittenProbability || 0) * 100)} size="small" /></Card></Col>
-                      <Col span={8}><Card size="small" style={{ textAlign: 'center' }}><CheckCircle2 size={16} /><div style={{ fontSize: 12 }}>Quality</div><Text strong>{selectedCandidate.aiFlags.generic_content ? 'Generic' : 'Authentic'}</Text></Card></Col>
-                      <Col span={8}><Card size="small" style={{ textAlign: 'center' }}><TrendingUp size={16} /><div style={{ fontSize: 12 }}>Potential</div><Text strong>{selectedCandidate.aiFlags.high_potential_outlier ? 'Outlier' : 'Standard'}</Text></Card></Col>
-                   </Row>
+                {selectedCandidate.aiFlags && (() => {
+                   // Support both field names: new AI uses is_ai_generated, seed data uses aiWrittenProbability
+                   const aiProb: number = selectedCandidate.aiFlags.is_ai_generated
+                     ?? selectedCandidate.aiFlags.aiWrittenProbability
+                     ?? 0;
+                   const aiProbPct = Math.round(aiProb * 100);
+                   return (
+                     <Row gutter={16} style={{ marginBottom: 24 }}>
+                       <Col span={8}>
+                         <Card size="small" style={{ textAlign: 'center' }}>
+                           <Bot size={16} />
+                           <div style={{ fontSize: 12, marginBottom: 4 }}>AI-Generated Essay</div>
+                           <Progress percent={aiProbPct} size="small" strokeColor={aiProb > 0.5 ? '#EF4444' : '#10B981'} />
+                           <div style={{ fontSize: 11, color: aiProb > 0.5 ? '#EF4444' : '#10B981', marginTop: 2 }}>
+                             {aiProbPct}% probability
+                           </div>
+                         </Card>
+                       </Col>
+                       <Col span={8}><Card size="small" style={{ textAlign: 'center' }}><CheckCircle2 size={16} /><div style={{ fontSize: 12 }}>Quality</div><Text strong style={{ color: selectedCandidate.aiFlags.generic_content ? '#F59E0B' : '#10B981' }}>{selectedCandidate.aiFlags.generic_content ? 'Generic' : 'Authentic'}</Text></Card></Col>
+                       <Col span={8}><Card size="small" style={{ textAlign: 'center' }}><TrendingUp size={16} /><div style={{ fontSize: 12 }}>Potential</div><Text strong style={{ color: selectedCandidate.aiFlags.high_potential_outlier ? '#006CFF' : '#6B7280' }}>{selectedCandidate.aiFlags.high_potential_outlier ? '⭐ Outlier' : 'Standard'}</Text></Card></Col>
+                     </Row>
+                   );
+                })()}
+
+                {/* Explainability: Score Evidence Quotes */}
+                {selectedCandidate.aiScores && (
+                  <div style={{ background: '#F8FAFC', padding: '20px', borderRadius: '14px', marginBottom: '24px', border: '1px solid #E2E8F0' }}>
+                    <Title level={5} style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <FileText size={18} /> Score Breakdown — Why this score?
+                    </Title>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {(Object.entries(selectedCandidate.aiScores) as [string, { score: number; evidence: string | { quote: string; explanation: string } }][]).map(([key, val]) => {
+                        const label: Record<string, string> = {
+                          motivation: 'Motivation & Vision',
+                          leadership: 'Leadership & Initiative',
+                          technicalPotential: 'Technical Potential',
+                          creativity: 'Creativity & Originality',
+                          resilience: 'Resilience (Path Traveled)',
+                          socialImpact: 'Social Impact',
+                        };
+                        const color = val.score >= 70 ? '#10B981' : val.score >= 50 ? '#F59E0B' : '#EF4444';
+                        // evidence can be: plain string | { quote, explanation } | Array<{ quote, explanation }>
+                        let evidenceText = '';
+                        if (typeof val.evidence === 'string') {
+                          evidenceText = val.evidence;
+                        } else if (Array.isArray(val.evidence) && val.evidence.length > 0) {
+                          evidenceText = val.evidence[0]?.quote || val.evidence[0]?.explanation || '';
+                        } else if (val.evidence && typeof val.evidence === 'object') {
+                          evidenceText = (val.evidence as any).quote || (val.evidence as any).explanation || '';
+                        }
+                        return (
+                          <div key={key} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 12px', background: 'white', borderRadius: 10, border: '1px solid #F0F0F0' }}>
+                            <div style={{ minWidth: 42, height: 42, borderRadius: 10, background: `${color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              <Text strong style={{ fontSize: 16, color }}>{val.score}</Text>
+                            </div>
+                            <div>
+                              <Text strong style={{ fontSize: 12, color: '#374151' }}>{label[key] || key}</Text>
+                              <Text type="secondary" style={{ fontSize: 12, display: 'block', fontStyle: 'italic', marginTop: 2 }}>
+                                {evidenceText ? `"${evidenceText}"` : '—'}
+                              </Text>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Simulation Assessment Results */}
+                {selectedCandidate.simulationScores && (
+                  <div style={{ background: '#FFF7ED', padding: '20px', borderRadius: '14px', marginBottom: '24px', border: '1px solid #FED7AA' }}>
+                    <Row justify="space-between" align="middle" style={{ marginBottom: 12 }}>
+                      <Title level={5} style={{ margin: 0 }}>🎭 Team Simulation — Leadership in Action</Title>
+                      <Tag color="orange" style={{ fontSize: 13, padding: '2px 10px' }}>
+                        Score: {selectedCandidate.simulationScores.simulationScore}/100
+                      </Tag>
+                    </Row>
+
+                    {/* Style Badge */}
+                    <div style={{ marginBottom: 12 }}>
+                      {(() => {
+                        const styleColors: Record<string, string> = { authoritative: '#ff7a00', facilitative: '#006CFF', democratic: '#52c41a', passive: '#8c8c8c' };
+                        const styleLabels: Record<string, string> = { authoritative: 'Авторитарный', facilitative: 'Фасилитирующий', democratic: 'Демократичный', passive: 'Пассивный' };
+                        const style = selectedCandidate.simulationScores!.leadershipStyle;
+                        const col = styleColors[style] || '#8c8c8c';
+                        return (
+                          <span style={{ display: 'inline-block', background: col + '18', color: col, border: `1px solid ${col}44`, borderRadius: 12, padding: '3px 12px', fontSize: 12, fontWeight: 600 }}>
+                            {styleLabels[style] || style}
+                          </span>
+                        );
+                      })()}
+                    </div>
+
+                    {/* 5 Dimension Pills */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
+                      {([ ['leadership','🧭 Лидерство'], ['empathy','❤️ Эмпатия'], ['conflictManagement','⚡ Конфликт'], ['teamOrientation','🤝 Командность'], ['decisionMaking','⚖️ Решения'] ] as [keyof typeof selectedCandidate.simulationScores, string][]).map(([key, label]) => {
+                        const score = selectedCandidate.simulationScores![key] as number;
+                        const color = score >= 70 ? '#10B981' : score >= 50 ? '#F59E0B' : '#EF4444';
+                        return (
+                          <div key={key} style={{ background: 'white', borderRadius: 8, padding: '4px 10px', border: `1px solid ${color}40`, display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <Text style={{ fontSize: 12 }}>{label}</Text>
+                            <Text strong style={{ fontSize: 13, color }}>{score}</Text>
+                            <div style={{ width: 40, height: 4, background: '#e8e8e8', borderRadius: 2 }}>
+                              <div style={{ width: `${score}%`, height: '100%', background: color, borderRadius: 2 }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* AI Narrative */}
+                    {selectedCandidate.simulationScores.narrative && (
+                      <div style={{ background: 'white', borderRadius: 10, padding: '12px 14px', border: '1px solid #FED7AA' }}>
+                        <Text style={{ fontSize: 12, color: '#92400e', fontWeight: 600, display: 'block', marginBottom: 6 }}>
+                          AI Assessment Narrative
+                        </Text>
+                        <Text type="secondary" style={{ fontSize: 13, fontStyle: 'italic', lineHeight: 1.7 }}>
+                          {selectedCandidate.simulationScores.narrative}
+                        </Text>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* SJT Assessment Results */}
+                {selectedCandidate.sjtScores && (
+                  <div style={{ background: '#F0FDF4', padding: '20px', borderRadius: '14px', marginBottom: '24px', border: '1px solid #BBF7D0' }}>
+                    <Row justify="space-between" align="middle" style={{ marginBottom: 12 }}>
+                      <Title level={5} style={{ margin: 0 }}>Situational Judgment Test</Title>
+                    </Row>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                      {Object.entries(selectedCandidate.sjtScores.overallScores || {}).map(([key, val]) => {
+                        const labels: Record<string, string> = {
+                          leadership: '🧭 Leadership',
+                          problemSolving: '🔧 Problem-Solving',
+                          teamwork: '🤝 Teamwork',
+                          stressResilience: '💪 Resilience',
+                          ethics: '⚖️ Ethics',
+                        };
+                        const score = val as number;
+                        const color = score >= 70 ? '#10B981' : score >= 50 ? '#F59E0B' : '#EF4444';
+                        return (
+                          <div key={key} style={{ background: 'white', borderRadius: 8, padding: '4px 10px', border: `1px solid ${color}40`, display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <Text style={{ fontSize: 12 }}>{labels[key] || key}</Text>
+                            <Text strong style={{ fontSize: 13, color }}>{score}</Text>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {selectedCandidate.sjtScores.personalitySummary && (
+                      <Text type="secondary" style={{ fontSize: 13, fontStyle: 'italic' }}>
+                        {selectedCandidate.sjtScores.personalitySummary}
+                      </Text>
+                    )}
+                  </div>
                 )}
 
                 <Row gutter={28}>
                    <Col span={11}>
                       <Title level={5}>Achievements</Title>
-                      <Space direction="vertical" style={{ width: '100%', marginBottom: 24 }}>
+                      <Space orientation="vertical" style={{ width: '100%', marginBottom: 24 }}>
                         {selectedCandidate.achievements.length > 0 ? selectedCandidate.achievements.map((a, i) => (
                           <Card key={i} styles={{ body: { padding: '10px' } }} style={{ background: '#F9FAFB' }}>
                             <Space><span>{ACHIEVEMENT_ICONS[a.type] || '📌'}</span><Text strong>{a.title}</Text></Space>
@@ -369,6 +521,45 @@ const Candidates = () => {
                       </Card>
                    </Col>
                 </Row>
+
+                {/* Personality Assessment Results */}
+                {selectedCandidate.personalityScores && (
+                  <div style={{ background: '#F0F7FF', padding: '20px', borderRadius: '14px', marginBottom: '24px', border: '1px solid #BFDBFE' }}>
+                    <Row justify="space-between" align="middle" style={{ marginBottom: 12 }}>
+                      <Title level={5} style={{ margin: 0 }}>Personality Assessment</Title>
+                      <Tag color="blue" style={{ fontSize: 13, padding: '2px 10px' }}>
+                        Overall: {selectedCandidate.personalityScores.overallScore}/100
+                      </Tag>
+                    </Row>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                      {Object.entries(selectedCandidate.personalityScores.clusterScores).map(([key, val]) => {
+                        const labels: Record<string, string> = {
+                          leadershipInitiative: '🚀 Leadership',
+                          responsibility: '⚖️ Responsibility',
+                          growthMindset: '🌱 Growth',
+                          ambition: '🎯 Ambition',
+                          ethics: '🧭 Ethics',
+                          communityOrientation: '🌍 Community',
+                          collaboration: '🤝 Collaboration',
+                          criticalThinking: '🧠 Critical',
+                        };
+                        const score = val as number;
+                        const color = score >= 75 ? '#10B981' : score >= 50 ? '#F59E0B' : '#EF4444';
+                        return (
+                          <div key={key} style={{ background: 'white', borderRadius: 8, padding: '4px 10px', border: `1px solid ${color}40`, display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <Text style={{ fontSize: 12 }}>{labels[key] || key}</Text>
+                            <Text strong style={{ fontSize: 13, color }}>{score}</Text>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {selectedCandidate.personalityScores.narrative && (
+                      <Text type="secondary" style={{ fontSize: 13, fontStyle: 'italic' }}>
+                        {selectedCandidate.personalityScores.narrative}
+                      </Text>
+                    )}
+                  </div>
+                )}
 
                 <div style={{ marginTop: 24 }}>
                   <Title level={5}>Reviewer Notes</Title>
@@ -406,7 +597,7 @@ const Candidates = () => {
       >
         {arbReport && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <Alert message="AI Анализ конфликта" description={arbReport.summary} type="warning" showIcon />
+            <Alert title="AI Анализ конфликта" description={arbReport.summary} type="warning" showIcon />
             <Row gutter={16}>
               <Col span={12}><Card title="Panel A (Tech)" size="small" style={{ background: '#F0FDF4' }}><Text strong style={{ fontSize: 24, color: '#10B981' }}>{arbReport.panelA.score}</Text><Paragraph italic>{arbReport.panelA.note}</Paragraph></Card></Col>
               <Col span={12}><Card title="Panel B (Soft)" size="small" style={{ background: '#FEF2F2' }}><Text strong style={{ fontSize: 24, color: '#EF4444' }}>{arbReport.panelB.score}</Text><Paragraph italic>{arbReport.panelB.note}</Paragraph></Card></Col>

@@ -7,10 +7,12 @@ import { fileURLToPath } from 'url';
 import { initDatabase } from './db.js';
 import { seedDatabase } from './seed.js';
 import candidatesRouter from './routes/candidates.js';
+import personalityRouter from './routes/personality.js';
 import statsRouter from './routes/stats.js';
 import configRouter from './routes/config.js';
 import sjtRouter from './routes/sjt.js';
 import nudgeRouter from './routes/nudge.js';
+import simulationRouter from './routes/simulation.js';
 import pool from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -55,6 +57,8 @@ app.use('/api/stats', statsRouter);
 app.use('/api/scoring-config', configRouter);
 app.use('/api/sjt', sjtRouter);
 app.use('/api/nudge', nudgeRouter);
+app.use('/api/personality', personalityRouter);
+app.use('/api/simulation', simulationRouter);
 
 // Apply route mapping
 app.post('/api/apply', (req, res, next) => {
@@ -91,6 +95,15 @@ app.get('/api/audit-log', async (req, res) => {
 // Health check
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', aiAvailable: !!process.env.GROQ_API_KEY });
+});
+
+// Global error handler — converts any middleware error (incl. multer) to JSON
+app.use((err: any, _req: any, res: any, _next: any) => {
+  console.error('Global error handler caught:', err);
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal server error',
+    code: err.code,
+  });
 });
 
 const PORT = parseInt(process.env.PORT || '5000');

@@ -7,7 +7,6 @@ import {
   RocketOutlined, StarOutlined, EditOutlined, TrophyOutlined
 } from '@ant-design/icons';
 
-
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
@@ -76,42 +75,34 @@ const StudentForm = () => {
     }
   };
 
-  
   const handleSaveAnswers = () => {
-  const answered = Object.entries(nudgeAnswers).filter(([, v]) => v.trim());
-  if (answered.length === 0) {
-    message.info('Вы не ответили ни на один вопрос. Пропускаем.');
+    const answered = Object.entries(nudgeAnswers).filter(([, v]) => v.trim());
+    if (answered.length === 0) {
+      message.info('Вы не ответили ни на один вопрос. Пропускаем.');
+      setNudgeVisible(false);
+      return;
+    }
     setNudgeVisible(false);
-    return;
-  }
+    message.success(`${answered.length} ответов сохранено!`);
+  };
 
-  // НИЧЕГО не добавляем в essayText, просто закрываем блок
-  setNudgeVisible(false);
-  message.success(`${answered.length} ответов сохранено!`);
-};
-
-    const handleApplyAnswers = () => {
-  const answered = Object.entries(nudgeAnswers).filter(([, v]) => v.trim());
-  if (answered.length === 0) {
-    message.info('Вы не ответили ни на один вопрос. Пропускаем.');
+  const handleApplyAnswers = () => {
+    const answered = Object.entries(nudgeAnswers).filter(([, v]) => v.trim());
+    if (answered.length === 0) {
+      message.info('Вы не ответили ни на один вопрос. Пропускаем.');
+      setNudgeVisible(false);
+      return;
+    }
+    const currentEssay = form.getFieldValue('essayText') || '';
+    const additions = answered.map(([qId, answer]) => {
+      const q = nudgeQuestions.find(nq => nq.id === qId);
+      return `**${q?.question}**\n${answer.trim()}`;
+    }).join('\n\n');
+    const newEssay = currentEssay.trim() ? `${currentEssay.trim()}\n\n${additions}` : additions;
+    form.setFieldValue('essayText', newEssay);
     setNudgeVisible(false);
-    return;
-  }
-  
-  const currentEssay = form.getFieldValue('essayText') || '';
-  const additions = answered.map(([qId, answer]) => {
-    const q = nudgeQuestions.find(nq => nq.id === qId);
-    return `**${q?.question}**\n${answer.trim()}`;
-  }).join('\n\n');
-
-  const newEssay = currentEssay.trim()
-    ? `${currentEssay.trim()}\n\n${additions}`
-    : additions;
-
-  form.setFieldValue('essayText', newEssay);
-  setNudgeVisible(false);
-  message.success(`${answered.length} ответов добавлено в эссе!`);
-};
+    message.success(`${answered.length} ответов добавлено в эссе!`);
+  };
 
   const addAchievement = () => {
     setAchievements([...achievements, { type: 'project', title: '', description: '', year: null }]);
@@ -134,55 +125,72 @@ const StudentForm = () => {
     }
   };
 
-  
-  // Функция для копирования пароля
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    message.success('Password copied to clipboard!');
-  };
-
   const onFinish = async (values: any) => {
-  setSubmitting(true);
+    setSubmitting(true);
+    try {
+      const nudgeAnswersList = Object.entries(nudgeAnswers)
+        .filter(([, v]) => v.trim())
+        .map(([id, answer]) => {
+          const q = nudgeQuestions.find(x => x.id === id);
+          return { questionId: id, question: q?.question, type: q?.type, answer: answer.trim() };
+        });
 
-  try {
-    // Сформировать массив ответов с вопросами
-    const nudgeAnswersList = Object.entries(nudgeAnswers)
-      .filter(([, v]) => v.trim())
-      .map(([id, answer]) => {
-        const q = nudgeQuestions.find(x => x.id === id);
-        return {
-          questionId: id,
-          question: q?.question,
-          type: q?.type,
-          answer: answer.trim(),
-        };
-      });
+      const formData = new FormData();
+      formData.append('name', values.name || '');
+      formData.append('email', values.email || '');
+      formData.append('phone', values.phone || '');
+      formData.append('university', values.university || '');
+      formData.append('city', values.city || '');
+      if (values.gpa != null) formData.append('gpa', String(values.gpa));
+      if (values.yearOfStudy != null) formData.append('yearOfStudy', String(values.yearOfStudy));
+      
+      // Новые академические данные
+      if (values.ielts != null) formData.append('ielts', String(values.ielts));
+      if (values.unt != null) formData.append('unt', String(values.unt));
+      formData.append('videoUrl', values.videoUrl || '');
 
-    const applicationPayload = {
-      ...values,
-      achievements: achievements.filter(a => a.title),
-      skills,
-      nudgeAnswers: nudgeAnswersList,
-    };
+      formData.append('essayText', values.essayText || '');
+      formData.append('achievements', JSON.stringify(achievements.filter(a => a.title)));
+      formData.append('skills', JSON.stringify(skills));
+      
+      if (nudgeAnswersList.length > 0) {
+        formData.append('nudgeAnswers', JSON.stringify(nudgeAnswersList));
+      }
 
-    // Сохранить в базе (БЕЗ AI анализа — он будет после SJT)
-    const res = await axios.post('http://localhost:5000/api/apply', applicationPayload);
-    const { id: candidateId, tempPassword } = res.data;
+      const avatarList = values.avatar;
+      if (avatarList?.length > 0 && avatarList[0].originFileObj) {
+        formData.append('avatar', avatarList[0].originFileObj);
+      }
+      const essayFileList = values.essayFile;
+      if (essayFileList?.length > 0 && essayFileList[0].originFileObj) {
+        formData.append('essay', essayFileList[0].originFileObj);
+      }
+      
+      // Новые сертификаты PDF
+      if (values.ieltsFile?.[0]?.originFileObj) {
+        formData.append('ielts_cert', values.ieltsFile[0].originFileObj);
+      }
+      if (values.untFile?.[0]?.originFileObj) {
+        formData.append('unt_cert', values.untFile[0].originFileObj);
+      }
 
-    // Сохраняем ID и пароль для страницы статуса
-    localStorage.setItem('candidateId', candidateId);
-    localStorage.setItem('tempPassword', tempPassword);
-    localStorage.setItem('userEmail', values.email || '');
+      const res = await axios.post('http://localhost:5000/api/apply', formData);
+      const { id: candidateId, tempPassword } = res.data;
 
-    message.success('Данные сохранены! Переходим к ситуационному тесту...');
-    navigate(`/test?candidateId=${candidateId}`);
-  } catch (err) {
-    console.error('Application submit error:', err);
-    message.error('Ошибка сохранения заявки. Попробуйте еще раз.');
-  } finally {
-    setSubmitting(false);
-  }
-};
+      localStorage.setItem('candidateId', candidateId);
+      localStorage.setItem('tempPassword', tempPassword);
+      localStorage.setItem('userEmail', values.email || '');
+      localStorage.setItem('candidateName', values.name || '');
+
+      message.success('Данные сохранены! Переходим к тесту личности...');
+      navigate(`/personality-test?candidateId=${candidateId}`);
+    } catch (err) {
+      console.error('Application submit error:', err);
+      message.error('Ошибка сохранения заявки. Попробуйте еще раз.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div style={{
@@ -214,20 +222,10 @@ const StudentForm = () => {
 
         <Form form={form} layout="vertical" onFinish={onFinish} requiredMark={false} autoComplete="off">
           
-          {/* Section: Profile Photo */}
           <Title level={5} style={{ marginBottom: 16, color: '#006CFF' }}>Profile Photo</Title>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '32px' }}>
-            <Form.Item 
-              name="avatar" 
-              valuePropName="fileList" 
-              getValueFromEvent={normFile}
-            >
-              <Upload 
-                listType="picture-circle" 
-                maxCount={1} 
-                beforeUpload={() => false}
-                accept="image/*"
-              >
+            <Form.Item name="avatar" valuePropName="fileList" getValueFromEvent={normFile}>
+              <Upload listType="picture-circle" maxCount={1} beforeUpload={() => false} accept="image/*">
                 <div style={{ textAlign: 'center' }}>
                   <CameraOutlined style={{ fontSize: '24px', color: '#006CFF' }} />
                   <div style={{ marginTop: 8, fontSize: '12px' }}>Upload</div>
@@ -238,7 +236,6 @@ const StudentForm = () => {
 
           <Divider />
 
-          {/* Personal Info */}
           <Title level={5} style={{ marginBottom: 16, color: '#006CFF' }}>Personal Information</Title>
           <Row gutter={24}>
             <Col span={12}>
@@ -300,6 +297,64 @@ const StudentForm = () => {
               </Form.Item>
             </Col>
           </Row>
+
+          <Divider />
+
+          {/* IELTS & UNT SECTION */}
+          <Title level={5} style={{ marginBottom: 16, color: '#006CFF' }}>Academic Credentials</Title>
+          <Row gutter={24}>
+            <Col span={12}>
+              <Form.Item name="ielts" label={<Text strong>IELTS Score (6.5-9.0)</Text>}>
+                <InputNumber min={0} max={9} step={0.5} placeholder="7.5" style={{ width: '100%', height: '45px', borderRadius: '8px' }} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="unt" label={<Text strong>ҰБТ / ЕНТ Score (80-140)</Text>}>
+                <InputNumber min={0} max={140} placeholder="115" style={{ width: '100%', height: '45px', borderRadius: '8px' }} />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={24}>
+            <Col span={12}>
+              <Form.Item name="ieltsFile" label={<Text strong>IELTS Certificate (PDF)</Text>} valuePropName="fileList" getValueFromEvent={normFile}>
+                <Upload beforeUpload={() => false} maxCount={1} accept=".pdf">
+                  <Button icon={<UploadOutlined />} style={{ width: '100%', borderRadius: '8px' }}>Upload IELTS PDF</Button>
+                </Upload>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="untFile" label={<Text strong>ҰБТ / ЕНТ Certificate (PDF)</Text>} valuePropName="fileList" getValueFromEvent={normFile}>
+                <Upload beforeUpload={() => false} maxCount={1} accept=".pdf">
+                  <Button icon={<UploadOutlined />} style={{ width: '100%', borderRadius: '8px' }}>Upload UNT PDF</Button>
+                </Upload>
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Divider />
+
+          {/* VIDEO PRESENTATION SECTION */}
+          <Title level={5} style={{ marginBottom: 16, color: '#006CFF' }}>Video Presentation</Title>
+          <Alert
+            title="Better to lose strong than pass weak"
+            description="Mandatory 1-minute video introduction. Link to Loom, YouTube, or Google Drive."
+            type="info"
+            showIcon
+            style={{ marginBottom: 16, borderRadius: '12px' }}
+          />
+          <Form.Item 
+  name="videoUrl" 
+  label={<Text strong>Video Link (YouTube/Loom/Google Drive)</Text>}
+  rules={[{ required: true, message: 'Video presentation is mandatory' }]}
+>
+  <Input 
+    prefix={<CameraOutlined style={{ color: '#bfbfbf' }} />} 
+    placeholder="https://..." 
+    style={{ height: '45px', borderRadius: '8px' }} 
+  />
+</Form.Item>
+
+          <Divider />
 
           {/* Skills */}
           <Title level={5} style={{ marginTop: 24, marginBottom: 16, color: '#006CFF' }}>Skills</Title>
@@ -489,15 +544,14 @@ const StudentForm = () => {
                     </Button>
                   </Col>
                   <Col>
-                  
                   <Button
-  type="primary"
-  onClick={handleSaveAnswers}
-  icon={<EditOutlined />}
-  style={{ borderRadius: '10px', fontWeight: 600, background: '#006CFF' }}
->
-  Save answers
-</Button>
+                    type="primary"
+                    onClick={handleSaveAnswers}
+                    icon={<EditOutlined />}
+                    style={{ borderRadius: '10px', fontWeight: 600, background: '#006CFF' }}
+                  >
+                    Save answers
+                  </Button>
                   </Col>
                 </Row>
 
@@ -521,23 +575,23 @@ const StudentForm = () => {
           </div>
 
           <Form.Item style={{ marginTop: '30px' }}>
-  <Button
-    type="primary"
-    htmlType="submit"          // ← добавили
-    block
-    loading={submitting}
-    style={{
-      height: '50px',
-      borderRadius: '12px',
-      background: '#006CFF',
-      fontSize: '16px',
-      fontWeight: 600,
-      boxShadow: '0 4px 12px rgba(0, 108, 255, 0.2)',
-    }}
-  >
-    {submitting ? 'Submitting ...' : 'Next: Situational Test'}
-  </Button>
-</Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              block
+              loading={submitting}
+              style={{
+                height: '50px',
+                borderRadius: '12px',
+                background: '#006CFF',
+                fontSize: '16px',
+                fontWeight: 600,
+                boxShadow: '0 4px 12px rgba(0, 108, 255, 0.2)',
+              }}
+            >
+              {submitting ? 'Submitting ...' : 'Next: Situational Test'}
+            </Button>
+          </Form.Item>
         </Form>
       </Card>
     </div>

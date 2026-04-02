@@ -8,6 +8,8 @@ import Scheduler from './pages/Scheduler';
 import StudentStatus from './pages/StudentStatus'; // Твой личный кабинет
 import Login from './pages/Login';                 // Твоя страница входа
 import SJTTest from './pages/SJTTest';             // Ситуационный тест
+import PersonalityTest from './pages/PersonalityTest'; // Тест личности (40 вопросов)
+import TeamSimulation from './pages/TeamSimulation'; // Командная симуляция
 
 function App() {
   return (
@@ -24,8 +26,14 @@ function App() {
         {/* Страница статуса (Личный кабинет) */}
         <Route path="/status" element={<StudentStatus />} />
 
+        {/* Тест личности (40 вопросов) */}
+        <Route path="/personality-test" element={<PersonalityTest />} />
+
         {/* Ситуационный тест (SJT) */}
         <Route path="/test" element={<SJTTest />} />
+
+        {/* Командная симуляция */}
+        <Route path="/simulation" element={<TeamSimulation />} />
 
         {/* --- РОУТЫ АДМИН ПАНЕЛИ (С префиксом /admin) --- */}
         <Route

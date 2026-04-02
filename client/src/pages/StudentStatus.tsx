@@ -148,7 +148,7 @@ const StudentStatus = () => {
 
         <Row gutter={[24, 24]}>
           <Col span={16}>
-            <Card bordered={false} style={{ borderRadius: '20px', marginBottom: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+            <Card variant="borderless" style={{ borderRadius: '20px', marginBottom: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
               <Steps
                 current={getStatusStep()}
                 items={[
@@ -283,7 +283,7 @@ const StudentStatus = () => {
 
             <Card 
               title={<Space><CheckCircleOutlined style={{color: '#006CFF'}}/> AI Profile Analysis</Space>} 
-              bordered={false} 
+              variant="borderless"
               style={{ borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}
             >
               <Paragraph style={{ fontSize: '15px', color: '#475569', lineHeight: '1.6' }}>
@@ -299,7 +299,7 @@ const StudentStatus = () => {
           </Col>
 
           <Col span={8}>
-            <Card bordered={false} style={{ borderRadius: '20px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+            <Card variant="borderless"style={{ borderRadius: '20px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
               <div style={{ position: 'relative', display: 'inline-block', marginBottom: '20px' }}>
                 <Avatar 
                   size={90} 
@@ -341,7 +341,7 @@ const StudentStatus = () => {
           footer={null}
           width={1000}
           centered
-          destroyOnClose
+          destroyOnHidden
           styles={{ body: { padding: 0, overflow: 'hidden', borderRadius: '12px' } }}
         >
           {activeCall && (

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Card, Radio, Typography, Spin, message, Input, Modal } from 'antd';
+import { Button, Card, Radio, Typography, Spin, message, Input } from 'antd';
 import { ArrowLeftOutlined, ArrowRightOutlined, CheckCircleFilled, LoadingOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -126,40 +126,9 @@ const SJTTest = () => {
         answers: answersArray,
       });
 
-      // Убеждаемся что email в localStorage для автологина на /status
-      const userEmail = localStorage.getItem('userEmail');
-      const tempPassword = localStorage.getItem('tempPassword') || '';
-
-      // Показываем модалку с паролем и редиректим
-      Modal.success({
-        title: 'Заявка успешно отправлена!',
-        content: (
-          <div>
-            <p>AI проанализировал ваше эссе, достижения и результаты SJT-теста.</p>
-            {tempPassword && (
-              <div style={{
-                background: '#F0F7FF',
-                borderRadius: 12,
-                padding: '12px 16px',
-                marginTop: 12,
-                border: '1px solid #D6E8FF',
-              }}>
-                <Text strong>Ваш временный пароль:</Text>
-                <div style={{ fontSize: 24, fontWeight: 700, color: '#006CFF', marginTop: 4, letterSpacing: 2 }}>
-                  {tempPassword}
-                </div>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  Используйте email ({userEmail}) и этот пароль для входа
-                </Text>
-              </div>
-            )}
-          </div>
-        ),
-        okText: 'Перейти в личный кабинет',
-        onOk: () => {
-          navigate('/status');
-        },
-      });
+      // SJT scores saved to DB for admin panel — candidate does not see results
+      // Navigate directly to team simulation
+      navigate(`/simulation?candidateId=${encodeURIComponent(candidateId)}`);
     } catch {
       message.error('Ошибка при отправке. Проверьте подключение к серверу.');
     } finally {

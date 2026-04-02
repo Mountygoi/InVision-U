@@ -72,7 +72,7 @@ const AppHeader = () => {
               size={46} 
               style={{ border: '2px solid #F0F7FF' }}
             />
-            <Space direction="vertical" size={0} style={{ lineHeight: '1.2' }}>
+            <Space orientation="vertical" size={0} style={{ lineHeight: '1.2' }}>
               <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>Admin:</Text>
               <Text strong style={{ fontSize: '14px', whiteSpace: 'nowrap' }}>
                 Bolatovich N. <DownOutlined style={{ fontSize: '10px' }} />

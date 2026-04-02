@@ -49,6 +49,59 @@ export interface NudgeAnswer {
   answer: string;
 }
 
+export interface SJTOverallScores {
+  leadership: number;
+  problemSolving: number;
+  teamwork: number;
+  stressResilience: number;
+  ethics: number;
+}
+
+export interface SJTScores {
+  overallScores: SJTOverallScores;
+  personalitySummary: string;
+  modelVersion: string;
+  analyzedAt: string;
+}
+
+export interface PersonalityClusterScores {
+  leadershipInitiative: number;
+  responsibility: number;
+  growthMindset: number;
+  ambition: number;
+  ethics: number;
+  communityOrientation: number;
+  collaboration: number;
+  criticalThinking: number;
+}
+
+export interface PersonalityScores {
+  clusterScores: PersonalityClusterScores;
+  overallScore: number;
+  narrative: string;
+}
+
+export interface SimulationScores {
+  leadership: number;
+  empathy: number;
+  conflictManagement: number;
+  teamOrientation: number;
+  decisionMaking: number;
+  leadershipStyle: 'authoritative' | 'facilitative' | 'democratic' | 'passive';
+  narrative: string;
+  simulationScore: number;
+  modelVersion: string;
+  analyzedAt: string;
+}
+
+export interface SimulationChatMessage {
+  role: 'candidate' | 'agent';
+  agentId?: 'aigerim' | 'dauren' | 'nurlan';
+  agentName?: string;
+  content: string;
+  timestamp: string;
+}
+
 export interface Candidate {
   id: string;
   name: string;
@@ -70,6 +123,9 @@ export interface Candidate {
   aiFlags?: AIFlags;
   aiModelVersion?: string;
   aiAnalyzedAt?: string;
+  personalityScores?: PersonalityScores;
+  sjtScores?: SJTScores;
+  simulationScores?: SimulationScores;
   compositeScore: number;
   achievementScore: number;
   status: 'new' | 'under_review' | 'interview' | 'accepted' | 'declined' | 'waitlisted'| 'arbitration';

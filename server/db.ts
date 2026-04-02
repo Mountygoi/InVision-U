@@ -50,15 +50,6 @@ export async function initDatabase(): Promise<void> {
         updated_at TIMESTAMPTZ DEFAULT NOW()
       );
 
-      -- Add columns if missing (safe for re-runs)
-      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS password TEXT;
-      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS avatar_url TEXT;
-      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS interview_time TIMESTAMPTZ;
-      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS nudge_answers JSONB DEFAULT '[]';
-      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS sjt_answers JSONB;
-      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS sjt_scores JSONB;
-      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS sjt_summary TEXT;
-
       CREATE TABLE IF NOT EXISTS audit_log (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         candidate_id UUID REFERENCES candidates(id),
@@ -74,6 +65,22 @@ export async function initDatabase(): Promise<void> {
         weights JSONB NOT NULL,
         updated_at TIMESTAMPTZ DEFAULT NOW()
       );
+
+      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS personality_scores JSONB;
+      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS password TEXT;
+      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS interview_time TEXT;
+      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS sjt_scores JSONB;
+      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS simulation_scores JSONB;
+      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS ielts REAL;
+      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS unt INTEGER;
+      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS video_url TEXT;
+      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS telegram TEXT;
+      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS nudge_answers JSONB DEFAULT '[]';
+      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS sjt_answers JSONB;
+      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS sjt_summary TEXT;
+      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS ielts_file_path TEXT;
+      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS unt_file_path TEXT;
     `);
     console.log('✅ Database tables initialized successfully');
   } catch (err) {

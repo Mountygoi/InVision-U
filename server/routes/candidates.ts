@@ -37,7 +37,7 @@ router.get('/', async (req, res) => {
   try {
     const { search, status, sort = 'composite_score', order = 'desc' } = req.query;
 
-    let query = 'SELECT id, name, email, password, avatar_url, university, city, region, is_rural, gpa, year_of_study, achievements, skills, ai_scores, ai_summary, ai_flags, ai_model_version, ai_analyzed_at, composite_score, achievement_score, status, reviewer_notes, created_at, updated_at, interview_time FROM candidates WHERE 1=1';
+    let query = 'SELECT id, name, email, password, avatar_url, university, city, region, is_rural, gpa, year_of_study, achievements, skills, ai_scores, ai_summary, ai_flags, ai_model_version, ai_analyzed_at, composite_score, achievement_score, status, reviewer_notes, created_at, updated_at, interview_time, personality_scores, sjt_scores, simulation_scores FROM candidates WHERE 1=1';
     const params: any[] = [];
     let paramIdx = 1;
 
@@ -86,6 +86,9 @@ router.get('/', async (req, res) => {
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       interviewTime: row.interview_time,
+      personalityScores: row.personality_scores,
+      sjtScores: row.sjt_scores,
+      simulationScores: row.simulation_scores,
     }));
 
     res.json(candidates);
@@ -145,94 +148,124 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/apply - Submit new application
-// ИСПРАВЛЕНО: Теперь принимаем несколько полей (essay и avatar)
-// POST /api/apply - Submit new application (2-STEP SAFE INSERT)
-// POST /api/apply - JSON-заявка без файлов (эссе текстом + nudgeAnswers)
-router.post('/apply', async (req, res) => {
-  try {
-    const {
-      name,
-      email,
-      phone,
-      university,
-      city,
-      region,
-      gpa,
-      yearOfStudy,
-      achievements,
-      skills,
-      essayText,
-      nudgeAnswers,
-    } = req.body as any;
+// POST /api/apply - Submit new application (multipart/form-data with optional file uploads)
+router.post(
+  '/apply',
+  upload.fields([
+    { name: 'avatar', maxCount: 1 },
+    { name: 'essay', maxCount: 1 },
+    { name: 'ielts_cert', maxCount: 1 },
+    { name: 'unt_cert', maxCount: 1 },
+  ]),
+  async (req, res) => {
+    try {
+      const {
+        name,
+        email,
+        phone,
+        university,
+        city,
+        region,
+        gpa,
+        yearOfStudy,
+        achievements,
+        skills,
+        essayText,
+        nudgeAnswers,
+        ielts,
+        unt,
+        videoUrl,
+      } = req.body as any;
 
-    if (!name || !city) {
-      return res.status(400).json({ error: 'Name and city are required' });
+      if (!name || !city) {
+        return res.status(400).json({ error: 'Name and city are required' });
+      }
+
+      const tempPassword = generateTempPassword();
+
+      const ruralCities = ['Qyzylorda', 'Atyrau', 'Aktau', 'Turkistan', 'Taraz', 'Oral', 'Kostanay', 'Petropavl'];
+      const isRural = ruralCities.includes(city);
+
+      const parsedAchievements: Achievement[] =
+        typeof achievements === 'string' ? JSON.parse(achievements) : (achievements || []);
+
+      const parsedSkills: string[] =
+        typeof skills === 'string' ? JSON.parse(skills) : (skills || []);
+
+      const parsedNudgeAnswers =
+        typeof nudgeAnswers === 'string' ? JSON.parse(nudgeAnswers) : (nudgeAnswers || []);
+
+      const achievementScore = calculateAchievementScore(parsedAchievements);
+
+      // File paths from multer
+      const files = req.files as Record<string, Express.Multer.File[]> | undefined;
+      const avatarFile = files?.['avatar']?.[0];
+      const essayFile = files?.['essay']?.[0];
+      const ieltsCertFile = files?.['ielts_cert']?.[0];
+      const untCertFile = files?.['unt_cert']?.[0];
+
+      const avatarUrl = avatarFile ? `/uploads/${avatarFile.filename}` : null;
+      const essayFilePath = essayFile ? `/uploads/${essayFile.filename}` : null;
+      const ieltsFilePath = ieltsCertFile ? `/uploads/${ieltsCertFile.filename}` : null;
+      const untFilePath = untCertFile ? `/uploads/${untCertFile.filename}` : null;
+
+      // If essay uploaded as PDF, try to extract text
+      let finalEssayText = essayText || null;
+      if (!finalEssayText && essayFile) {
+        try {
+          const extracted = await extractPdfText(essayFile.path);
+          if (extracted) finalEssayText = extracted;
+        } catch { /* ignore extraction errors */ }
+      }
+
+      const weights = await getWeights();
+      const compositeScore = calculateCompositeScore(null, achievementScore, isRural, weights);
+
+      const result = await pool.query(
+        `INSERT INTO candidates (
+          name, email, phone, university, city, region, is_rural,
+          gpa, year_of_study, achievements, skills,
+          essay_text, essay_file_path, achievement_score,
+          status, password, avatar_url, composite_score,
+          nudge_answers, ielts, unt, video_url,
+          ielts_file_path, unt_file_path
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)
+        RETURNING id`,
+        [
+          name, email || null, phone || null, university || null,
+          city, region || city, isRural,
+          gpa ? parseFloat(gpa) : null, yearOfStudy ? parseInt(yearOfStudy) : null,
+          JSON.stringify(parsedAchievements), parsedSkills,
+          finalEssayText, essayFilePath, achievementScore,
+          'new', tempPassword, avatarUrl, compositeScore,
+          JSON.stringify(parsedNudgeAnswers),
+          ielts ? parseFloat(ielts) : null,
+          unt ? parseInt(unt) : null,
+          videoUrl || null,
+          ieltsFilePath,
+          untFilePath,
+        ]
+      );
+
+      const candidateId = result.rows[0].id;
+
+      await pool.query(
+        'INSERT INTO audit_log (candidate_id, action, new_value) VALUES ($1, $2, $3)',
+        [candidateId, 'application_submitted', name]
+      );
+
+      console.log(`New application: ${name} (ID: ${candidateId}, Pass: ${tempPassword})`);
+      res.status(201).json({
+        id: candidateId,
+        tempPassword,
+        message: 'Application submitted successfully',
+      });
+    } catch (err: any) {
+      console.error('Error submitting application:', err);
+      res.status(500).json({ error: 'Failed to submit application', details: err?.message || String(err) });
     }
-
-    const tempPassword = generateTempPassword();
-
-    const ruralCities = ['Qyzylorda', 'Atyrau', 'Aktau', 'Turkistan', 'Taraz', 'Oral', 'Kostanay', 'Petropavl'];
-    const isRural = ruralCities.includes(city);
-
-    const parsedAchievements: Achievement[] =
-      typeof achievements === 'string' ? JSON.parse(achievements) : (achievements || []);
-
-    const parsedSkills: string[] =
-      typeof skills === 'string' ? JSON.parse(skills) : (skills || []);
-
-    const parsedNudgeAnswers =
-      typeof nudgeAnswers === 'string' ? JSON.parse(nudgeAnswers) : (nudgeAnswers || []);
-
-    const achievementScore = calculateAchievementScore(parsedAchievements);
-
-    const finalEssayText = essayText || null;
-    const essayFilePath = null; // сейчас PDF не обрабатываем
-
-    const weights = await getWeights();
-    let compositeScore = calculateCompositeScore(null, achievementScore, isRural, weights);
-
-    // STEP 1: базовая вставка
-    const result = await pool.query(
-      `INSERT INTO candidates (
-        name, email, phone, university, city, region, is_rural,
-        gpa, year_of_study, achievements, skills,
-        essay_text, essay_file_path, achievement_score,
-        status, password, avatar_url, composite_score,
-        nudge_answers
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
-      RETURNING id`,
-      [
-        name, email || null, phone || null, university || null,
-        city, region || city, isRural,
-        gpa ? parseFloat(gpa) : null, yearOfStudy ? parseInt(yearOfStudy) : null,
-        JSON.stringify(parsedAchievements), parsedSkills,
-        finalEssayText, essayFilePath, achievementScore,
-        'new', tempPassword, null, compositeScore,
-        JSON.stringify(parsedNudgeAnswers),
-      ]
-    );
-
-    const candidateId = result.rows[0].id;
-
-    await pool.query(
-      'INSERT INTO audit_log (candidate_id, action, new_value) VALUES ($1, $2, $3)',
-      [candidateId, 'application_submitted', name]
-    );
-
-    // ВАЖНО: анализ эссе теперь запускается ПОСЛЕ SJT, поэтому здесь AI не вызываем
-
-    console.log(`New application: ${name} (ID: ${candidateId}, Pass: ${tempPassword})`);
-    res.status(201).json({
-      id: candidateId,
-      tempPassword,
-      message: 'Application submitted successfully',
-     });
-  } catch (err) {
-    console.error('Error submitting application:', err);
-    res.status(500).json({ error: 'Failed to submit application' });
   }
-});
+);
 
 // PATCH /api/candidates/:id/password - Change password
 router.patch('/:id/password', async (req, res) => {
