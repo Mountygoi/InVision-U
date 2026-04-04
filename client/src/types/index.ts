@@ -116,6 +116,7 @@ export interface Candidate {
   email?: string;
   phone?: string;
   university?: string;
+  school?: string;
   city: string;
   region?: string;
   isRural: boolean;
@@ -150,6 +151,9 @@ export interface Candidate {
   ieltsApproved?: boolean;
   untApproved?: boolean;
   interviewTime?: string;
+  // Contact
+  contactMethod?: string;
+  contactHandle?: string;
 }
 
 export interface DashboardStats {

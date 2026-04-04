@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Row, Col, Avatar, Tag, Button, Typography, Space, Empty, message, Input, Layout, Card, Divider, Select, Progress, Badge, Alert, Modal } from 'antd';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Row, Col, Avatar, Tag, Button, Typography, Space, Empty, message, Input, Layout, Card, Divider, Select, Progress, Badge, Alert, Modal, Slider } from 'antd';
 import { ShieldCheck, FileText, Send, XCircle, MapPin, GraduationCap, CheckCircle2, AlertTriangle, Bot, TrendingUp, User, EyeOff, Scale } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -43,6 +43,7 @@ const Candidates = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [scoreRange, setScoreRange] = useState<[number, number]>([0, 100]);
   const [reviewNotes, setReviewNotes] = useState('');
 
   // Арбитраж
@@ -98,6 +99,14 @@ const Candidates = () => {
   }, [fetchCandidates]);
 
   const selectedCandidate = candidates.find(c => c.id === selectedId);
+
+  // Client-side filtering for score range
+  const filteredCandidates = useMemo(() => {
+    return candidates.filter(c => {
+      const score = Math.round(c.compositeScore || 0);
+      return score >= scoreRange[0] && score <= scoreRange[1];
+    });
+  }, [candidates, scoreRange]);
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     try {
@@ -243,19 +252,19 @@ const Candidates = () => {
   };
 
   return (
-    <Layout style={{ height: '100vh', overflow: 'hidden', background: '#FFFFFF' }}>
+    <Layout style={{ height: '100vh', overflow: 'hidden', background: '#fafafa' }}>
       <style>{`
-        body { margin: 0; padding: 0; overflow: hidden !important; }
-        .ant-layout { background: #FFFFFF !important; }
+        .candidates-layout { overflow: hidden; }
+        .ant-layout { background: #fafafa !important; }
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
       `}</style>
 
-      <Content style={{ padding: '24px', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Content style={{ padding: '24px', height: '100%', display: 'flex', flexDirection: 'column', animation: 'fadeIn 0.4s ease both' }}>
         <Row gutter={0} style={{
           flex: 1,
-          background: '#FFFFFF',
+          background: '#fafafa',
           borderRadius: '16px',
           border: '1px solid #F0F0F0',
           overflow: 'hidden',
@@ -276,7 +285,7 @@ const Candidates = () => {
 
               <Row justify="space-between" align="middle" style={{ marginBottom: '16px' }}>
                 <Title level={4} style={{ margin: 0, fontWeight: 700 }}>
-                  Applicants <Text type="secondary" style={{ fontWeight: 400 }}>({candidates.length})</Text>
+                  Applicants <Text type="secondary" style={{ fontWeight: 400 }}>({filteredCandidates.length})</Text>
                 </Title>
                 <Select value={statusFilter} onChange={setStatusFilter} style={{ width: 140 }} size="small">
                   <Select.Option value="all">Все статусы</Select.Option>
@@ -293,9 +302,21 @@ const Candidates = () => {
                 prefix={<img src={searchIcon} alt="search" style={{ width: '14px', marginRight: '4px' }} />}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                style={{ borderRadius: '10px', background: '#F5F7FA', border: '1px solid #F0F0F0', height: '40px' }}
+                style={{ borderRadius: '10px', background: '#F5F7FA', border: '1px solid #F0F0F0', height: '40px', marginBottom: 8 }}
                 allowClear
               />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 8 }}>
+                <Text style={{ fontSize: 11, color: '#9CA3AF', whiteSpace: 'nowrap' }}>Баллы</Text>
+                <Slider
+                  range
+                  min={0}
+                  max={100}
+                  value={scoreRange}
+                  onChange={v => setScoreRange(v as [number, number])}
+                  style={{ flex: 1 }}
+                  size="small"
+                />
+              </div>
             </div>
 
             <div className="custom-scroll" style={{ flex: 1, overflowY: 'auto', paddingBottom: '100px' }}>
@@ -304,7 +325,7 @@ const Candidates = () => {
                   <span>Loading...</span>
                 </div>
               ) : (
-                candidates.map((item) => {
+                filteredCandidates.map((item) => {
                   const hidden = isDataHidden(item.status);
                   return (
                     <div
@@ -313,8 +334,8 @@ const Candidates = () => {
                       style={{
                         padding: '16px 24px',
                         cursor: 'pointer',
-                        background: selectedId === item.id ? '#F0F7FF' : '#FFFFFF',
-                        borderLeft: selectedId === item.id ? '4px solid #006CFF' : '4px solid transparent',
+                        background: selectedId === item.id ? '#f0fce0' : '#fafafa',
+                        borderLeft: selectedId === item.id ? '4px solid #c1f11d' : '4px solid transparent',
                         borderBottom: '1px solid #F0F0F0',
                         transition: 'all 0.2s ease',
                       }}
@@ -324,12 +345,12 @@ const Candidates = () => {
                           {hidden ? <Avatar size={48} icon={<User />} style={{ background: '#E5E7EB', color: '#9CA3AF' }} /> : <Avatar size={48} src={getAvatarUrl(item)} />}
                         </Col>
                         <Col span={14}>
-                          <Text strong style={{ fontSize: '14px', display: 'block', color: selectedId === item.id ? '#006CFF' : '#1F2937' }}>
+                          <Text strong style={{ fontSize: '14px', display: 'block', color: selectedId === item.id ? '#c1f11d' : '#1F2937' }}>
                             {hidden ? `Applicant #${item.id.slice(-5).toUpperCase()}` : item.name}
                           </Text>
                           <Space size={4} style={{ marginTop: '2px' }}>
                             <GraduationCap size={12} color="#9CA3AF" />
-                            <Text type="secondary" style={{ fontSize: '12px' }}>{hidden ? `GPA: ${item.gpa || 'N/A'}` : item.university || 'N/A'}</Text>
+                            <Text type="secondary" style={{ fontSize: '12px' }}>{hidden ? `Score: ${Math.round(item.compositeScore)}` : item.school || item.university || 'N/A'}</Text>
                           </Space>
                           <div style={{ marginTop: 4 }}><Tag color={STATUS_COLORS[item.status]} style={{ fontSize: '10px' }}>{item.status.toUpperCase()}</Tag></div>
                         </Col>
@@ -346,7 +367,7 @@ const Candidates = () => {
           </Col>
 
           {/* RIGHT: Candidate Detail */}
-          <Col span={15} style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#FFFFFF' }}>
+          <Col span={15} style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#fafafa' }}>
             {selectedCandidate ? (
               <div className="custom-scroll" style={{ flex: 1, overflowY: 'auto', padding: '36px', paddingBottom: '120px' }}>
                 <Row justify="space-between" align="top" style={{ marginBottom: '28px' }}>
@@ -358,7 +379,7 @@ const Candidates = () => {
                       </Title>
                       <Space size="large" style={{ marginTop: '6px' }}>
                          <Space><MapPin size={14} /><Text type="secondary">{isDataHidden(selectedCandidate.status) ? 'Hidden' : selectedCandidate.city}</Text></Space>
-                         <Space><GraduationCap size={14} /><Text type="secondary">{isDataHidden(selectedCandidate.status) ? 'Hidden' : selectedCandidate.university}</Text></Space>
+                         <Space><GraduationCap size={14} /><Text type="secondary">{isDataHidden(selectedCandidate.status) ? 'Hidden' : selectedCandidate.school || selectedCandidate.university}</Text></Space>
                          {selectedCandidate.gpa && <Text strong>GPA: {selectedCandidate.gpa}</Text>}
                       </Space>
                       {/* Document action buttons */}
@@ -432,7 +453,7 @@ const Candidates = () => {
 
                 {/* AI Assessment Summary */}
                 {selectedCandidate.aiSummary && (
-                  <div style={{ background: '#F8FAFC', padding: '20px', borderRadius: '14px', marginBottom: '24px', border: '1px solid #E2E8F0' }}>
+                  <div style={{ background: '#fafafa', padding: '20px', borderRadius: '14px', marginBottom: '24px', border: '1px solid #E2E8F0' }}>
                     <Title level={5} style={{ display: 'flex', alignItems: 'center' }}><ShieldCheck size={18} style={{ marginRight: 8 }} /> AI Assessment</Title>
                     <Paragraph style={{ fontSize: '14px', lineHeight: '1.6' }}>{selectedCandidate.aiSummary}</Paragraph>
                   </div>
@@ -458,14 +479,14 @@ const Candidates = () => {
                          </Card>
                        </Col>
                        <Col span={8}><Card size="small" style={{ textAlign: 'center' }}><CheckCircle2 size={16} /><div style={{ fontSize: 12 }}>Quality</div><Text strong style={{ color: selectedCandidate.aiFlags.generic_content ? '#F59E0B' : '#10B981' }}>{selectedCandidate.aiFlags.generic_content ? 'Generic' : 'Authentic'}</Text></Card></Col>
-                       <Col span={8}><Card size="small" style={{ textAlign: 'center' }}><TrendingUp size={16} /><div style={{ fontSize: 12 }}>Potential</div><Text strong style={{ color: selectedCandidate.aiFlags.high_potential_outlier ? '#006CFF' : '#6B7280' }}>{selectedCandidate.aiFlags.high_potential_outlier ? '⭐ Outlier' : 'Standard'}</Text></Card></Col>
+                       <Col span={8}><Card size="small" style={{ textAlign: 'center' }}><TrendingUp size={16} /><div style={{ fontSize: 12 }}>Potential</div><Text strong style={{ color: selectedCandidate.aiFlags.high_potential_outlier ? '#c1f11d' : '#6B7280' }}>{selectedCandidate.aiFlags.high_potential_outlier ? '⭐ Outlier' : 'Standard'}</Text></Card></Col>
                      </Row>
                    );
                 })()}
 
                 {/* Explainability: Score Evidence Quotes */}
                 {selectedCandidate.aiScores && (
-                  <div style={{ background: '#F8FAFC', padding: '20px', borderRadius: '14px', marginBottom: '24px', border: '1px solid #E2E8F0' }}>
+                  <div style={{ background: '#fafafa', padding: '20px', borderRadius: '14px', marginBottom: '24px', border: '1px solid #E2E8F0' }}>
                     <Title level={5} style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
                       <FileText size={18} /> Score Breakdown — Why this score?
                     </Title>
@@ -520,7 +541,7 @@ const Candidates = () => {
                     {/* Style Badge */}
                     <div style={{ marginBottom: 12 }}>
                       {(() => {
-                        const styleColors: Record<string, string> = { authoritative: '#ff7a00', facilitative: '#006CFF', democratic: '#52c41a', passive: '#8c8c8c' };
+                        const styleColors: Record<string, string> = { authoritative: '#ff7a00', facilitative: '#c1f11d', democratic: '#52c41a', passive: '#8c8c8c' };
                         const styleLabels: Record<string, string> = { authoritative: 'Авторитарный', facilitative: 'Фасилитирующий', democratic: 'Демократичный', passive: 'Пассивный' };
                         const style = selectedCandidate.simulationScores!.leadershipStyle;
                         const col = styleColors[style] || '#8c8c8c';
@@ -660,7 +681,7 @@ const Candidates = () => {
                           <ResponsiveContainer width="99%" height="100%">
                             <RadarChart data={radarData}>
                               <PolarGrid /><PolarAngleAxis dataKey="subject" /><PolarRadiusAxis domain={[0, 100]} tick={false} />
-                              <RadarArea dataKey="A" stroke="#006CFF" fill="#006CFF" fillOpacity={0.1} />
+                              <RadarArea dataKey="A" stroke="#c1f11d" fill="#c1f11d" fillOpacity={0.1} />
                             </RadarChart>
                           </ResponsiveContainer>
                         </div>
@@ -670,7 +691,7 @@ const Candidates = () => {
 
                 {/* Personality Assessment Results */}
                 {selectedCandidate.personalityScores && (
-                  <div style={{ background: '#F0F7FF', padding: '20px', borderRadius: '14px', marginBottom: '24px', border: '1px solid #BFDBFE' }}>
+                  <div style={{ background: '#f0fce0', padding: '20px', borderRadius: '14px', marginBottom: '24px', border: '1px solid #d4edb0' }}>
                     <Row justify="space-between" align="middle" style={{ marginBottom: 12 }}>
                       <Title level={5} style={{ margin: 0 }}>Personality Assessment</Title>
                       <Tag color="blue" style={{ fontSize: 13, padding: '2px 10px' }}>
@@ -789,7 +810,7 @@ const Candidates = () => {
 
       {/* ARBITRATION MODAL */}
       <Modal
-        title={<Space><Bot size={20} color="#006CFF" /> Арбитраж: AI-анализ расхождения оценок</Space>}
+        title={<Space><Bot size={20} color="#c1f11d" /> Арбитраж: AI-анализ расхождения оценок</Space>}
         open={isArbModalOpen}
         onCancel={() => setIsArbModalOpen(false)}
         footer={[<Button key="ok" type="primary" onClick={() => setIsArbModalOpen(false)}>Принято</Button>]}
@@ -832,7 +853,7 @@ const Candidates = () => {
               </div>
             )}
 
-            <div style={{ background: '#F0F7FF', padding: '16px', borderRadius: 12, border: '1px solid #BFDBFE' }}>
+            <div style={{ background: '#f0fce0', padding: '16px', borderRadius: 12, border: '1px solid #d4edb0' }}>
               <Title level={5} style={{ color: '#1D4ED8', marginBottom: 8 }}>🎯 AI Verdict & Recommendation</Title>
               <Paragraph style={{ margin: 0, fontSize: 13 }}>{arbReport.verdict}</Paragraph>
               {arbReport.suggestedScore !== undefined && (
@@ -896,7 +917,7 @@ const Candidates = () => {
               placeholder="Комментарий панели A (необязательно)..."
             />
           </div>
-          <div style={{ background: '#EFF6FF', padding: 16, borderRadius: 12, border: '1px solid #BFDBFE' }}>
+          <div style={{ background: '#EFF6FF', padding: 16, borderRadius: 12, border: '1px solid #d4edb0' }}>
             <Text strong style={{ display: 'block', marginBottom: 10, color: '#1E3A8A' }}>Panel B — Soft Skills (0–100)</Text>
             <Input
               type="number"

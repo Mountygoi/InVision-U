@@ -38,23 +38,23 @@ const CertificatePrint = ({ candidate }: { candidate: any }) => {
       fontFamily: '"Times New Roman", Times, serif', boxSizing: 'border-box',
     }}>
       {/* Outer border */}
-      <div style={{ position: 'absolute', inset: 16, border: '3px solid #006CFF', borderRadius: 4, pointerEvents: 'none' }} />
-      <div style={{ position: 'absolute', inset: 22, border: '1px solid #00D8E6', borderRadius: 2, pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', inset: 16, border: '3px solid #c1f11d', borderRadius: 4, pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', inset: 22, border: '1px solid #3dedf1', borderRadius: 2, pointerEvents: 'none' }} />
 
       {/* Content */}
       <div style={{ padding: '48px 72px', textAlign: 'center' }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginBottom: 8 }}>
-          <div style={{ width: 48, height: 48, background: 'linear-gradient(135deg,#006CFF,#00D8E6)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 900, fontSize: 22, flexShrink: 0 }}>N</div>
+          <div style={{ width: 48, height: 48, background: 'linear-gradient(135deg,#c1f11d,#3dedf1)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 900, fontSize: 22, flexShrink: 0 }}>N</div>
           <div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: '#006CFF', fontFamily: 'Inter, sans-serif', letterSpacing: 1 }}>nVision U</div>
-            <div style={{ fontSize: 12, color: '#64748B', fontFamily: 'Inter, sans-serif', letterSpacing: 2 }}>SCHOLARSHIP PROGRAM · KAZAKHSTAN</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: '#c1f11d', fontFamily: "'Raleway', sans-serif", letterSpacing: 1 }}>inVision U</div>
+            <div style={{ fontSize: 12, color: '#64748B', fontFamily: "'Raleway', sans-serif", letterSpacing: 2 }}>SCHOLARSHIP PROGRAM · KAZAKHSTAN</div>
           </div>
         </div>
 
-        <div style={{ width: 80, height: 2, background: 'linear-gradient(90deg,#006CFF,#00D8E6)', margin: '16px auto' }} />
+        <div style={{ width: 80, height: 2, background: 'linear-gradient(90deg,#c1f11d,#3dedf1)', margin: '16px auto' }} />
 
-        <div style={{ fontSize: 13, letterSpacing: 4, color: '#64748B', textTransform: 'uppercase', marginBottom: 18, fontFamily: 'Inter, sans-serif' }}>
+        <div style={{ fontSize: 13, letterSpacing: 4, color: '#64748B', textTransform: 'uppercase', marginBottom: 18, fontFamily: "'Raleway', sans-serif" }}>
           This is to certify that
         </div>
 
@@ -62,8 +62,8 @@ const CertificatePrint = ({ candidate }: { candidate: any }) => {
           {candidate.name}
         </div>
 
-        <div style={{ fontSize: 14, color: '#475569', lineHeight: 1.8, maxWidth: 520, margin: '0 auto 24px', fontFamily: 'Inter, sans-serif' }}>
-          has successfully completed the <strong>nVision U Selection Process</strong> and is officially
+        <div style={{ fontSize: 14, color: '#475569', lineHeight: 1.8, maxWidth: 520, margin: '0 auto 24px', fontFamily: "'Raleway', sans-serif" }}>
+          has successfully completed the <strong>inVision U Selection Process</strong> and is officially
           confirmed as eligible for the next stage — the <strong>Offline Selection</strong>.
         </div>
 
@@ -72,18 +72,18 @@ const CertificatePrint = ({ candidate }: { candidate: any }) => {
         {/* Details row */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: 48, marginBottom: 32 }}>
           <div>
-            <div style={{ fontSize: 11, color: '#94A3B8', letterSpacing: 2, textTransform: 'uppercase', fontFamily: 'Inter, sans-serif' }}>Application ID</div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#006CFF', fontFamily: 'Inter, sans-serif', letterSpacing: 2 }}>#{appId}</div>
+            <div style={{ fontSize: 11, color: '#94A3B8', letterSpacing: 2, textTransform: 'uppercase', fontFamily: "'Raleway', sans-serif" }}>Application ID</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#c1f11d', fontFamily: "'Raleway', sans-serif", letterSpacing: 2 }}>#{appId}</div>
           </div>
           <div style={{ width: 1, background: '#E2E8F0' }} />
           <div>
-            <div style={{ fontSize: 11, color: '#94A3B8', letterSpacing: 2, textTransform: 'uppercase', fontFamily: 'Inter, sans-serif' }}>Date of Approval</div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#1E293B', fontFamily: 'Inter, sans-serif' }}>{approvedDate}</div>
+            <div style={{ fontSize: 11, color: '#94A3B8', letterSpacing: 2, textTransform: 'uppercase', fontFamily: "'Raleway', sans-serif" }}>Date of Approval</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#1E293B', fontFamily: "'Raleway', sans-serif" }}>{approvedDate}</div>
           </div>
           <div style={{ width: 1, background: '#E2E8F0' }} />
           <div>
-            <div style={{ fontSize: 11, color: '#94A3B8', letterSpacing: 2, textTransform: 'uppercase', fontFamily: 'Inter, sans-serif' }}>Certificate No.</div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#1E293B', fontFamily: 'Inter, sans-serif' }}>NVSU-{new Date().getFullYear()}-{appId}</div>
+            <div style={{ fontSize: 11, color: '#94A3B8', letterSpacing: 2, textTransform: 'uppercase', fontFamily: "'Raleway', sans-serif" }}>Certificate No.</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#1E293B', fontFamily: "'Raleway', sans-serif" }}>NVSU-{new Date().getFullYear()}-{appId}</div>
           </div>
         </div>
 
@@ -91,18 +91,18 @@ const CertificatePrint = ({ candidate }: { candidate: any }) => {
         <div style={{ display: 'flex', justifyContent: 'center', gap: 80 }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ width: 140, borderBottom: '1px solid #94A3B8', marginBottom: 6, height: 36 }} />
-            <div style={{ fontSize: 12, color: '#64748B', fontFamily: 'Inter, sans-serif' }}>Head of Admissions</div>
-            <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>nVision U</div>
+            <div style={{ fontSize: 12, color: '#64748B', fontFamily: "'Raleway', sans-serif" }}>Head of Admissions</div>
+            <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: "'Raleway', sans-serif" }}>inVision U</div>
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={{ width: 140, borderBottom: '1px solid #94A3B8', marginBottom: 6, height: 36 }} />
-            <div style={{ fontSize: 12, color: '#64748B', fontFamily: 'Inter, sans-serif' }}>Program Director</div>
-            <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>nVision U</div>
+            <div style={{ fontSize: 12, color: '#64748B', fontFamily: "'Raleway', sans-serif" }}>Program Director</div>
+            <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: "'Raleway', sans-serif" }}>inVision U</div>
           </div>
         </div>
 
-        <div style={{ marginTop: 24, fontSize: 11, color: '#CBD5E1', letterSpacing: 1, fontFamily: 'Inter, sans-serif' }}>
-          This certificate is digitally generated and verified by nVision U Admissions System
+        <div style={{ marginTop: 24, fontSize: 11, color: '#CBD5E1', letterSpacing: 1, fontFamily: "'Raleway', sans-serif" }}>
+          This certificate is digitally generated and verified by inVision U Admissions System
         </div>
       </div>
     </div>
@@ -210,7 +210,7 @@ const StudentStatus = () => {
     window.print();
   };
 
-  if (loading) return <div style={{ textAlign: 'center', padding: '100px' }}><LoadingOutlined style={{ fontSize: 40, color: '#006CFF' }} /></div>;
+  if (loading) return <div style={{ textAlign: 'center', padding: '100px' }}><LoadingOutlined style={{ fontSize: 40, color: '#c1f11d' }} /></div>;
   if (!candidate) return <Result status="404" title="Application not found" />;
 
   const getStatusStep = () => {
@@ -228,20 +228,20 @@ const StudentStatus = () => {
     under_review: { label: 'Under Review', color: '#F59E0B', bg: '#FFFBEB', text: 'Our committee is currently reviewing your application and test results.' },
     interview: { label: 'Interview Stage', color: '#8B5CF6', bg: '#F5F3FF', text: 'Congratulations! You have been selected for an interview. Please schedule your slot below.' },
     arbitration: { label: 'Under Additional Review', color: '#EF4444', bg: '#FEF2F2', text: 'Your evaluation is undergoing an additional review by the committee.' },
-    waitlisted: { label: 'Waitlisted', color: '#64748B', bg: '#F8FAFC', text: 'You have been placed on the waitlist. We will notify you if a spot opens up.' },
-    accepted: { label: 'Accepted — Congratulations!', color: '#10B981', bg: '#F0FDF4', text: 'You have successfully passed all stages of the nVision U selection process!' },
+    waitlisted: { label: 'Waitlisted', color: '#64748B', bg: '#F1F5F9', text: 'You have been placed on the waitlist. We will notify you if a spot opens up.' },
+    accepted: { label: 'Accepted — Congratulations!', color: '#10B981', bg: '#F0FDF4', text: 'You have successfully passed all stages of the inVision U selection process!' },
     declined: { label: 'Application Not Accepted', color: '#EF4444', bg: '#FEF2F2', text: 'Unfortunately, your application was not successful at this stage. Thank you for applying.' },
   };
   const currentStatus = statusInfo[candidate.status] || statusInfo['new'];
 
   return (
-    <Layout style={{ minHeight: '100vh', background: '#F8FAFC' }}>
-      <Content style={{ padding: '40px 20px', maxWidth: '1100px', margin: '0 auto', width: '100%' }}>
+    <Layout style={{ minHeight: '100vh', background: '#fafafa' }}>
+      <Content style={{ padding: '40px 20px', maxWidth: '1100px', margin: '0 auto', width: '100%', animation: 'fadeInUp 0.5s cubic-bezier(0.16,1,0.3,1) both' }}>
         
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
           <div>
-            <Title level={2} style={{ margin: 0, fontWeight: 800, color: '#1E293B' }}>Portal nVision U</Title>
-            <Text style={{ color: '#64748B' }}>Personal Account • {candidate.name}</Text>
+            <Title level={2} style={{ margin: 0, fontWeight: 800, color: '#1E293B', fontFamily: "'Raleway', sans-serif" }}>Portal inVision U</Title>
+            <Text style={{ color: '#64748B' }}>Personal Account \u2022 {candidate.name}</Text>
           </div>
           <Button type="text" danger icon={<LogoutOutlined />} onClick={logout}>Sign Out</Button>
         </div>
@@ -253,11 +253,11 @@ const StudentStatus = () => {
               <div style={{ width: 12, height: 12, borderRadius: '50%', background: currentStatus.color, flexShrink: 0, boxShadow: `0 0 0 4px ${currentStatus.color}30` }} />
               <div>
                 <Text strong style={{ color: currentStatus.color, fontSize: 15, display: 'block' }}>{currentStatus.label}</Text>
-                <Text style={{ color: '#475569', fontSize: 13 }}>{currentStatus.text}</Text>
+                <Text style={{ color: '#64748B', fontSize: 13 }}>{currentStatus.text}</Text>
               </div>
             </div>
 
-            <Card variant="borderless" style={{ borderRadius: '20px', marginBottom: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+            <Card variant="borderless" style={{ borderRadius: '20px', marginBottom: '24px', background: '#ffffff', border: '1px solid #E2E8F0' }}>
               <Steps
                 current={getStatusStep()}
                 items={[
@@ -273,18 +273,18 @@ const StudentStatus = () => {
             {/* ACCEPTED: Congratulations + Certificate */}
             {candidate.status === 'accepted' && (
               <Card
-                style={{ borderRadius: 20, marginBottom: 24, border: '2px solid #10B981', background: 'linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%)', overflow: 'hidden' }}
+                style={{ borderRadius: 20, marginBottom: 24, border: '2px solid #c1f11d', background: '#ffffff', overflow: 'hidden' }}
                 styles={{ body: { padding: 0 } }}
               >
                 <div style={{ padding: '28px 32px' }}>
                   <Space size={16} align="start">
-                    <div style={{ width: 56, height: 56, background: '#10B981', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <TrophyOutlined style={{ fontSize: 28, color: 'white' }} />
+                    <div style={{ width: 56, height: 56, background: '#c1f11d', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <TrophyOutlined style={{ fontSize: 28, color: '#141414' }} />
                     </div>
                     <div>
-                      <Title level={3} style={{ color: '#065F46', margin: 0, fontWeight: 800 }}>🎉 Congratulations, {candidate.name}!</Title>
-                      <Text style={{ color: '#047857', fontSize: 15, display: 'block', marginTop: 6, lineHeight: 1.6 }}>
-                        You have successfully passed all stages of the nVision U selection process.<br />
+                      <Title level={3} style={{ color: '#c1f11d', margin: 0, fontWeight: 800 }}>🎉 Congratulations, {candidate.name}!</Title>
+                      <Text style={{ color: '#475569', fontSize: 15, display: 'block', marginTop: 6, lineHeight: 1.6 }}>
+                        You have successfully passed all stages of the inVision U selection process.<br />
                         You are now eligible for the <strong>Offline Selection stage</strong>. Your digital certificate is ready.
                       </Text>
                     </div>
@@ -295,7 +295,7 @@ const StudentStatus = () => {
                       type="primary"
                       size="large"
                       icon={<PrinterOutlined />}
-                      style={{ background: '#10B981', borderColor: '#10B981', borderRadius: 12, height: 48 }}
+                      style={{ background: '#c1f11d', borderColor: '#c1f11d', borderRadius: 12, height: 48, color: '#141414', fontWeight: 700 }}
                       onClick={() => setCertModalOpen(true)}
                     >
                       View Certificate
@@ -303,7 +303,7 @@ const StudentStatus = () => {
                     <Button
                       size="large"
                       icon={<DownloadOutlined />}
-                      style={{ borderRadius: 12, height: 48, borderColor: '#10B981', color: '#10B981' }}
+                      style={{ borderRadius: 12, height: 48, borderColor: '#c1f11d', color: '#c1f11d' }}
                       onClick={() => { setCertModalOpen(true); setTimeout(() => window.print(), 400); }}
                     >
                       Download PDF
@@ -317,7 +317,7 @@ const StudentStatus = () => {
             {candidate.status === 'declined' && (
               <Alert
                 title="Application Not Accepted"
-                description="Thank you for your effort and time applying to nVision U. We encourage you to continue developing your skills and apply again in the future."
+                description="Thank you for your effort and time applying to inVision U. We encourage you to continue developing your skills and apply again in the future."
                 type="error"
                 showIcon
                 style={{ borderRadius: 16, marginBottom: 24 }}
@@ -326,15 +326,15 @@ const StudentStatus = () => {
 
             {candidate.status === 'interview' && !candidate.interviewTime && (
               <Card 
-                style={{ borderRadius: '20px', marginBottom: '24px', border: '1px solid #E2E8F0', overflow: 'hidden' }}
+                style={{ borderRadius: '20px', marginBottom: '24px', border: '1px solid #E2E8F0', overflow: 'hidden', background: '#ffffff' }}
                 styles={{ body: { padding: 0 } }}
               >
-                <div style={{ background: 'linear-gradient(90deg, #006CFF 0%, #00D8E6 100%)', padding: '16px 24px' }}>
-                  <Title level={4} style={{ color: '#fff', margin: 0 }}><CalendarOutlined /> Interview Scheduler</Title>
+                <div style={{ background: '#f5f5f5', padding: '16px 24px', borderBottom: '1px solid #E2E8F0' }}>
+                  <Title level={4} style={{ color: '#c1f11d', margin: 0 }}><CalendarOutlined /> Interview Scheduler</Title>
                 </div>
                 
                 <Row>
-                  <Col span={11} style={{ padding: '24px', borderRight: '1px solid #F1F5F9' }}>
+                  <Col span={11} style={{ padding: '24px', borderRight: '1px solid #E2E8F0' }}>
                     <Text strong style={{ display: 'block', marginBottom: '15px' }}>1. Select Date</Text>
                     <div className="calendar-fix-wrapper" style={{ minHeight: '320px', position: 'relative' }}>
                       <DatePicker 
@@ -351,7 +351,7 @@ const StudentStatus = () => {
                     </div>
                   </Col>
                   
-                  <Col span={13} style={{ padding: '24px', background: '#FAFCFF' }}>
+                  <Col span={13} style={{ padding: '24px', background: '#f5f5f5' }}>
                     <Text strong style={{ display: 'block', marginBottom: '15px' }}>
                       2. Available Slots {selectedDate ? `for ${selectedDate.format('MMM DD')}` : ''}
                     </Text>
@@ -387,8 +387,8 @@ const StudentStatus = () => {
                     )}
 
                     {selectedDate && selectedTime && (
-                      <div style={{ marginTop: '30px', padding: '20px', background: '#E0F2FE', borderRadius: '16px', border: '1px solid #BAE6FD' }}>
-                         <Text strong style={{ color: '#0369A1', display: 'block', marginBottom: '10px' }}>
+                      <div style={{ marginTop: '30px', padding: '20px', background: 'rgba(193,241,29,0.1)', borderRadius: '16px', border: '1px solid rgba(193,241,29,0.3)' }}>
+                         <Text strong style={{ color: '#c1f11d', display: 'block', marginBottom: '10px' }}>
                            Final check: {selectedDate.format('MMMM DD, YYYY')} at {selectedTime}
                          </Text>
                          <Button 
@@ -396,7 +396,7 @@ const StudentStatus = () => {
                            block 
                            loading={isScheduling}
                            onClick={handleScheduleConfirm}
-                           style={{ height: '45px', borderRadius: '10px', background: '#0369A1', border: 'none', fontWeight: 'bold' }}
+                           style={{ height: '45px', borderRadius: '10px', background: '#c1f11d', border: 'none', fontWeight: 'bold', color: '#141414' }}
                          >
                            Confirm Appointment
                          </Button>
@@ -408,12 +408,12 @@ const StudentStatus = () => {
             )}
 
             {candidate.interviewTime && (
-              <Card style={{ borderRadius: '20px', marginBottom: '24px', border: 'none', background: '#ECFDF5', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
+              <Card style={{ borderRadius: '20px', marginBottom: '24px', border: '1px solid #E2E8F0', background: '#ffffff' }}>
                 <Result
                   status="success"
-                  title={<span style={{ color: '#065F46', fontWeight: 700 }}>Interview Confirmed!</span>}
+                  title={<span style={{ color: '#c1f11d', fontWeight: 700 }}>Interview Confirmed!</span>}
                   subTitle={
-                    <div style={{ color: '#065F46' }}>
+                    <div style={{ color: '#475569' }}>
                       <Paragraph>We are waiting for you on <b>{candidate.interviewTime}</b>.</Paragraph>
                       <Paragraph>You can join the video call directly using the button below:</Paragraph>
                       
@@ -422,8 +422,9 @@ const StudentStatus = () => {
                         size="large" 
                         icon={<VideoCameraOutlined />} 
                         style={{ 
-                          background: '#10B981', 
-                          borderColor: '#10B981', 
+                          background: '#c1f11d', 
+                          borderColor: '#c1f11d', 
+                          color: '#141414', 
                           borderRadius: '12px', 
                           height: '50px', 
                           padding: '0 30px',
@@ -446,40 +447,40 @@ const StudentStatus = () => {
             )}
 
             <Card 
-              title={<Space><CheckCircleOutlined style={{color: '#006CFF'}}/> AI Profile Analysis</Space>} 
+              title={<Space><CheckCircleOutlined style={{color: '#c1f11d'}}/> <span style={{color:'#1E293B'}}>AI Profile Analysis</span></Space>} 
               variant="borderless"
-              style={{ borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}
+              style={{ borderRadius: '20px', background: '#ffffff', border: '1px solid #E2E8F0' }}
             >
-              <Paragraph style={{ fontSize: '15px', color: '#475569', lineHeight: '1.6' }}>
+              <Paragraph style={{ fontSize: '15px', color: '#64748B', lineHeight: '1.6' }}>
                 {candidate.aiSummary || "Our neural network is currently evaluating your motivation essay and achievements."}
               </Paragraph>
               <Divider />
               <Row gutter={16}>
-                <Col span={8}><Text type="secondary">GPA Status</Text><br/><Text strong>{candidate.gpa || 'N/A'}</Text></Col>
-                <Col span={8}><Text type="secondary">Location Status</Text><br/><Tag color={candidate.isRural ? 'green' : 'blue'}>{candidate.isRural ? 'Rural Bonus' : 'Urban'}</Tag></Col>
-                <Col span={8}><Text type="secondary">Verification</Text><br/><Text code style={{ fontSize: '11px' }}>v{candidate.aiModelVersion || '1.0.2'}-stable</Text></Col>
+                <Col span={8}><Text style={{color:'#94A3B8'}}>GPA Status</Text><br/><Text strong style={{color:'#1E293B'}}>{candidate.gpa || 'N/A'}</Text></Col>
+                <Col span={8}><Text style={{color:'#94A3B8'}}>Location Status</Text><br/><Tag color={candidate.isRural ? 'green' : 'blue'}>{candidate.isRural ? 'Rural Bonus' : 'Urban'}</Tag></Col>
+                <Col span={8}><Text style={{color:'#94A3B8'}}>Verification</Text><br/><Text code style={{ fontSize: '11px', color: '#c1f11d' }}>v{candidate.aiModelVersion || '1.0.2'}-stable</Text></Col>
               </Row>
             </Card>
           </Col>
 
           <Col span={8}>
-            <Card variant="borderless"style={{ borderRadius: '20px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+            <Card variant="borderless" style={{ borderRadius: '20px', textAlign: 'center', background: '#ffffff', border: '1px solid #E2E8F0' }}>
               <div style={{ position: 'relative', display: 'inline-block', marginBottom: '20px' }}>
                 <Avatar 
                   size={90} 
                   src={getAvatar(candidate)} 
                   style={{ 
-                    border: '4px solid #F0F7FF', 
+                    border: '4px solid #1f1f1f', 
                     boxShadow: '0 10px 20px rgba(0,0,0,0.05)',
                     background: '#E0F2FE'
                   }} 
                 />
                 <Badge status="processing" style={{ position: 'absolute', bottom: '5px', right: '5px' }} />
               </div>
-              <Title level={4} style={{ margin: 0, fontWeight: 700 }}>{candidate.name}</Title>
-              <Text type="secondary">{candidate.email}</Text>
+              <Title level={4} style={{ margin: 0, fontWeight: 700, color: '#1E293B' }}>{candidate.name}</Title>
+              <Text style={{ color: '#64748B' }}>{candidate.email}</Text>
               <Divider />
-              <Button block icon={<LockOutlined />} onClick={() => setIsModalVisible(true)} style={{ borderRadius: '10px', height: '40px' }}>
+              <Button block icon={<LockOutlined />} onClick={() => setIsModalVisible(true)} style={{ borderRadius: '10px', height: '40px', background: '#f5f5f5', borderColor: '#E2E8F0', color: '#1E293B' }}>
                 Account Settings
               </Button>
             </Card>
@@ -546,8 +547,9 @@ const StudentStatus = () => {
           left: 0 !important;
           box-shadow: none !important;
           display: inline-block;
-          border: 1px solid #f0f0f0;
+          border: 1px solid #E2E8F0;
           border-radius: 12px;
+          background: #f5f5f5;
         }
         .calendar-fix-wrapper .ant-picker-panel-container {
           box-shadow: none !important;

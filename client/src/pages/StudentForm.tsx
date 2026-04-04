@@ -139,10 +139,10 @@ const StudentForm = () => {
       formData.append('name', values.name || '');
       formData.append('email', values.email || '');
       formData.append('phone', values.phone || '');
-      formData.append('university', values.university || '');
+      formData.append('school', values.school || '');
       formData.append('city', values.city || '');
-      if (values.gpa != null) formData.append('gpa', String(values.gpa));
-      if (values.yearOfStudy != null) formData.append('yearOfStudy', String(values.yearOfStudy));
+      formData.append('contactMethod', values.contactMethod || '');
+      formData.append('contactHandle', values.contactHandle || '');
       
       // Новые академические данные
       if (values.ielts != null) formData.append('ielts', String(values.ielts));
@@ -195,9 +195,9 @@ const StudentForm = () => {
   return (
     <div style={{
       padding: '60px 20px',
-      background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+      background: 'linear-gradient(160deg, #fafafa 0%, #f0f4e8 100%)',
       minHeight: '100vh',
-      fontFamily: 'Inter, sans-serif'
+      fontFamily: "'Raleway', sans-serif"
     }}>
       <Card
         variant="borderless"
@@ -205,29 +205,34 @@ const StudentForm = () => {
           maxWidth: 860,
           margin: '0 auto',
           borderRadius: '24px',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.05)'
+          boxShadow: '0 24px 64px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.03)',
+          background: '#ffffff',
+          border: 'none',
+          animation: 'fadeInUp 0.6s cubic-bezier(0.16,1,0.3,1) both',
         }}
       >
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
           <div style={{
-            width: '48px', height: '48px',
-            background: 'linear-gradient(135deg, #006CFF 0%, #00D8E6 100%)',
-            borderRadius: '12px', margin: '0 auto 16px',
+            width: '52px', height: '52px',
+            background: '#c1f11d',
+            borderRadius: '14px', margin: '0 auto 16px',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'white', fontWeight: 'bold', fontSize: '20px'
-          }}>N</div>
-          <Title level={2} style={{ marginBottom: '8px' }}>Scholarship Application</Title>
-          <Text type="secondary">Fill out the form so our AI can analyze your potential for nVision U</Text>
+            color: '#141414', fontWeight: 'bold', fontSize: '18px',
+            fontFamily: "'Raleway', sans-serif",
+            boxShadow: '0 4px 20px rgba(193, 241, 29, 0.3)',
+          }}>iU</div>
+          <Title level={2} style={{ marginBottom: '8px', color: '#1E293B', fontFamily: "'Raleway', sans-serif" }}>Scholarship Application</Title>
+          <Text style={{ color: '#64748B' }}>Fill out the form so our AI can analyze your potential for inVision U</Text>
         </div>
 
         <Form form={form} layout="vertical" onFinish={onFinish} requiredMark={false} autoComplete="off">
           
-          <Title level={5} style={{ marginBottom: 16, color: '#006CFF' }}>Profile Photo</Title>
+          <Title level={5} style={{ marginBottom: 16, color: '#4d7c0f', fontFamily: "'Raleway', sans-serif" }}>Profile Photo</Title>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '32px' }}>
             <Form.Item name="avatar" valuePropName="fileList" getValueFromEvent={normFile}>
               <Upload listType="picture-circle" maxCount={1} beforeUpload={() => false} accept="image/*">
                 <div style={{ textAlign: 'center' }}>
-                  <CameraOutlined style={{ fontSize: '24px', color: '#006CFF' }} />
+                  <CameraOutlined style={{ fontSize: '24px', color: '#c1f11d' }} />
                   <div style={{ marginTop: 8, fontSize: '12px' }}>Upload</div>
                 </div>
               </Upload>
@@ -236,7 +241,7 @@ const StudentForm = () => {
 
           <Divider />
 
-          <Title level={5} style={{ marginBottom: 16, color: '#006CFF' }}>Personal Information</Title>
+          <Title level={5} style={{ marginBottom: 16, color: '#4d7c0f', fontFamily: "'Raleway', sans-serif" }}>Personal Information</Title>
           <Row gutter={24}>
             <Col span={12}>
               <Form.Item name="name" label={<Text strong>Full Name</Text>} rules={[{ required: true, message: 'Please enter your full name' }]}>
@@ -257,8 +262,59 @@ const StudentForm = () => {
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item name="university" label={<Text strong>University / School</Text>} rules={[{ required: true, message: 'Please enter your institution' }]}>
-                <Input prefix={<BookOutlined style={{ color: '#bfbfbf' }} />} placeholder="SDU / IITU / AITU" style={{ height: '45px', borderRadius: '8px' }} />
+              <Form.Item name="school" label={<Text strong>School</Text>} rules={[{ required: true, message: 'Please select your school' }]}>
+                <Select
+                  showSearch
+                  placeholder="Select your school"
+                  optionFilterProp="label"
+                  style={{ height: '45px' }}
+                  suffixIcon={<BookOutlined style={{ color: '#bfbfbf' }} />}
+                  options={[
+                    { label: 'НИШ ФМН Алматы', value: 'НИШ ФМН Алматы' },
+                    { label: 'НИШ ФМН Астана', value: 'НИШ ФМН Астана' },
+                    { label: 'НИШ ХБН Алматы', value: 'НИШ ХБН Алматы' },
+                    { label: 'НИШ ХБН Астана', value: 'НИШ ХБН Астана' },
+                    { label: 'НИШ ФМН Шымкент', value: 'НИШ ФМН Шымкент' },
+                    { label: 'НИШ ФМН Караганда', value: 'НИШ ФМН Караганда' },
+                    { label: 'НИШ ФМН Актобе', value: 'НИШ ФМН Актобе' },
+                    { label: 'НИШ ФМН Атырау', value: 'НИШ ФМН Атырау' },
+                    { label: 'НИШ ФМН Кызылорда', value: 'НИШ ФМН Кызылорда' },
+                    { label: 'НИШ ФМН Тараз', value: 'НИШ ФМН Тараз' },
+                    { label: 'НИШ ФМН Уральск', value: 'НИШ ФМН Уральск' },
+                    { label: 'НИШ ФМН Актау', value: 'НИШ ФМН Актау' },
+                    { label: 'НИШ ФМН Костанай', value: 'НИШ ФМН Костанай' },
+                    { label: 'НИШ ФМН Павлодар', value: 'НИШ ФМН Павлодар' },
+                    { label: 'НИШ ФМН Петропавловск', value: 'НИШ ФМН Петропавловск' },
+                    { label: 'НИШ ФМН Семей', value: 'НИШ ФМН Семей' },
+                    { label: 'НИШ ФМН Талдыкорган', value: 'НИШ ФМН Талдыкорган' },
+                    { label: 'НИШ ФМН Туркестан', value: 'НИШ ФМН Туркестан' },
+                    { label: 'НИШ ФМН Усть-Каменогорск', value: 'НИШ ФМН Усть-Каменогорск' },
+                    { label: 'НИШ ХБН Караганда', value: 'НИШ ХБН Караганда' },
+                    { label: 'НИШ ХБН Шымкент', value: 'НИШ ХБН Шымкент' },
+                    { label: 'НИШ ХБН Актобе', value: 'НИШ ХБН Актобе' },
+                    { label: 'БИЛ Алматы', value: 'БИЛ Алматы' },
+                    { label: 'БИЛ Астана', value: 'БИЛ Астана' },
+                    { label: 'БИЛ Шымкент', value: 'БИЛ Шымкент' },
+                    { label: 'БИЛ Караганда', value: 'БИЛ Караганда' },
+                    { label: 'БИЛ Актобе', value: 'БИЛ Актобе' },
+                    { label: 'БИЛ Атырау', value: 'БИЛ Атырау' },
+                    { label: 'БИЛ Кызылорда', value: 'БИЛ Кызылорда' },
+                    { label: 'БИЛ Тараз', value: 'БИЛ Тараз' },
+                    { label: 'БИЛ Уральск', value: 'БИЛ Уральск' },
+                    { label: 'БИЛ Актау', value: 'БИЛ Актау' },
+                    { label: 'Гимназия №1 Алматы', value: 'Гимназия №1 Алматы' },
+                    { label: 'Гимназия №1 Астана', value: 'Гимназия №1 Астана' },
+                    { label: 'Лицей №1 Алматы', value: 'Лицей №1 Алматы' },
+                    { label: 'Лицей №1 Астана', value: 'Лицей №1 Астана' },
+                    { label: 'РФМШ Алматы', value: 'РФМШ Алматы' },
+                    { label: 'Haileybury Almaty', value: 'Haileybury Almaty' },
+                    { label: 'Haileybury Astana', value: 'Haileybury Astana' },
+                    { label: 'QSI Almaty', value: 'QSI Almaty' },
+                    { label: 'QSI Astana', value: 'QSI Astana' },
+                    { label: 'Miras International School', value: 'Miras International School' },
+                    { label: 'Другая школа', value: 'other' },
+                  ]}
+                />
               </Form.Item>
             </Col>
             <Col span={8}>
@@ -280,20 +336,20 @@ const StudentForm = () => {
           </Row>
 
           <Row gutter={24}>
-            <Col span={8}>
-              <Form.Item name="gpa" label={<Text strong>GPA</Text>}>
-                <InputNumber min={0} max={4} step={0.1} placeholder="3.5" style={{ width: '100%', height: '45px', borderRadius: '8px' }} />
+            <Col span={12}>
+              <Form.Item name="contactMethod" label={<Text strong>Preferred Contact Method</Text>} rules={[{ required: true, message: 'Please select a contact method' }]}>
+                <Select placeholder="How should we contact you?" style={{ height: '45px' }}>
+                  <Select.Option value="telegram">Telegram</Select.Option>
+                  <Select.Option value="instagram">Instagram</Select.Option>
+                  <Select.Option value="whatsapp">WhatsApp</Select.Option>
+                  <Select.Option value="email">Email</Select.Option>
+                  <Select.Option value="phone">Phone</Select.Option>
+                </Select>
               </Form.Item>
             </Col>
-            <Col span={8}>
-              <Form.Item name="yearOfStudy" label={<Text strong>Year of Study</Text>}>
-                <Select placeholder="Select year" style={{ height: '45px' }}>
-                  <Select.Option value={1}>1st year</Select.Option>
-                  <Select.Option value={2}>2nd year</Select.Option>
-                  <Select.Option value={3}>3rd year</Select.Option>
-                  <Select.Option value={4}>4th year</Select.Option>
-                  <Select.Option value={0}>High School</Select.Option>
-                </Select>
+            <Col span={12}>
+              <Form.Item name="contactHandle" label={<Text strong>Contact Handle</Text>} rules={[{ required: true, message: 'Please enter your contact handle' }]}>
+                <Input placeholder="@username or phone number" style={{ height: '45px', borderRadius: '8px' }} />
               </Form.Item>
             </Col>
           </Row>
@@ -301,7 +357,7 @@ const StudentForm = () => {
           <Divider />
 
           {/* IELTS & UNT SECTION */}
-          <Title level={5} style={{ marginBottom: 16, color: '#006CFF' }}>Academic Credentials</Title>
+          <Title level={5} style={{ marginBottom: 16, color: '#4d7c0f' }}>Academic Credentials</Title>
           <Row gutter={24}>
             <Col span={12}>
               <Form.Item name="ielts" label={<Text strong>IELTS Score (6.5-9.0)</Text>}>
@@ -334,7 +390,7 @@ const StudentForm = () => {
           <Divider />
 
           {/* VIDEO PRESENTATION SECTION */}
-          <Title level={5} style={{ marginBottom: 16, color: '#006CFF' }}>Video Presentation</Title>
+          <Title level={5} style={{ marginBottom: 16, color: '#4d7c0f' }}>Video Presentation</Title>
           <Alert
             title="Better to lose strong than pass weak"
             description="Mandatory 1-minute video introduction. Link to Loom, YouTube, or Google Drive."
@@ -357,7 +413,7 @@ const StudentForm = () => {
           <Divider />
 
           {/* Skills */}
-          <Title level={5} style={{ marginTop: 24, marginBottom: 16, color: '#006CFF' }}>Skills</Title>
+          <Title level={5} style={{ marginTop: 24, marginBottom: 16, color: '#4d7c0f' }}>Skills</Title>
           <div style={{ marginBottom: 16 }}>
             <Space wrap>
               {skills.map((skill, i) => (
@@ -379,9 +435,9 @@ const StudentForm = () => {
           </div>
 
           {/* Achievements */}
-          <Title level={5} style={{ marginTop: 24, marginBottom: 16, color: '#006CFF' }}>Achievements</Title>
+          <Title level={5} style={{ marginTop: 24, marginBottom: 16, color: '#4d7c0f' }}>Achievements</Title>
           {achievements.map((a, i) => (
-            <Card key={i} size="small" style={{ marginBottom: 12, borderRadius: '12px', background: '#F9FAFB' }}
+            <Card key={i} size="small" style={{ marginBottom: 12, borderRadius: '12px', background: '#F9FAFB', transition: 'box-shadow 0.2s ease', border: '1px solid #E2E8F0' }}
               extra={<Button type="text" danger icon={<DeleteOutlined />} onClick={() => removeAchievement(i)} />}
             >
               <Row gutter={16}>
@@ -418,7 +474,7 @@ const StudentForm = () => {
           </Button>
 
           {/* Essay */}
-          <Title level={5} style={{ marginTop: 8, marginBottom: 16, color: '#006CFF' }}>Motivation Essay</Title>
+          <Title level={5} style={{ marginTop: 8, marginBottom: 16, color: '#4d7c0f' }}>Motivation Essay</Title>
           <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
             Upload a PDF or write your essay directly. Our AI will evaluate your leadership potential, motivation, resilience, and more.
           </Text>
@@ -446,20 +502,20 @@ const StudentForm = () => {
 
           {/* AI Nudge Button */}
           <div style={{
-            background: 'linear-gradient(135deg, #F0F7FF 0%, #E8F4FD 100%)',
+            background: 'rgba(193, 241, 29, 0.08)',
             borderRadius: '14px',
             padding: '20px 24px',
             marginBottom: '24px',
-            border: '1px solid #D6E8FF',
+            border: '1px solid rgba(193, 241, 29, 0.2)',
           }}>
             <Row justify="space-between" align="middle">
               <Col>
                 <Space>
-                  <BulbOutlined style={{ fontSize: 20, color: '#006CFF' }} />
+                  <BulbOutlined style={{ fontSize: 20, color: '#c1f11d' }} />
                   <div>
-                    <Text strong style={{ fontSize: 14, color: '#1F2937' }}>AI Application Assistant</Text>
+                    <Text strong style={{ fontSize: 14, color: '#1E293B' }}>AI Application Assistant</Text>
                     <br />
-                    <Text type="secondary" style={{ fontSize: 12 }}>
+                    <Text style={{ fontSize: 12, color: '#64748B' }}>
                       Get personalized tips to strengthen your application before submitting
                     </Text>
                   </div>
@@ -498,12 +554,12 @@ const StudentForm = () => {
                 <Space direction="vertical" style={{ width: '100%' }} size={16}>
                   {nudgeQuestions.map((q, i) => {
                     const iconMap: Record<string, any> = {
-                      essay: <EditOutlined style={{ color: '#006CFF' }} />,
+                      essay: <EditOutlined style={{ color: '#c1f11d' }} />,
                       achievements: <TrophyOutlined style={{ color: '#F59E0B' }} />,
                       skills: <StarOutlined style={{ color: '#10B981' }} />,
                       general: <RocketOutlined style={{ color: '#8B5CF6' }} />,
                     };
-                    const priorityColor = q.priority === 'high' ? '#006CFF' : q.priority === 'medium' ? '#F59E0B' : '#9CA3AF';
+                    const priorityColor = q.priority === 'high' ? '#c1f11d' : q.priority === 'medium' ? '#F59E0B' : '#9CA3AF';
 
                     return (
                       <div key={q.id} style={{
@@ -548,7 +604,7 @@ const StudentForm = () => {
                     type="primary"
                     onClick={handleSaveAnswers}
                     icon={<EditOutlined />}
-                    style={{ borderRadius: '10px', fontWeight: 600, background: '#006CFF' }}
+                    style={{ borderRadius: '10px', fontWeight: 600, background: '#c1f11d' }}
                   >
                     Save answers
                   </Button>
@@ -581,12 +637,15 @@ const StudentForm = () => {
               block
               loading={submitting}
               style={{
-                height: '50px',
-                borderRadius: '12px',
-                background: '#006CFF',
+                height: '52px',
+                borderRadius: '14px',
+                background: '#c1f11d',
+                color: '#141414',
+                border: 'none',
                 fontSize: '16px',
-                fontWeight: 600,
-                boxShadow: '0 4px 12px rgba(0, 108, 255, 0.2)',
+                fontWeight: 700,
+                fontFamily: "'Raleway', sans-serif",
+                boxShadow: '0 4px 20px rgba(193, 241, 29, 0.3)',
               }}
             >
               {submitting ? 'Submitting ...' : 'Next: Situational Test'}

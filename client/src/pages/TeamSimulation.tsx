@@ -140,23 +140,23 @@ export default function TeamSimulation() {
     return (
       <div style={{
         padding: '40px 20px',
-        background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+        background: 'linear-gradient(160deg, #fafafa 0%, #f0f4e8 100%)',
         minHeight: '100vh',
-        fontFamily: 'Inter, sans-serif',
+        fontFamily: "'Raleway', sans-serif",
       }}>
-        <div style={{ maxWidth: 780, margin: '0 auto' }}>
+        <div style={{ maxWidth: 780, margin: '0 auto', animation: 'fadeInUp 0.5s cubic-bezier(0.16,1,0.3,1) both' }}>
           {/* Header */}
           <div style={{ textAlign: 'center', marginBottom: 40 }}>
             <div style={{
               width: 56, height: 56,
-              background: 'linear-gradient(135deg, #006CFF 0%, #00D8E6 100%)',
+              background: '#c1f11d',
               borderRadius: 16, margin: '0 auto 20px',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <TeamOutlined style={{ fontSize: 28, color: 'white' }} />
+              <TeamOutlined style={{ fontSize: 28, color: '#141414' }} />
             </div>
-            <Title level={2} style={{ marginBottom: 8 }}>Командная симуляция</Title>
-            <Text type="secondary" style={{ fontSize: 15 }}>
+            <Title level={2} style={{ marginBottom: 8, color: '#1E293B', fontFamily: "'Raleway', sans-serif" }}>Командная симуляция</Title>
+            <Text style={{ fontSize: 15, color: '#64748B' }}>
               Оценка лидерства и командной работы в реальной ситуации
             </Text>
           </div>
@@ -164,22 +164,22 @@ export default function TeamSimulation() {
           {/* Scenario Card */}
           <Card
             variant="borderless"
-            style={{ borderRadius: 20, boxShadow: '0 10px 30px rgba(0,0,0,0.06)', marginBottom: 28 }}
+            style={{ borderRadius: 20, boxShadow: '0 10px 30px rgba(0,0,0,0.06)', marginBottom: 28, background: '#ffffff', border: '1px solid #E2E8F0' }}
           >
             <div style={{
-              display: 'inline-block', background: '#F0F7FF', color: '#006CFF',
+              display: 'inline-block', background: 'rgba(193,241,29,0.1)', color: '#c1f11d',
               padding: '4px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600, marginBottom: 16,
             }}>
               Ситуация
             </div>
-            <Title level={4} style={{ marginBottom: 12 }}>"Команда мечты под давлением"</Title>
-            <Paragraph style={{ fontSize: 15, lineHeight: 1.8, color: '#444' }}>
+            <Title level={4} style={{ marginBottom: 12, color: '#1E293B' }}>"Команда мечты под давлением"</Title>
+            <Paragraph style={{ fontSize: 15, lineHeight: 1.8, color: '#475569' }}>
               Ваша команда из 4 человек (включая вас) выиграла небольшой грант и взялась организовать{' '}
               <strong>бесплатные образовательные курсы для детей в малообеспеченном районе города</strong>.
               До презентации результатов для спонсора (который решает, продолжить ли финансирование){' '}
               осталось <strong>48 часов</strong>. Внезапно — ситуация в команде стала критической.
             </Paragraph>
-            <Paragraph style={{ fontSize: 14, color: '#666', margin: 0 }}>
+            <Paragraph style={{ fontSize: 14, color: '#64748B', margin: 0 }}>
               Вы — неформальный лидер команды. В чате уже написали ваши коллеги.
               Напишите команде 5 сообщений — после каждого все трое ответят вам.
               Нет правильных или неправильных ответов. Оценивается ваш стиль, ценности и поведение.
@@ -192,15 +192,15 @@ export default function TeamSimulation() {
               const agent = AGENT_CONFIG[key];
               return (
                 <div key={key} style={{
-                  background: 'white',
+                  background: '#f5f5f5',
                   borderRadius: 16,
                   padding: '20px 16px',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                   borderLeft: `4px solid ${agent.color}`,
                 }}>
                   <div style={{ fontSize: 32, marginBottom: 10 }}>{agent.emoji}</div>
-                  <Text strong style={{ fontSize: 16, display: 'block', marginBottom: 6 }}>{agent.name}</Text>
-                  <Text type="secondary" style={{ fontSize: 13 }}>{agent.label}</Text>
+                  <Text strong style={{ fontSize: 16, display: 'block', marginBottom: 6, color: '#1E293B' }}>{agent.name}</Text>
+                  <Text style={{ fontSize: 13, color: '#64748B' }}>{agent.label}</Text>
                 </div>
               );
             })}
@@ -213,7 +213,8 @@ export default function TeamSimulation() {
               onClick={startSimulation}
               style={{
                 borderRadius: 12, height: 52, paddingInline: 48,
-                background: '#006CFF', fontSize: 16, fontWeight: 600,
+                background: '#c1f11d', color: '#141414', border: 'none',
+                fontSize: 16, fontWeight: 700, fontFamily: "'Raleway', sans-serif",
               }}
             >
               Начать симуляцию
@@ -238,17 +239,17 @@ export default function TeamSimulation() {
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         minHeight: '100vh', padding: '40px 20px',
-        background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
-        fontFamily: 'Inter, sans-serif',
+        background: '#fafafa',
+        fontFamily: "'Raleway', sans-serif",
       }}>
         <div style={{ maxWidth: 540, width: '100%', textAlign: 'center' }}>
           <CheckCircleFilled style={{ fontSize: 72, color: '#52c41a', marginBottom: 24 }} />
-          <Title level={2} style={{ marginBottom: 12 }}>
+          <Title level={2} style={{ marginBottom: 12, color: '#1E293B' }}>
             🎉 Заявка полностью отправлена!
           </Title>
-          <Paragraph style={{ fontSize: 16, color: '#555', lineHeight: 1.8, marginBottom: 28 }}>
+          <Paragraph style={{ fontSize: 16, color: '#64748B', lineHeight: 1.8, marginBottom: 28 }}>
             {candidateName ? `${candidateName}, ваши` : 'Ваши'} ответы записаны и переданы
-            приёмной комиссии inVision U для детального анализа.
+            приёмной комиссии iinVision U для детального анализа.
           </Paragraph>
 
           {/* Temp password reveal */}
@@ -257,13 +258,13 @@ export default function TeamSimulation() {
               variant="borderless"
               style={{
                 borderRadius: 16, boxShadow: '0 6px 20px rgba(0,108,255,0.12)',
-                marginBottom: 24, background: '#F0F7FF', border: '1px solid #D6E8FF',
+                marginBottom: 24, background: '#1f1f1f', border: '1px solid rgba(193,241,29,0.15)',
               }}
             >
               <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 4 }}>
                 Ваш временный пароль для личного кабинета:
               </Text>
-              <div style={{ fontSize: 32, fontWeight: 800, color: '#006CFF', letterSpacing: 4, marginBottom: 6 }}>
+              <div style={{ fontSize: 32, fontWeight: 800, color: '#c1f11d', letterSpacing: 4, marginBottom: 6 }}>
                 {tempPassword}
               </div>
               {userEmail && (
@@ -288,7 +289,7 @@ export default function TeamSimulation() {
             type="primary"
             size="large"
             href="/login"
-            style={{ borderRadius: 12, height: 52, paddingInline: 40, background: '#006CFF', fontSize: 16 }}
+            style={{ borderRadius: 12, height: 52, paddingInline: 40, background: '#c1f11d', fontSize: 16 }}
           >
             Войти в личный кабинет →
           </Button>
@@ -304,26 +305,26 @@ export default function TeamSimulation() {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', height: '100vh',
-      background: '#f0f2f5', fontFamily: 'Inter, sans-serif',
+      background: '#fafafa', fontFamily: "'Raleway', sans-serif",
     }}>
       {/* Top bar */}
       <div style={{
-        background: 'white', padding: '14px 20px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(12px)', padding: '14px 20px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        flexShrink: 0,
+        flexShrink: 0, borderBottom: '1px solid #E2E8F0',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{
             width: 38, height: 38,
-            background: 'linear-gradient(135deg, #006CFF 0%, #00D8E6 100%)',
+            background: '#c1f11d',
             borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <TeamOutlined style={{ color: 'white', fontSize: 18 }} />
+            <TeamOutlined style={{ color: '#141414', fontSize: 18 }} />
           </div>
           <div>
-            <Text strong style={{ fontSize: 15, display: 'block', lineHeight: 1.2 }}>Командный чат</Text>
-            <Text type="secondary" style={{ fontSize: 12 }}>Бесплатные курсы для детей · 48 часов до презентации</Text>
+            <Text strong style={{ fontSize: 15, display: 'block', lineHeight: 1.2, color: '#1E293B' }}>Командный чат</Text>
+            <Text style={{ fontSize: 12, color: '#94A3B8' }}>Бесплатные курсы для детей · 48 часов до презентации</Text>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -354,11 +355,11 @@ export default function TeamSimulation() {
               return (
                 <div key={idx} style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 14 }}>
                   <div style={{
-                    background: '#006CFF', color: 'white',
+                    background: '#c1f11d', color: '#141414',
                     borderRadius: '18px 18px 4px 18px',
                     padding: '10px 16px', maxWidth: '70%',
                     fontSize: 15, lineHeight: 1.5,
-                    boxShadow: '0 2px 8px rgba(0,108,255,0.3)',
+                    boxShadow: '0 2px 8px rgba(193,241,29,0.3)',
                   }}>
                     {msg.content}
                   </div>
@@ -376,7 +377,7 @@ export default function TeamSimulation() {
               <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 14 }}>
                 <div style={{
                   width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-                  background: 'white', border: `2px solid ${borderColor}`,
+                  background: '#f5f5f5', border: `2px solid ${borderColor}`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 16,
                 }}>
@@ -387,10 +388,10 @@ export default function TeamSimulation() {
                     {name}
                   </Text>
                   <div style={{
-                    background: 'white', borderRadius: '4px 18px 18px 18px',
+                    background: '#ffffff', borderRadius: '4px 18px 18px 18px',
                     borderLeft: `3px solid ${borderColor}`,
-                    padding: '10px 16px', fontSize: 15, lineHeight: 1.5,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                    padding: '10px 16px', fontSize: 15, lineHeight: 1.5, color: '#1E293B',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
                   }}>
                     {msg.content}
                   </div>
@@ -404,15 +405,15 @@ export default function TeamSimulation() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
               <div style={{
                 width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-                background: 'white', border: '2px solid #d9d9d9',
+                background: '#f5f5f5', border: '2px solid #E2E8F0',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 16,
               }}>
                 💬
               </div>
               <div style={{
-                background: 'white', borderRadius: '4px 18px 18px 18px',
-                borderLeft: '3px solid #d9d9d9',
+                background: '#ffffff', borderRadius: '4px 18px 18px 18px',
+                borderLeft: '3px solid #333',
                 padding: '10px 16px',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
               }}>
@@ -437,8 +438,9 @@ export default function TeamSimulation() {
 
       {/* Input Area */}
       <div style={{
-        background: 'white', padding: '14px 16px',
-        boxShadow: '0 -2px 8px rgba(0,0,0,0.06)', flexShrink: 0,
+        background: '#ffffff', padding: '14px 16px',
+        boxShadow: '0 -2px 8px rgba(0,0,0,0.2)', flexShrink: 0,
+        borderTop: '1px solid #E2E8F0',
       }}>
         <div style={{ maxWidth: 700, margin: '0 auto', display: 'flex', gap: 10, alignItems: 'flex-end' }}>
           <TextArea
@@ -457,7 +459,7 @@ export default function TeamSimulation() {
             disabled={inputDisabled || !inputText.trim()}
             style={{
               borderRadius: 12, height: 44, width: 44, padding: 0,
-              background: '#006CFF', flexShrink: 0,
+              background: '#c1f11d', flexShrink: 0,
             }}
           />
         </div>

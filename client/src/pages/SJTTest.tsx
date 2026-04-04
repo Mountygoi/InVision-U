@@ -161,14 +161,14 @@ const SJTTest = () => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
-        fontFamily: 'Inter, sans-serif',
+        background: '#fafafa',
+        fontFamily: "'Raleway', sans-serif",
       }}>
-        <Spin indicator={<LoadingOutlined style={{ fontSize: 48, color: '#006CFF' }} spin />} />
-        <Title level={3} style={{ marginTop: 24, color: '#1a1a2e' }}>
+        <Spin indicator={<LoadingOutlined style={{ fontSize: 48, color: '#c1f11d' }} spin />} />
+        <Title level={3} style={{ marginTop: 24, color: '#1E293B' }}>
           AI анализирует вашу заявку...
         </Title>
-        <Text type="secondary">Это может занять 15-30 секунд — AI оценивает тест и эссе</Text>
+        <Text style={{ color: '#64748B' }}>Это может занять 15-30 секунд — AI оценивает тест и эссе</Text>
       </div>
     );
   }
@@ -177,22 +177,23 @@ const SJTTest = () => {
   return (
     <div style={{
       padding: '40px 20px',
-      background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+      background: 'linear-gradient(160deg, #fafafa 0%, #f0f4e8 100%)',
       minHeight: '100vh',
-      fontFamily: 'Inter, sans-serif',
+      fontFamily: "'Raleway', sans-serif",
     }}>
-      <div style={{ maxWidth: 720, margin: '0 auto' }}>
+      <div style={{ maxWidth: 720, margin: '0 auto', animation: 'fadeInUp 0.5s cubic-bezier(0.16,1,0.3,1) both' }}>
         {/* Logo + Title */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{
             width: 48, height: 48,
-            background: 'linear-gradient(135deg, #006CFF 0%, #00D8E6 100%)',
+            background: '#c1f11d',
             borderRadius: 12, margin: '0 auto 16px',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'white', fontWeight: 'bold', fontSize: 20,
-          }}>N</div>
-          <Title level={2} style={{ marginBottom: 4 }}>Ситуационный тест (SJT)</Title>
-          <Text type="secondary">Оцените свои навыки принятия решений в реальных ситуациях</Text>
+            color: '#141414', fontWeight: 'bold', fontSize: 18,
+            fontFamily: "'Raleway', sans-serif",
+          }}>iU</div>
+          <Title level={2} style={{ marginBottom: 4, color: '#1E293B', fontFamily: "'Raleway', sans-serif" }}>Ситуационный тест (SJT)</Title>
+          <Text style={{ color: '#64748B' }}>Оцените свои навыки принятия решений в реальных ситуациях</Text>
         </div>
 
         {/* Progress stepper */}
@@ -202,7 +203,7 @@ const SJTTest = () => {
               <div style={{
                 width: 36, height: 36, borderRadius: '50%',
                 background: idx < currentStep ? '#52c41a'
-                  : idx === currentStep ? '#006CFF' : '#e0e0e0',
+                  : idx === currentStep ? '#c1f11d' : '#E2E8F0',
                 color: 'white',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontWeight: 600, fontSize: 14,
@@ -213,7 +214,7 @@ const SJTTest = () => {
               {idx < SCENARIOS.length - 1 && (
                 <div style={{
                   width: 40, height: 2,
-                  background: idx < currentStep ? '#52c41a' : '#e0e0e0',
+                  background: idx < currentStep ? '#52c41a' : '#E2E8F0',
                   transition: 'all 0.3s ease',
                 }} />
               )}
@@ -231,14 +232,16 @@ const SJTTest = () => {
             variant="borderless"
             style={{
               borderRadius: 20,
-              boxShadow: '0 20px 40px rgba(0,0,0,0.05)',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.06)',
               marginBottom: 24,
+              background: '#ffffff',
+              border: '1px solid #E2E8F0',
             }}
           >
             <div style={{
               display: 'inline-block',
-              background: '#F0F7FF',
-              color: '#006CFF',
+              background: '#1f1f1f',
+              color: '#4d7c0f',
               padding: '4px 14px',
               borderRadius: 8,
               fontSize: 13,
@@ -249,7 +252,7 @@ const SJTTest = () => {
             </div>
 
             <Paragraph style={{
-              fontSize: 16, lineHeight: 1.7, color: '#1a1a2e', marginBottom: 28,
+              fontSize: 16, lineHeight: 1.7, color: '#475569', marginBottom: 28,
             }}>
               {currentScenario.situation}
             </Paragraph>
@@ -268,16 +271,16 @@ const SJTTest = () => {
                       padding: '14px 18px',
                       borderRadius: 12,
                       border: currentAnswer?.chosenOption === opt.key
-                        ? '2px solid #006CFF' : '2px solid #f0f0f0',
+                        ? '2px solid #c1f11d' : '2px solid #E2E8F0',
                       background: currentAnswer?.chosenOption === opt.key
-                        ? '#F0F7FF' : 'white',
+                        ? 'rgba(193,241,29,0.1)' : '#f5f5f5',
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
                     }}
                   >
                     <Radio value={opt.key} style={{ width: '100%' }}>
                       <Text style={{ fontSize: 14 }}>
-                        <span style={{ fontWeight: 600, color: '#006CFF', marginRight: 8 }}>{opt.key})</span>
+                        <span style={{ fontWeight: 600, color: '#4d7c0f', marginRight: 8 }}>{opt.key})</span>
                         {opt.text}
                       </Text>
                     </Radio>
@@ -320,11 +323,13 @@ const SJTTest = () => {
               borderRadius: 12,
               height: 48,
               paddingInline: 28,
-              background: isLastStep ? '#16A34A' : '#006CFF',
+              background: isLastStep ? '#16A34A' : '#c1f11d',
+              color: '#141414',
+              border: 'none',
+              fontWeight: 700,
               boxShadow: isLastStep
-                ? '0 4px 12px rgba(22, 163, 74, 0.3)'
-                : '0 4px 12px rgba(0, 108, 255, 0.2)',
-              fontWeight: isLastStep ? 700 : 500,
+                ? '0 4px 20px rgba(22, 163, 74, 0.3)'
+                : '0 4px 20px rgba(193, 241, 29, 0.3)',
             }}
           >
             {isLastStep ? 'Submit Application' : 'Далее'}

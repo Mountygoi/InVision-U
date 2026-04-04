@@ -37,7 +37,7 @@ router.get('/', async (req, res) => {
   try {
     const { search, status, sort = 'composite_score', order = 'desc' } = req.query;
 
-    let query = 'SELECT id, name, email, password, avatar_url, university, city, region, is_rural, gpa, year_of_study, achievements, skills, essay_text, ai_scores, ai_summary, ai_flags, ai_model_version, ai_analyzed_at, composite_score, achievement_score, status, reviewer_notes, created_at, updated_at, interview_time, personality_scores, sjt_scores, simulation_scores, tech_score, soft_score, tech_notes, soft_notes, ielts_file_path, unt_file_path, ielts_approved, unt_approved FROM candidates WHERE 1=1';
+    let query = 'SELECT id, name, email, password, avatar_url, university, school, city, region, is_rural, gpa, year_of_study, achievements, skills, essay_text, ai_scores, ai_summary, ai_flags, ai_model_version, ai_analyzed_at, composite_score, achievement_score, status, reviewer_notes, created_at, updated_at, interview_time, personality_scores, sjt_scores, simulation_scores, tech_score, soft_score, tech_notes, soft_notes, ielts_file_path, unt_file_path, ielts_approved, unt_approved, contact_method, contact_handle FROM candidates WHERE 1=1';
     const params: any[] = [];
     let paramIdx = 1;
 
@@ -67,6 +67,7 @@ router.get('/', async (req, res) => {
       password: row.password,
       avatarUrl: row.avatar_url, // Добавлено поле аватарки
       university: row.university,
+      school: row.school,
       city: row.city,
       region: row.region,
       isRural: row.is_rural,
@@ -98,6 +99,8 @@ router.get('/', async (req, res) => {
       untFilePath: row.unt_file_path,
       ieltsApproved: row.ielts_approved ?? false,
       untApproved: row.unt_approved ?? false,
+      contactMethod: row.contact_method,
+      contactHandle: row.contact_handle,
     }));
 
     res.json(candidates);
@@ -123,6 +126,7 @@ router.get('/:id', async (req, res) => {
       phone: row.phone,
       avatarUrl: row.avatar_url,
       university: row.university,
+      school: row.school,
       city: row.city,
       region: row.region,
       isRural: row.is_rural,
@@ -163,6 +167,8 @@ router.get('/:id', async (req, res) => {
       ielts: row.ielts,
       unt: row.unt,
       videoUrl: row.video_url,
+      contactMethod: row.contact_method,
+      contactHandle: row.contact_handle,
     });
   } catch (err) {
     console.error('Error fetching candidate:', err);
@@ -186,6 +192,7 @@ router.post(
         email,
         phone,
         university,
+        school,
         city,
         region,
         gpa,
@@ -197,6 +204,8 @@ router.post(
         ielts,
         unt,
         videoUrl,
+        contactMethod,
+        contactHandle,
       } = req.body as any;
 
       if (!name || !city) {
@@ -245,16 +254,18 @@ router.post(
 
       const result = await pool.query(
         `INSERT INTO candidates (
-          name, email, phone, university, city, region, is_rural,
+          name, email, phone, university, school, city, region, is_rural,
           gpa, year_of_study, achievements, skills,
           essay_text, essay_file_path, achievement_score,
           status, password, avatar_url, composite_score,
           nudge_answers, ielts, unt, video_url,
-          ielts_file_path, unt_file_path
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)
+          ielts_file_path, unt_file_path,
+          contact_method, contact_handle
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27)
         RETURNING id`,
         [
           name, email || null, phone || null, university || null,
+          school || null,
           city, region || city, isRural,
           gpa ? parseFloat(gpa) : null, yearOfStudy ? parseInt(yearOfStudy) : null,
           JSON.stringify(parsedAchievements), parsedSkills,
@@ -266,6 +277,8 @@ router.post(
           videoUrl || null,
           ieltsFilePath,
           untFilePath,
+          contactMethod || null,
+          contactHandle || null,
         ]
       );
 

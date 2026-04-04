@@ -8,7 +8,7 @@ import type { DashboardStats } from '../types';
 const { Title, Text } = Typography;
 
 const STATUS_COLORS: Record<string, string> = {
-  new: '#006CFF',
+  new: '#c1f11d',
   under_review: '#F59E0B',
   interview: '#8B5CF6',
   accepted: '#10B981',
@@ -25,7 +25,7 @@ const STATUS_LABELS: Record<string, string> = {
   waitlisted: 'Waitlisted',
 };
 
-const SCORE_COLORS = ['#EF4444', '#F59E0B', '#F59E0B', '#10B981', '#006CFF'];
+const SCORE_COLORS = ['#EF4444', '#F59E0B', '#F59E0B', '#10B981', '#c1f11d'];
 
 const Dashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -42,23 +42,23 @@ const Dashboard = () => {
   if (!stats) return <div style={{ padding: 40 }}><Text type="danger">Failed to load dashboard data</Text></div>;
 
   return (
-    <div style={{ padding: '32px 40px', fontFamily: 'Inter, sans-serif' }}>
-      <Title level={2} style={{ marginBottom: '8px' }}>Admissions Dashboard</Title>
-      <Text type="secondary" style={{ display: 'block', marginBottom: '32px' }}>AI-powered candidate screening overview for InVision U</Text>
+    <div style={{ padding: '32px 40px', fontFamily: "'Raleway', sans-serif", animation: 'fadeInUp 0.5s cubic-bezier(0.16,1,0.3,1) both' }}>
+      <Title level={2} style={{ marginBottom: '8px', letterSpacing: '-0.02em' }}>Admissions Dashboard</Title>
+      <Text type="secondary" style={{ display: 'block', marginBottom: '32px', fontSize: 15 }}>AI-powered candidate screening overview for IinVision U</Text>
 
       {/* Metric Cards */}
       <Row gutter={[20, 20]} style={{ marginBottom: 32 }}>
         <Col span={6}>
-          <Card variant="borderless" style={{ borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+          <Card variant="borderless" style={{ borderRadius: '16px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', transition: 'transform 0.25s ease, box-shadow 0.25s ease', cursor: 'default' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)'; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ''; (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 12px rgba(0,0,0,0.04)'; }}>
             <Statistic
               title={<Text type="secondary">Total Applicants</Text>}
               value={stats.total}
-              prefix={<Users size={20} style={{ marginRight: 8, color: '#006CFF' }} />}
+              prefix={<Users size={20} style={{ marginRight: 8, color: '#c1f11d' }} />}
             />
           </Card>
         </Col>
         <Col span={6}>
-          <Card variant="borderless" style={{ borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+          <Card variant="borderless" style={{ borderRadius: '16px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', transition: 'transform 0.25s ease, box-shadow 0.25s ease', cursor: 'default' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)'; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ''; (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 12px rgba(0,0,0,0.04)'; }}>
             <Statistic
               title={<Text type="secondary">Pending Review</Text>}
               value={stats.new + stats.underReview}
@@ -67,7 +67,7 @@ const Dashboard = () => {
           </Card>
         </Col>
         <Col span={6}>
-          <Card variant="borderless" style={{ borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+          <Card variant="borderless" style={{ borderRadius: '16px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', transition: 'transform 0.25s ease, box-shadow 0.25s ease', cursor: 'default' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)'; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ''; (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 12px rgba(0,0,0,0.04)'; }}>
             <Statistic
               title={<Text type="secondary">In Interview</Text>}
               value={stats.interview}
@@ -76,7 +76,7 @@ const Dashboard = () => {
           </Card>
         </Col>
         <Col span={6}>
-          <Card variant="borderless" style={{ borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+          <Card variant="borderless" style={{ borderRadius: '16px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', transition: 'transform 0.25s ease, box-shadow 0.25s ease', cursor: 'default' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)'; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ''; (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 12px rgba(0,0,0,0.04)'; }}>
             <Statistic
               title={<Text type="secondary">Avg AI Score</Text>}
               value={stats.avgCompositeScore}
@@ -91,7 +91,7 @@ const Dashboard = () => {
       <Row gutter={[20, 20]} style={{ marginBottom: 32 }}>
         {/* Score Distribution */}
         <Col span={12}>
-          <Card title={<Text strong style={{ fontSize: 16 }}>Score Distribution</Text>} style={{ borderRadius: '16px', height: '100%' }}>
+          <Card title={<Text strong style={{ fontSize: 16 }}>Score Distribution</Text>} style={{ borderRadius: '16px', height: '100%', border: '1px solid #E2E8F0' }}>
             <div style={{ height: 250 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={stats.scoreDistribution}>
@@ -101,7 +101,7 @@ const Dashboard = () => {
                   <Tooltip />
                   <Bar dataKey="count" radius={[4, 4, 0, 0]}>
                     {stats.scoreDistribution.map((_, index) => (
-                      <Cell key={index} fill={SCORE_COLORS[index] || '#006CFF'} />
+                      <Cell key={index} fill={SCORE_COLORS[index] || '#c1f11d'} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -112,7 +112,7 @@ const Dashboard = () => {
 
         {/* Status Funnel */}
         <Col span={12}>
-          <Card title={<Text strong style={{ fontSize: 16 }}>Application Pipeline</Text>} style={{ borderRadius: '16px', height: '100%' }}>
+          <Card title={<Text strong style={{ fontSize: 16 }}>Application Pipeline</Text>} style={{ borderRadius: '16px', height: '100%', border: '1px solid #E2E8F0' }}>
             <div style={{ height: 250 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={stats.statusFunnel} layout="vertical">
@@ -123,7 +123,7 @@ const Dashboard = () => {
                   <Tooltip formatter={(value) => [String(value), 'Candidates']} />
                   <Bar dataKey="count" radius={[0, 4, 4, 0]}>
                     {stats.statusFunnel.map((entry) => (
-                      <Cell key={entry.status} fill={STATUS_COLORS[entry.status] || '#006CFF'} />
+                      <Cell key={entry.status} fill={STATUS_COLORS[entry.status] || '#c1f11d'} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -137,7 +137,7 @@ const Dashboard = () => {
       <Row gutter={[20, 20]}>
         {/* Regional Breakdown */}
         <Col span={14}>
-          <Card title={<><MapPin size={16} style={{ marginRight: 8 }} /> Regional Breakdown</>} style={{ borderRadius: '16px' }}>
+          <Card title={<><MapPin size={16} style={{ marginRight: 8 }} /> Regional Breakdown</>} style={{ borderRadius: '16px', border: '1px solid #E2E8F0' }}>
             <div style={{ height: 250 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={stats.regionBreakdown}>
@@ -145,8 +145,8 @@ const Dashboard = () => {
                   <XAxis dataKey="region" tick={{ fontSize: 11, fill: '#6B7280' }} />
                   <YAxis tick={{ fontSize: 12, fill: '#6B7280' }} allowDecimals={false} />
                   <Tooltip />
-                  <Bar dataKey="count" name="Total" fill="#006CFF" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="rural" name="Rural" fill="#00D8E6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="count" name="Total" fill="#c1f11d" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="rural" name="Rural" fill="#3dedf1" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -155,7 +155,7 @@ const Dashboard = () => {
 
         {/* Recent Applications */}
         <Col span={10}>
-          <Card title={<Text strong style={{ fontSize: 16 }}>Recent Applications</Text>} style={{ borderRadius: '16px' }}>
+          <Card title={<Text strong style={{ fontSize: 16 }}>Recent Applications</Text>} style={{ borderRadius: '16px', border: '1px solid #E2E8F0' }}>
             <List
               dataSource={stats.recentApplications}
               renderItem={item => (
@@ -166,7 +166,7 @@ const Dashboard = () => {
                     description={<Text type="secondary" style={{ fontSize: 12 }}>{item.city} &middot; {item.university || 'N/A'}</Text>}
                   />
                   <div style={{ textAlign: 'right' }}>
-                    <Text strong style={{ color: '#006CFF', fontSize: 14 }}>{Math.round(item.compositeScore)}</Text>
+                    <Text strong style={{ color: '#c1f11d', fontSize: 14 }}>{Math.round(item.compositeScore)}</Text>
                     <br />
                     <Tag color={STATUS_COLORS[item.status]} style={{ fontSize: 10, borderRadius: 4, border: 'none', marginRight: 0 }}>
                       {STATUS_LABELS[item.status] || item.status}

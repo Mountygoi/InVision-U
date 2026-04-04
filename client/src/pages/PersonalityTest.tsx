@@ -618,14 +618,14 @@ const PersonalityTest = () => {
       <div style={{
         minHeight: '100vh', display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
-        background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
-        fontFamily: 'Inter, sans-serif',
+        background: '#fafafa',
+        fontFamily: "'Raleway', sans-serif",
       }}>
-        <Spin indicator={<LoadingOutlined style={{ fontSize: 48, color: '#006CFF' }} spin />} />
-        <Title level={3} style={{ marginTop: 24, color: '#1a1a2e' }}>
+        <Spin indicator={<LoadingOutlined style={{ fontSize: 48, color: '#c1f11d' }} spin />} />
+        <Title level={3} style={{ marginTop: 24, color: '#1E293B' }}>
           ИИ анализирует ваш профиль ценностей...
         </Title>
-        <Text type="secondary">Это займёт 10–20 секунд</Text>
+        <Text style={{ color: '#64748B' }}>Это займёт 10–20 секунд</Text>
       </div>
     );
   }
@@ -635,22 +635,23 @@ const PersonalityTest = () => {
   return (
     <div style={{
       padding: '40px 20px',
-      background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
-      minHeight: '100vh', fontFamily: 'Inter, sans-serif',
+      background: 'linear-gradient(160deg, #fafafa 0%, #f0f4e8 100%)',
+      minHeight: '100vh', fontFamily: "'Raleway', sans-serif",
     }}>
-      <div style={{ maxWidth: 720, margin: '0 auto' }}>
+      <div style={{ maxWidth: 720, margin: '0 auto', animation: 'fadeInUp 0.5s cubic-bezier(0.16,1,0.3,1) both' }}>
 
         {/* Logo + Title */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
           <div style={{
             width: 48, height: 48,
-            background: 'linear-gradient(135deg, #006CFF 0%, #00D8E6 100%)',
+            background: '#c1f11d',
             borderRadius: 12, margin: '0 auto 16px',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'white', fontWeight: 'bold', fontSize: 20,
-          }}>N</div>
-          <Title level={2} style={{ marginBottom: 4 }}>Тест ценностей и личности</Title>
-          <Text type="secondary">
+            color: '#141414', fontWeight: 'bold', fontSize: 18,
+            fontFamily: "'Raleway', sans-serif",
+          }}>iU</div>
+          <Title level={2} style={{ marginBottom: 4, color: '#1E293B', fontFamily: "'Raleway', sans-serif" }}>Тест ценностей и личности</Title>
+          <Text style={{ color: '#64748B' }}>
             Ответьте честно — нет правильных или неправильных ответов
           </Text>
         </div>
@@ -667,8 +668,8 @@ const PersonalityTest = () => {
               style={{
                 width: 32, height: 32, borderRadius: '50%',
                 background: idx < clusterStep ? '#52c41a'
-                  : idx === clusterStep ? '#006CFF'
-                    : '#e0e0e0',
+                  : idx === clusterStep ? '#c1f11d'
+                    : '#E2E8F0',
                 color: 'white',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 13, fontWeight: 600,
@@ -689,7 +690,8 @@ const PersonalityTest = () => {
 
         {/* Cluster Card */}
         <Card variant="borderless" style={{
-          borderRadius: 20, boxShadow: '0 20px 40px rgba(0,0,0,0.05)', marginBottom: 24,
+          borderRadius: 20, boxShadow: '0 20px 40px rgba(0,0,0,0.06)', marginBottom: 24,
+          background: '#ffffff', border: '1px solid #E2E8F0',
         }}>
           {/* Cluster header */}
           <div style={{
@@ -697,20 +699,20 @@ const PersonalityTest = () => {
           }}>
             <div style={{
               fontSize: 28, width: 44, height: 44, borderRadius: 12,
-              background: '#F0F7FF', display: 'flex',
+              background: '#f5f5f5', display: 'flex',
               alignItems: 'center', justifyContent: 'center',
             }}>
               {currentCluster.icon}
             </div>
             <div>
-              <Title level={4} style={{ margin: 0, color: '#1a1a2e' }}>
+              <Title level={4} style={{ margin: 0, color: '#1E293B' }}>
                 {currentCluster.label}
               </Title>
             </div>
           </div>
 
           <div style={{
-            height: 2, background: 'linear-gradient(90deg, #006CFF, #00D8E6)',
+            height: 2, background: 'linear-gradient(90deg, #c1f11d, #3dedf1)',
             borderRadius: 2, marginBottom: 24,
           }} />
 
@@ -722,10 +724,10 @@ const PersonalityTest = () => {
                 <div key={q.id}>
                   <Text style={{
                     fontSize: 15, lineHeight: 1.6, display: 'block',
-                    marginBottom: 14, color: '#1a1a2e',
+                    marginBottom: 14, color: '#1E293B',
                   }}>
                     <span style={{
-                      fontWeight: 700, color: '#006CFF',
+                      fontWeight: 700, color: '#4d7c0f',
                       marginRight: 8, fontSize: 13,
                     }}>
                       {clusterStep * 5 + qIdx + 1}.
@@ -746,9 +748,9 @@ const PersonalityTest = () => {
                             padding: '12px 16px',
                             borderRadius: 12,
                             border: isSelected
-                              ? '2px solid #006CFF'
-                              : '2px solid #e5e7eb',
-                            background: isSelected ? 'rgba(0,108,255,0.07)' : 'white',
+                              ? '2px solid #c1f11d'
+                              : '2px solid #E2E8F0',
+                            background: isSelected ? 'rgba(193,241,29,0.1)' : '#f5f5f5',
                             cursor: 'pointer',
                             textAlign: 'left',
                             transition: 'all 0.15s ease',
@@ -758,15 +760,15 @@ const PersonalityTest = () => {
                         >
                           <div style={{
                             minWidth: 28, height: 28, borderRadius: '50%',
-                            background: isSelected ? '#006CFF' : '#f3f4f6',
-                            color: isSelected ? 'white' : '#6b7280',
+                            background: isSelected ? '#c1f11d' : '#E2E8F0',
+                            color: isSelected ? '#141414' : '#64748B',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontSize: 12, fontWeight: 700, flexShrink: 0,
                           }}>
                             {OPTION_LETTERS[optIdx]}
                           </div>
                           <span style={{
-                            fontSize: 14, color: isSelected ? '#006CFF' : '#374151',
+                            fontSize: 14, color: isSelected ? '#c1f11d' : '#475569',
                             fontWeight: isSelected ? 600 : 400,
                             lineHeight: 1.5, paddingTop: 4,
                           }}>
@@ -800,8 +802,11 @@ const PersonalityTest = () => {
             disabled={!clusterComplete}
             style={{
               borderRadius: 12, height: 48, paddingInline: 28,
-              background: clusterComplete ? '#006CFF' : undefined,
-              boxShadow: clusterComplete ? '0 4px 12px rgba(0,108,255,0.2)' : 'none',
+              background: clusterComplete ? '#c1f11d' : undefined,
+              color: clusterComplete ? '#141414' : undefined,
+              border: 'none',
+              fontWeight: 700,
+              boxShadow: clusterComplete ? '0 4px 20px rgba(193,241,29,0.3)' : 'none',
             }}
           >
             {isLastCluster ? (

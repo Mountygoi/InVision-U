@@ -174,7 +174,7 @@ const [evalData, setEvalData] = useState({
             <Text type="secondary" style={{ fontSize: 11 }}>{desc}</Text>
           </div>
         </Space>
-        <Text strong style={{ color: '#006CFF', fontSize: 16 }}>{scores[key]}</Text>
+        <Text strong style={{ color: '#c1f11d', fontSize: 16 }}>{scores[key]}</Text>
       </Row>
       <Row gutter={12} align="middle">
         <Col flex="auto">
@@ -195,19 +195,19 @@ const [evalData, setEvalData] = useState({
   return (
     <Content style={{ 
       padding: '24px', 
-      background: '#F8FAFC', 
+      background: '#fafafa', 
       height: 'calc(100vh - 64px)', 
       overflow: 'hidden', 
       display: 'flex',
-      flexDirection: 'column'
+      flexDirection: 'column',
+      animation: 'fadeIn 0.4s ease both'
     }}>
       <style>{`
-        body { overflow: hidden !important; }
-        .ant-layout { overflow: hidden !important; }
+        .scheduler-layout { overflow: hidden; }
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
-        .candidate-item-hover:hover { background: #F8FAFC !important; transform: translateX(4px); }
+        .candidate-item-hover:hover { background: #f5f5f5 !important; transform: translateX(4px); }
         .ant-picker-calendar-header { padding: 12px 16px !important; }
         .ant-picker-calendar-date-content { height: 60px !important; }
       `}</style>
@@ -280,7 +280,7 @@ const [evalData, setEvalData] = useState({
             styles={{ body: { height: 'calc(100% - 70px)', overflow: 'hidden', padding: '16px' } }}
             title={
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Space><CalIcon size={22} color="#006CFF" /><Title level={4} style={{ margin: 0, fontWeight: 800 }}>Global Scheduler</Title></Space>
+                <Space><CalIcon size={22} color="#c1f11d" /><Title level={4} style={{ margin: 0, fontWeight: 800 }}>Global Scheduler</Title></Space>
                 <Button icon={<RefreshCw size={16} />} onClick={fetchCandidates} loading={loading} type="primary" ghost style={{ borderRadius: '10px' }}>Refresh</Button>
               </div>
             }
@@ -299,7 +299,7 @@ const [evalData, setEvalData] = useState({
 
       {/* MODAL 1: Слоты дня */}
       <Modal
-        title={<Space><Clock size={20} color="#006CFF" /> <Text strong>Interviews: {selectedDate.format('DD MMMM YYYY')}</Text></Space>}
+        title={<Space><Clock size={20} color="#c1f11d" /> <Text strong>Interviews: {selectedDate.format('DD MMMM YYYY')}</Text></Space>}
         open={isSlotsModalVisible}
         onCancel={() => setIsSlotsModalVisible(false)}
         footer={null}
@@ -315,10 +315,10 @@ const [evalData, setEvalData] = useState({
             return (
               <div key={time} style={{ 
                 display: 'flex', alignItems: 'center', padding: '14px 18px', marginBottom: '10px', 
-                borderRadius: '16px', background: candidate ? '#F0F7FF' : '#FAFAFA',
+                borderRadius: '16px', background: candidate ? '#f0fce0' : '#FAFAFA',
                 border: candidate ? '1px solid #BAE7FF' : '1px solid #F1F5F9'
               }}>
-                <Text strong style={{ width: '70px', color: candidate ? '#006CFF' : '#94A3B8', fontSize: '15px' }}>{time}</Text>
+                <Text strong style={{ width: '70px', color: candidate ? '#c1f11d' : '#94A3B8', fontSize: '15px' }}>{time}</Text>
                 <Divider type="vertical" style={{ height: '24px' }} />
                 <div style={{ flex: 1 }}>
                   {candidate ? (
@@ -376,7 +376,7 @@ footer={[
       >
         {viewCandidate && (
           <div style={{ overflow: 'hidden', borderRadius: '16px' }}>
-            <div style={{ background: 'linear-gradient(135deg, #006CFF 0%, #00D8E6 100%)', padding: '40px', color: '#fff' }}>
+            <div style={{ background: '#c1f11d', padding: '40px', color: '#fff' }}>
               <Row align="middle" gutter={24}>
                 <Col><Avatar size={90} src={getAvatar(viewCandidate)} style={{ border: '4px solid rgba(255,255,255,0.3)' }} /></Col>
                 <Col>
@@ -392,7 +392,7 @@ footer={[
               <Row gutter={[24, 24]}>
                 <Col span={12}><Statistic title="Internal GPA" value={viewCandidate.gpa || 0} precision={2} prefix={<Star size={18} color="#F59E0B" fill="#F59E0B" />} /></Col>
                 <Col span={12}>
-                   <div style={{ background: '#F8FAFC', padding: '12px', borderRadius: '12px' }}>
+                   <div style={{ background: '#fafafa', padding: '12px', borderRadius: '12px' }}>
                       <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>CONTACTS</Text>
                       <Text style={{ fontSize: '13px', display: 'block', marginTop: '4px' }}>{viewCandidate.email}</Text>
                       <Text style={{ fontSize: '13px', display: 'block' }}>{viewCandidate.phone || '+7 (707) 123 45 67'}</Text>
@@ -406,7 +406,7 @@ footer={[
 
       {/* MODAL 4: РАСШИРЕННЫЙ SCORECARD (8 КРИТЕРИЕВ) */}
       <Modal
-  title={<Space><ShieldCheck size={20} color="#006CFF" /> <Text strong>Evidence-Based Scorecard: {viewCandidate?.name}</Text></Space>}
+  title={<Space><ShieldCheck size={20} color="#c1f11d" /> <Text strong>Evidence-Based Scorecard: {viewCandidate?.name}</Text></Space>}
   open={isEvalModalOpen}
   onCancel={() => setIsEvalModalOpen(false)}
   onOk={() => handleScoreSubmit()}
@@ -415,7 +415,7 @@ footer={[
   width={650}
 >
         <Space direction="vertical" style={{ width: '100%', padding: '10px 0' }} size="large">
-          <Card size="small" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+          <Card size="small" style={{ background: '#fafafa', border: '1px solid #E2E8F0' }}>
             <Text type="secondary" style={{ fontSize: '11px' }}>ТЕКУЩАЯ КОМИССИЯ:</Text>
             <Select style={{ width: '100%', marginTop: 8 }} value={evalData.panelType} onChange={v => setEvalData({...evalData, panelType: v})}>
               <Select.Option value="Technical">Академическая панель (Panel A)</Select.Option>
@@ -426,10 +426,10 @@ footer={[
           <div style={{ padding: '0 5px' }}>
             {evalData.panelType === 'Technical' ? (
               <>
-                {renderCriterion('Логика и Алгоритмы', 'logic', 'Способность находить закономерности.', <Lightbulb size={16} color="#006CFF"/>)}
-                {renderCriterion('Академическая база', 'academic', 'Математика и общая эрудиция.', <BookOpen size={16} color="#006CFF"/>)}
-                {renderCriterion('Problem Solving', 'problemSolving', 'Поиск решений в нестандартных ситуациях.', <ShieldCheck size={16} color="#006CFF"/>)}
-                {renderCriterion('Критическое мышление', 'criticalThinking', 'Умение анализировать информацию.', <Star size={16} color="#006CFF"/>)}
+                {renderCriterion('Логика и Алгоритмы', 'logic', 'Способность находить закономерности.', <Lightbulb size={16} color="#c1f11d"/>)}
+                {renderCriterion('Академическая база', 'academic', 'Математика и общая эрудиция.', <BookOpen size={16} color="#c1f11d"/>)}
+                {renderCriterion('Problem Solving', 'problemSolving', 'Поиск решений в нестандартных ситуациях.', <ShieldCheck size={16} color="#c1f11d"/>)}
+                {renderCriterion('Критическое мышление', 'criticalThinking', 'Умение анализировать информацию.', <Star size={16} color="#c1f11d"/>)}
               </>
             ) : (
               <>
@@ -441,8 +441,8 @@ footer={[
             )}
           </div>
 
-          <div style={{ background: '#F0F7FF', padding: '20px', borderRadius: '16px', textAlign: 'center', border: '1px dashed #006CFF' }}>
-            <Statistic title="Прогноз успешности ученика (AI Model)" value={calculateTotalScore()} suffix="%" valueStyle={{ color: '#006CFF', fontWeight: 800 }} />
+          <div style={{ background: '#f0fce0', padding: '20px', borderRadius: '16px', textAlign: 'center', border: '1px dashed #c1f11d' }}>
+            <Statistic title="Прогноз успешности ученика (AI Model)" value={calculateTotalScore()} suffix="%" valueStyle={{ color: '#c1f11d', fontWeight: 800 }} />
             {calculateTotalScore() < 45 && (
               <Tag color="error" style={{ marginTop: 10 }} icon={<AlertTriangle size={12} />}>
                 Arbitration Check Required
@@ -494,7 +494,7 @@ footer={[
 };
 
 const CustomBadge = ({ text }: { text: string }) => (
-  <span style={{ fontSize: '10px', background: '#006CFF', color: '#fff', padding: '2px 8px', borderRadius: '6px', fontWeight: 700 }}>
+  <span style={{ fontSize: '10px', background: '#c1f11d', color: '#141414', padding: '2px 8px', borderRadius: '6px', fontWeight: 700 }}>
     {text}
   </span>
 );

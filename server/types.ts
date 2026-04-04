@@ -49,6 +49,7 @@ export interface Candidate {
   email?: string;
   phone?: string;
   university?: string;
+  school?: string;
   city: string;
   region?: string;
   isRural: boolean;
@@ -71,6 +72,8 @@ export interface Candidate {
   reviewedAt?: string;
   createdAt: string;
   updatedAt: string;
+  contactMethod?: string;
+  contactHandle?: string;
 }
 
 export interface ScoringWeights {

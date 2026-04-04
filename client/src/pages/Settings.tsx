@@ -55,8 +55,8 @@ const Settings = () => {
   const totalDimensionWeight = weights.motivation + weights.leadership + weights.technicalPotential + weights.creativity + weights.resilience + weights.socialImpact;
 
   return (
-    <div style={{ padding: '32px 40px', maxWidth: '900px', fontFamily: 'Inter, sans-serif' }}>
-      <Title level={2}>Scoring Configuration</Title>
+    <div style={{ padding: '32px 40px', maxWidth: '900px', fontFamily: "'Raleway', sans-serif", animation: 'fadeInUp 0.5s cubic-bezier(0.16,1,0.3,1) both' }}>
+      <Title level={2} style={{ letterSpacing: '-0.02em' }}>Scoring Configuration</Title>
       <Text type="secondary">Configure the AI scoring weights to prioritize candidate dimensions. Changes recalculate all scores.</Text>
 
       <Divider />
@@ -70,7 +70,7 @@ const Settings = () => {
           </div>
           <div style={{ marginBottom: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}><Text>Leadership</Text><Text strong>{weights.leadership}</Text></div>
-            <Slider max={50} value={weights.leadership} onChange={(val) => handleChange('leadership', val)} trackStyle={{ background: '#006CFF' }} />
+            <Slider max={50} value={weights.leadership} onChange={(val) => handleChange('leadership', val)} trackStyle={{ background: '#c1f11d' }} />
           </div>
           <div style={{ marginBottom: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}><Text>Technical Potential</Text><Text strong>{weights.technicalPotential}</Text></div>
@@ -82,10 +82,10 @@ const Settings = () => {
           </div>
           <div style={{ marginBottom: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Text>Resilience / "Path Traveled" <Text type="secondary" style={{ fontSize: 11 }}>— InVision U core value</Text></Text>
+              <Text>Resilience / "Path Traveled" <Text type="secondary" style={{ fontSize: 11 }}>— IinVision U core value</Text></Text>
               <Text strong>{weights.resilience}</Text>
             </div>
-            <Slider max={50} value={weights.resilience} onChange={(val) => handleChange('resilience', val)} trackStyle={{ background: '#00D8E6' }} handleStyle={{ borderColor: '#00D8E6' }} />
+            <Slider max={50} value={weights.resilience} onChange={(val) => handleChange('resilience', val)} trackStyle={{ background: '#3dedf1' }} handleStyle={{ borderColor: '#3dedf1' }} />
           </div>
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}><Text>Social Impact</Text><Text strong>{weights.socialImpact}</Text></div>
@@ -101,13 +101,13 @@ const Settings = () => {
           </div>
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}><Text>Rural Area Bonus</Text><Text strong>{weights.ruralBonus}</Text></div>
-            <Slider max={30} value={weights.ruralBonus} onChange={(val) => handleChange('ruralBonus', val)} trackStyle={{ background: '#00D8E6' }} handleStyle={{ borderColor: '#00D8E6' }} />
-            <Text type="secondary" style={{ fontSize: 12 }}>This parameter helps nVision U discover hidden talents in rural regions of Kazakhstan.</Text>
+            <Slider max={30} value={weights.ruralBonus} onChange={(val) => handleChange('ruralBonus', val)} trackStyle={{ background: '#3dedf1' }} handleStyle={{ borderColor: '#3dedf1' }} />
+            <Text type="secondary" style={{ fontSize: 12 }}>This parameter helps inVision U discover hidden talents in rural regions of Kazakhstan.</Text>
           </div>
         </Card>
 
         {/* Transparency Card */}
-        <Card title={<Space><Globe size={18} /> Scoring Formula (Transparency)</Space>} style={{ borderLeft: '4px solid #006CFF' }}>
+        <Card title={<Space><Globe size={18} /> Scoring Formula (Transparency)</Space>} style={{ borderLeft: '4px solid #c1f11d' }}>
           <Text style={{ fontSize: 13, lineHeight: '1.8' }}>
             <strong>Composite Score</strong> = (Weighted AI Dimension Average x 0.75) + Achievement Bonus + Rural Bonus<br />
             <strong>AI Dimensions</strong>: Each essay is analyzed by Claude AI across 6 dimensions (0-100). Scores are weighted by the sliders above.<br />
@@ -120,7 +120,7 @@ const Settings = () => {
         {/* Actions */}
         <div style={{ display: 'flex', gap: 12 }}>
           <Button type="primary" icon={<Save size={16} />} onClick={handleSave} loading={saving} size="large"
-            style={{ borderRadius: 10, background: '#006CFF', fontWeight: 600 }}>
+            style={{ borderRadius: 10, background: '#c1f11d', fontWeight: 600 }}>
             Save & Recalculate All Scores
           </Button>
           <Button onClick={handleReset} size="large" style={{ borderRadius: 10 }}>

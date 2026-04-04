@@ -129,8 +129,8 @@ const ReviewPage = () => {
     : null;
 
   return (
-    <Layout style={{ minHeight: '100vh', background: '#F8FAFC' }}>
-      <Content style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px', width: '100%' }}>
+    <Layout style={{ minHeight: '100vh', background: '#fafafa' }}>
+      <Content style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px', width: '100%', animation: 'fadeInUp 0.5s cubic-bezier(0.16,1,0.3,1) both' }}>
 
         {/* Top nav */}
         <Row justify="space-between" align="middle" style={{ marginBottom: 28 }}>
@@ -150,7 +150,7 @@ const ReviewPage = () => {
           style={{ borderRadius: 20, marginBottom: 24, border: '1px solid #E2E8F0', overflow: 'hidden' }}
           styles={{ body: { padding: 0 } }}
         >
-          <div style={{ background: 'linear-gradient(135deg, #006CFF 0%, #00D8E6 100%)', padding: '28px 32px' }}>
+          <div style={{ background: '#c1f11d', padding: '28px 32px' }}>
             <Row align="middle" gutter={24}>
               <Col flex="none">
                 <Avatar
@@ -226,7 +226,7 @@ const ReviewPage = () => {
                   )}
                   {candidate.softScore != null && (
                     <Col span={12}>
-                      <div style={{ background: '#EFF6FF', borderRadius: 12, padding: '16px', border: '1px solid #BFDBFE' }}>
+                      <div style={{ background: '#EFF6FF', borderRadius: 12, padding: '16px', border: '1px solid #d4edb0' }}>
                         <Text type="secondary" style={{ fontSize: 12 }}>Panel B — Soft Skills</Text>
                         <div style={{ fontSize: 36, fontWeight: 800, color: score2color(candidate.softScore) }}>{candidate.softScore}<span style={{ fontSize: 16, color: '#9CA3AF' }}>/100</span></div>
                         <Progress percent={candidate.softScore} showInfo={false} strokeColor={score2color(candidate.softScore)} size="small" />
@@ -246,7 +246,7 @@ const ReviewPage = () => {
 
             {/* AI Essay Assessment */}
             {candidate.aiSummary && (
-              <Card title={<Space><Shield size={16} style={{ color: '#006CFF' } as any} /> AI Essay Assessment</Space>}
+              <Card title={<Space><Shield size={16} style={{ color: '#c1f11d' } as any} /> AI Essay Assessment</Space>}
                 style={{ borderRadius: 16, marginBottom: 20, border: '1px solid #E2E8F0' }}
               >
                 <Paragraph style={{ fontSize: 14, lineHeight: 1.8, color: '#374151' }}>{candidate.aiSummary}</Paragraph>
@@ -288,7 +288,7 @@ const ReviewPage = () => {
             {/* Personality */}
             {candidate.personalityScores?.clusterScores && (
               <Card title="🧠 Personality Assessment"
-                style={{ borderRadius: 16, marginBottom: 20, border: '1px solid #BFDBFE', background: '#F0F7FF' }}
+                style={{ borderRadius: 16, marginBottom: 20, border: '1px solid #d4edb0', background: '#f0fce0' }}
                 extra={<Tag color="blue">Overall: {candidate.personalityScores.overallScore}/100</Tag>}
               >
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: candidate.personalityScores.narrative ? 12 : 0 }}>

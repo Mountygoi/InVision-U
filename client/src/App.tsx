@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ConfigProvider } from 'antd';
 import AppHeader from './layout/AppHeader';
 import Dashboard from './pages/Dashboard';
 import Candidates from './pages/Candidates';
@@ -15,6 +16,31 @@ import Reviews from './pages/Reviews';               // Список канди�
 
 function App() {
   return (
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: '#c1f11d',
+          colorLink: '#c1f11d',
+          fontFamily: "'Raleway', Arial, sans-serif",
+          borderRadius: 12,
+          colorBgContainer: '#ffffff',
+        },
+        components: {
+          Steps: {
+            colorPrimary: '#c1f11d',
+            colorTextDescription: '#94A3B8',
+          },
+          Button: {
+            colorPrimary: '#c1f11d',
+            colorPrimaryHover: '#d4f74d',
+            primaryColor: '#141414',
+          },
+          Menu: {
+            colorPrimary: '#c1f11d',
+          },
+        },
+      }}
+    >
     <Router>
       <Routes>
         {/* --- ПУБЛИЧНЫЕ РОУТЫ ДЛЯ КАНДИДАТОВ --- */}
@@ -64,6 +90,7 @@ function App() {
         <Route path="*" element={<Navigate to="/apply" replace />} />
       </Routes>
     </Router>
+    </ConfigProvider>
   );
 }
 
