@@ -81,6 +81,8 @@ export async function initDatabase(): Promise<void> {
       ALTER TABLE candidates ADD COLUMN IF NOT EXISTS sjt_summary TEXT;
       ALTER TABLE candidates ADD COLUMN IF NOT EXISTS ielts_file_path TEXT;
       ALTER TABLE candidates ADD COLUMN IF NOT EXISTS unt_file_path TEXT;
+      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS ielts_approved BOOLEAN DEFAULT false;
+      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS unt_approved BOOLEAN DEFAULT false;
     `);
     console.log('✅ Database tables initialized successfully');
   } catch (err) {

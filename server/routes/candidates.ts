@@ -37,7 +37,7 @@ router.get('/', async (req, res) => {
   try {
     const { search, status, sort = 'composite_score', order = 'desc' } = req.query;
 
-    let query = 'SELECT id, name, email, password, avatar_url, university, city, region, is_rural, gpa, year_of_study, achievements, skills, ai_scores, ai_summary, ai_flags, ai_model_version, ai_analyzed_at, composite_score, achievement_score, status, reviewer_notes, created_at, updated_at, interview_time, personality_scores, sjt_scores, simulation_scores FROM candidates WHERE 1=1';
+    let query = 'SELECT id, name, email, password, avatar_url, university, city, region, is_rural, gpa, year_of_study, achievements, skills, essay_text, ai_scores, ai_summary, ai_flags, ai_model_version, ai_analyzed_at, composite_score, achievement_score, status, reviewer_notes, created_at, updated_at, interview_time, personality_scores, sjt_scores, simulation_scores, tech_score, soft_score, tech_notes, soft_notes, ielts_file_path, unt_file_path, ielts_approved, unt_approved FROM candidates WHERE 1=1';
     const params: any[] = [];
     let paramIdx = 1;
 
@@ -89,6 +89,15 @@ router.get('/', async (req, res) => {
       personalityScores: row.personality_scores,
       sjtScores: row.sjt_scores,
       simulationScores: row.simulation_scores,
+      techScore: row.tech_score,
+      softScore: row.soft_score,
+      techNotes: row.tech_notes,
+      softNotes: row.soft_notes,
+      essayText: row.essay_text,
+      ieltsFilePath: row.ielts_file_path,
+      untFilePath: row.unt_file_path,
+      ieltsApproved: row.ielts_approved ?? false,
+      untApproved: row.unt_approved ?? false,
     }));
 
     res.json(candidates);
@@ -112,7 +121,7 @@ router.get('/:id', async (req, res) => {
       name: row.name,
       email: row.email,
       phone: row.phone,
-      avatarUrl: row.avatar_url, // Добавлено поле аватарки
+      avatarUrl: row.avatar_url,
       university: row.university,
       city: row.city,
       region: row.region,
@@ -141,6 +150,19 @@ router.get('/:id', async (req, res) => {
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       interviewTime: row.interview_time,
+      personalityScores: row.personality_scores,
+      simulationScores: row.simulation_scores,
+      techScore: row.tech_score,
+      softScore: row.soft_score,
+      techNotes: row.tech_notes,
+      softNotes: row.soft_notes,
+      ieltsFilePath: row.ielts_file_path,
+      untFilePath: row.unt_file_path,
+      ieltsApproved: row.ielts_approved ?? false,
+      untApproved: row.unt_approved ?? false,
+      ielts: row.ielts,
+      unt: row.unt,
+      videoUrl: row.video_url,
     });
   } catch (err) {
     console.error('Error fetching candidate:', err);
@@ -266,6 +288,123 @@ router.post(
     }
   }
 );
+
+// PATCH /api/candidates/:id/approve-cert - Approve IELTS or UNT certificate
+router.patch('/:id/approve-cert', async (req, res) => {
+  try {
+    const { certType } = req.body as { certType: 'ielts' | 'unt' };
+    if (!['ielts', 'unt'].includes(certType)) {
+      return res.status(400).json({ error: 'certType must be ielts or unt' });
+    }
+    const col = certType === 'ielts' ? 'ielts_approved' : 'unt_approved';
+    await pool.query(
+      `UPDATE candidates SET ${col} = true, updated_at = NOW() WHERE id = $1`,
+      [req.params.id]
+    );
+    await pool.query(
+      'INSERT INTO audit_log (candidate_id, action, new_value) VALUES ($1, $2, $3)',
+      [req.params.id, 'cert_approved', certType.toUpperCase()]
+    );
+    res.json({ message: 'Certificate approved' });
+  } catch (err) {
+    console.error('Error approving cert:', err);
+    res.status(500).json({ error: 'Failed to approve certificate' });
+  }
+});
+
+// POST /api/candidates/:id/arbitration - AI analysis of panel score discrepancy
+router.post('/:id/arbitration', async (req, res) => {
+  try {
+    const candidate = await pool.query(
+      `SELECT name, tech_score, soft_score, tech_notes, soft_notes,
+              ai_scores, ai_summary, composite_score
+       FROM candidates WHERE id = $1`,
+      [req.params.id]
+    );
+    if (candidate.rows.length === 0) {
+      return res.status(404).json({ error: 'Candidate not found' });
+    }
+    const c = candidate.rows[0];
+
+    const techScore = c.tech_score ?? 0;
+    const softScore = c.soft_score ?? 0;
+    const techNotes = c.tech_notes || 'No notes provided';
+    const softNotes = c.soft_notes || 'No notes provided';
+    const gap = Math.abs(techScore - softScore);
+
+    // If Groq is available, run AI analysis
+    if (process.env.GROQ_API_KEY) {
+      try {
+        const Groq = (await import('groq-sdk')).default;
+        const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+        const MODEL = 'llama-3.3-70b-versatile';
+
+        const prompt = `You are an expert arbitration analyst for InVision U, a prestigious scholarship program.
+
+A candidate named "${c.name}" has conflicting scores from two evaluation panels:
+- Panel A (Technical): ${techScore}/100
+  Notes: "${techNotes}"
+- Panel B (Soft Skills): ${softScore}/100
+  Notes: "${softNotes}"
+- Score gap: ${gap} points
+- AI Essay Score: ${c.composite_score?.toFixed(1) || 'N/A'}/100
+
+Analyze this discrepancy and return a JSON object (no markdown, no explanation, raw JSON only):
+{
+  "summary": "2-3 sentence analysis of the conflict in English",
+  "disagreementFactors": ["factor1", "factor2", "factor3"],
+  "panelAAnalysis": "1-2 sentences on why Technical panel rated this way",
+  "panelBAnalysis": "1-2 sentences on why Soft Skills panel rated this way",
+  "verdict": "2-3 sentence recommendation for the admissions committee",
+  "suggestedScore": <number between ${Math.min(techScore, softScore)} and ${Math.max(techScore, softScore)}>
+}`;
+
+        const completion = await groq.chat.completions.create({
+          model: MODEL,
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.3,
+          max_tokens: 600,
+        });
+
+        const text = completion.choices[0]?.message?.content || '';
+        const firstBrace = text.indexOf('{');
+        const lastBrace = text.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1) {
+          const jsonStr = text.slice(firstBrace, lastBrace + 1).replace(/,\s*([}\]])/g, '$1');
+          const parsed = JSON.parse(jsonStr);
+          return res.json({
+            candidateName: c.name,
+            panelA: { score: techScore, note: techNotes, analysis: parsed.panelAAnalysis },
+            panelB: { score: softScore, note: softNotes, analysis: parsed.panelBAnalysis },
+            summary: parsed.summary,
+            disagreementFactors: parsed.disagreementFactors || [],
+            verdict: parsed.verdict,
+            suggestedScore: parsed.suggestedScore,
+          });
+        }
+      } catch (aiErr) {
+        console.error('Groq arbitration error:', aiErr);
+        // Fall through to deterministic fallback
+      }
+    }
+
+    // Deterministic fallback (no AI available)
+    const higherPanel = techScore >= softScore ? 'Technical' : 'Soft Skills';
+    const lowerPanel = techScore < softScore ? 'Technical' : 'Soft Skills';
+    res.json({
+      candidateName: c.name,
+      panelA: { score: techScore, note: techNotes, analysis: techNotes },
+      panelB: { score: softScore, note: softNotes, analysis: softNotes },
+      summary: `A ${gap}-point gap between panels was detected. ${higherPanel} panel scored higher. Manual review recommended.`,
+      disagreementFactors: ['Evaluation criteria interpretation', 'Different panel observations', 'Potential stress-related performance variation'],
+      verdict: `Score gap of ${gap} points requires committee review. Consider averaging both scores (${Math.round((techScore + softScore) / 2)}/100) unless a specific disqualifying factor was observed.`,
+      suggestedScore: Math.round((techScore + softScore) / 2),
+    });
+  } catch (err) {
+    console.error('Arbitration error:', err);
+    res.status(500).json({ error: 'Failed to generate arbitration report' });
+  }
+});
 
 // PATCH /api/candidates/:id/password - Change password
 router.patch('/:id/password', async (req, res) => {

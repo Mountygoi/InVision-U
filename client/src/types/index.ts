@@ -57,8 +57,15 @@ export interface SJTOverallScores {
   ethics: number;
 }
 
+export interface SJTScenarioResult {
+  scenarioId: number;
+  feedback: string;
+  scores: SJTOverallScores;
+}
+
 export interface SJTScores {
   overallScores: SJTOverallScores;
+  scenarioResults?: SJTScenarioResult[];
   personalitySummary: string;
   modelVersion: string;
   analyzedAt: string;
@@ -132,6 +139,17 @@ export interface Candidate {
   reviewerNotes?: string;
   createdAt: string;
   updatedAt: string;
+  // Interview evaluation scores
+  techScore?: number;
+  softScore?: number;
+  techNotes?: string;
+  softNotes?: string;
+  // Documents
+  ieltsFilePath?: string;
+  untFilePath?: string;
+  ieltsApproved?: boolean;
+  untApproved?: boolean;
+  interviewTime?: string;
 }
 
 export interface DashboardStats {

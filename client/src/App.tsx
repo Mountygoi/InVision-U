@@ -10,6 +10,7 @@ import Login from './pages/Login';                 // Твоя страница 
 import SJTTest from './pages/SJTTest';             // Ситуационный тест
 import PersonalityTest from './pages/PersonalityTest'; // Тест личности (40 вопросов)
 import TeamSimulation from './pages/TeamSimulation'; // Командная симуляция
+import ReviewPage from './pages/ReviewPage';          // Страница ревью (admin)
 
 function App() {
   return (
@@ -45,6 +46,7 @@ function App() {
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/candidates" element={<Candidates />} />
+                  <Route path="/review/:id" element={<ReviewPage />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/scheduler" element={<Scheduler />} />
                 </Routes>

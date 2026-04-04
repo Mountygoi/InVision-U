@@ -50,7 +50,13 @@ router.post('/analyze', async (req, res) => {
         WHERE id = $4`,
         [
           JSON.stringify(answers),
-          JSON.stringify(sjtResult.overallScores),
+          JSON.stringify({
+            overallScores: sjtResult.overallScores,
+            scenarioResults: sjtResult.scenarioResults,
+            personalitySummary: sjtResult.personalitySummary,
+            modelVersion: sjtResult.modelVersion,
+            analyzedAt: sjtResult.analyzedAt,
+          }),
           sjtResult.personalitySummary,
           candidateId,
         ]

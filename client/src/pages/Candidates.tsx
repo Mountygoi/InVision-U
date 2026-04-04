@@ -2,16 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { Row, Col, Avatar, Tag, Button, Typography, Space, Empty, message, Input, Layout, Card, Divider, Select, Progress, Badge, Alert, Modal } from 'antd';
 import { ShieldCheck, FileText, Send, XCircle, MapPin, GraduationCap, CheckCircle2, AlertTriangle, Bot, TrendingUp, User, EyeOff, Scale } from 'lucide-react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, PolarRadiusAxis, Radar as RadarArea } from 'recharts';
 import searchIcon from '../assets/icons/search.svg';
 import type { Candidate } from '../types';
 
-const getAvatar = (item: Candidate) => {
-  if (item.avatarUrl) {
-    return item.avatarUrl;
-  }
-  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(item.name)}`;
-};
 
 const { Title, Text, Paragraph } = Typography;
 const { Content } = Layout;
@@ -42,6 +37,7 @@ const ACHIEVEMENT_ICONS: Record<string, string> = {
 };
 
 const Candidates = () => {
+  const navigate = useNavigate();
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -49,14 +45,23 @@ const Candidates = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [reviewNotes, setReviewNotes] = useState('');
 
-  // Состояния для Арбитража
+  // Арбитраж
   const [isArbModalOpen, setIsArbModalOpen] = useState(false);
+  const [arbLoading, setArbLoading] = useState(false);
   const [arbReport, setArbReport] = useState<{
+    candidateName: string;
     summary: string;
-    panelA: { score: number; note: string };
-    panelB: { score: number; note: string };
+    panelA: { score: number; note: string; analysis?: string };
+    panelB: { score: number; note: string; analysis?: string };
+    disagreementFactors?: string[];
     verdict: string;
+    suggestedScore?: number;
   } | null>(null);
+
+  // Документы
+  const [essayModalOpen, setEssayModalOpen] = useState(false);
+  const [certModal, setCertModal] = useState<{ type: 'ielts' | 'unt'; open: boolean }>({ type: 'ielts', open: false });
+  const [certApproving, setCertApproving] = useState(false);
 
   const isDataHidden = (status: string) => {
     return status === 'new' || status === 'under_review';
@@ -139,26 +144,46 @@ const Candidates = () => {
     });
   };
 
-  // ФУНКЦИЯ ДЛЯ КНОПКИ AI АРБИТРАЖА
-  const generateArbitrationReport = (candidate: Candidate) => {
-    message.loading({ content: 'AI сопоставляет контекст панелей...', key: 'arb_gen' });
-    
-    setTimeout(() => {
-      setArbReport({
-        summary: "Выявлена критическая аномалия: Технический гений vs Культурный риск.",
-        panelA: { 
-          score: 95, 
-          note: "Идеально решил алгоритмическую задачу. Стек технологий знает на уровне уверенного Middle." 
-        },
-        panelB: { 
-          score: 30, 
-          note: "Кандидат проявляет признаки токсичности. Отказался обсуждать альтернативные решения." 
-        },
-        verdict: "Рекомендация: Провести финальный раунд. Нужно понять, является ли поведение следствием стресса или это черта характера."
-      });
+  // AI Арбитраж — реальный анализ расхождения оценок панелей
+  const generateArbitrationReport = async (candidate: Candidate) => {
+    setArbLoading(true);
+    message.loading({ content: 'AI анализирует расхождение оценок...', key: 'arb_gen' });
+    try {
+      const res = await axios.post(`http://localhost:5000/api/candidates/${candidate.id}/arbitration`);
+      setArbReport(res.data);
       setIsArbModalOpen(true);
       message.success({ content: 'Аналитическая записка готова', key: 'arb_gen' });
-    }, 1200);
+    } catch (err) {
+      console.error('Arbitration error:', err);
+      message.error({ content: 'Не удалось сгенерировать арбитраж', key: 'arb_gen' });
+    } finally {
+      setArbLoading(false);
+    }
+  };
+
+  // Одобрение сертификата
+  const approveCert = async (candidateId: string, certType: 'ielts' | 'unt') => {
+    setCertApproving(true);
+    try {
+      await axios.patch(`http://localhost:5000/api/candidates/${candidateId}/approve-cert`, { certType });
+      message.success(`${certType.toUpperCase()} certificate approved ✅`);
+      fetchCandidates();
+    } catch {
+      message.error('Failed to approve certificate');
+    } finally {
+      setCertApproving(false);
+    }
+  };
+
+  // Правильный URL аватара
+  const getAvatarUrl = (item: Candidate) => {
+    if (item.avatarUrl) {
+      if (item.avatarUrl.startsWith('/uploads/')) {
+        return `http://localhost:5000${item.avatarUrl}`;
+      }
+      return item.avatarUrl;
+    }
+    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(item.name)}`;
   };
 
   const radarData = selectedCandidate?.aiScores ? [
@@ -261,7 +286,7 @@ const Candidates = () => {
                     >
                       <Row align="middle" gutter={12} style={{ width: '100%' }}>
                         <Col span={4}>
-                          {hidden ? <Avatar size={48} icon={<User />} style={{ background: '#E5E7EB', color: '#9CA3AF' }} /> : <Avatar size={48} src={getAvatar(item)} />}
+                          {hidden ? <Avatar size={48} icon={<User />} style={{ background: '#E5E7EB', color: '#9CA3AF' }} /> : <Avatar size={48} src={getAvatarUrl(item)} />}
                         </Col>
                         <Col span={14}>
                           <Text strong style={{ fontSize: '14px', display: 'block', color: selectedId === item.id ? '#006CFF' : '#1F2937' }}>
@@ -291,7 +316,7 @@ const Candidates = () => {
               <div className="custom-scroll" style={{ flex: 1, overflowY: 'auto', padding: '36px', paddingBottom: '120px' }}>
                 <Row justify="space-between" align="top" style={{ marginBottom: '28px' }}>
                   <Space size={20}>
-                    {isDataHidden(selectedCandidate.status) ? <Avatar size={90} icon={<EyeOff size={40} />} /> : <Avatar size={90} src={getAvatar(selectedCandidate)} />}
+                    {isDataHidden(selectedCandidate.status) ? <Avatar size={90} icon={<EyeOff size={40} />} /> : <Avatar size={90} src={getAvatarUrl(selectedCandidate)} />}
                     <div>
                       <Title level={3} style={{ margin: 0, fontWeight: 700 }}>
                         {isDataHidden(selectedCandidate.status) ? `Applicant #${selectedCandidate.id.slice(-5).toUpperCase()}` : selectedCandidate.name}
@@ -301,6 +326,45 @@ const Candidates = () => {
                          <Space><GraduationCap size={14} /><Text type="secondary">{isDataHidden(selectedCandidate.status) ? 'Hidden' : selectedCandidate.university}</Text></Space>
                          {selectedCandidate.gpa && <Text strong>GPA: {selectedCandidate.gpa}</Text>}
                       </Space>
+                      {/* Document action buttons */}
+                      {!isDataHidden(selectedCandidate.status) && (
+                        <Space size={8} style={{ marginTop: 12, flexWrap: 'wrap' }}>
+                          {selectedCandidate.essayText && (
+                            <Button
+                              size="small"
+                              icon={<FileText size={13} />}
+                              onClick={() => setEssayModalOpen(true)}
+                              style={{ borderRadius: 8, fontSize: 12 }}
+                            >
+                              View Essay
+                            </Button>
+                          )}
+                          {selectedCandidate.ieltsFilePath ? (
+                            <Button
+                              size="small"
+                              icon={selectedCandidate.ieltsApproved ? <CheckCircle2 size={13} color="#10B981" /> : <FileText size={13} />}
+                              style={{ borderRadius: 8, fontSize: 12, borderColor: selectedCandidate.ieltsApproved ? '#10B981' : undefined, color: selectedCandidate.ieltsApproved ? '#10B981' : undefined }}
+                              onClick={() => setCertModal({ type: 'ielts', open: true })}
+                            >
+                              IELTS {selectedCandidate.ieltsApproved ? '✅' : ''}
+                            </Button>
+                          ) : (
+                            <Tag color="default" style={{ borderRadius: 8, fontSize: 11 }}>No IELTS cert</Tag>
+                          )}
+                          {selectedCandidate.untFilePath ? (
+                            <Button
+                              size="small"
+                              icon={selectedCandidate.untApproved ? <CheckCircle2 size={13} color="#10B981" /> : <FileText size={13} />}
+                              style={{ borderRadius: 8, fontSize: 12, borderColor: selectedCandidate.untApproved ? '#10B981' : undefined, color: selectedCandidate.untApproved ? '#10B981' : undefined }}
+                              onClick={() => setCertModal({ type: 'unt', open: true })}
+                            >
+                              UBT {selectedCandidate.untApproved ? '✅' : ''}
+                            </Button>
+                          ) : (
+                            <Tag color="default" style={{ borderRadius: 8, fontSize: 11 }}>No UBT cert</Tag>
+                          )}
+                        </Space>
+                      )}
                     </div>
                   </Space>
                 </Row>
@@ -318,7 +382,7 @@ const Candidates = () => {
                             Система выявила критическое расхождение мнений экспертов. Решение заблокировано для аудита.
                           </Paragraph>
                           <Space style={{ marginTop: 12 }}>
-                            <Button size="small" danger icon={<Bot size={14} />} onClick={() => generateArbitrationReport(selectedCandidate)}>Сравнить мнения (AI)</Button>
+                            <Button size="small" danger icon={<Bot size={14} />} loading={arbLoading} onClick={() => generateArbitrationReport(selectedCandidate)}>Сравнить мнения (AI)</Button>
                             <Button size="small" icon={<Scale size={14} />} onClick={showAuditInfo}>Audit Info</Button>
                           </Space>
                         </div>
@@ -465,37 +529,84 @@ const Candidates = () => {
                 )}
 
                 {/* SJT Assessment Results */}
-                {selectedCandidate.sjtScores && (
-                  <div style={{ background: '#F0FDF4', padding: '20px', borderRadius: '14px', marginBottom: '24px', border: '1px solid #BBF7D0' }}>
-                    <Row justify="space-between" align="middle" style={{ marginBottom: 12 }}>
-                      <Title level={5} style={{ margin: 0 }}>Situational Judgment Test</Title>
-                    </Row>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-                      {Object.entries(selectedCandidate.sjtScores.overallScores || {}).map(([key, val]) => {
-                        const labels: Record<string, string> = {
-                          leadership: '🧭 Leadership',
-                          problemSolving: '🔧 Problem-Solving',
-                          teamwork: '🤝 Teamwork',
-                          stressResilience: '💪 Resilience',
-                          ethics: '⚖️ Ethics',
-                        };
-                        const score = val as number;
-                        const color = score >= 70 ? '#10B981' : score >= 50 ? '#F59E0B' : '#EF4444';
-                        return (
-                          <div key={key} style={{ background: 'white', borderRadius: 8, padding: '4px 10px', border: `1px solid ${color}40`, display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <Text style={{ fontSize: 12 }}>{labels[key] || key}</Text>
-                            <Text strong style={{ fontSize: 13, color }}>{score}</Text>
+                {selectedCandidate.sjtScores && (() => {
+                  const sjt = selectedCandidate.sjtScores!;
+                  const overall = sjt.overallScores || {};
+                  const overallValues = Object.values(overall) as number[];
+                  const avgScore = overallValues.length > 0 ? Math.round(overallValues.reduce((a, b) => a + b, 0) / overallValues.length) : 0;
+                  const verdict = avgScore >= 70 ? { label: 'Strong Candidate', color: '#10B981', bg: '#F0FDF4' }
+                    : avgScore >= 50 ? { label: 'Average Candidate', color: '#F59E0B', bg: '#FFFBEB' }
+                    : { label: 'Weak Candidate', color: '#EF4444', bg: '#FEF2F2' };
+                  const labels: Record<string, string> = {
+                    leadership: '🧭 Leadership',
+                    problemSolving: '🔧 Problem-Solving',
+                    teamwork: '🤝 Teamwork',
+                    stressResilience: '💪 Resilience',
+                    ethics: '⚖️ Ethics',
+                  };
+                  return (
+                    <div style={{ background: '#F0FDF4', padding: '20px', borderRadius: '14px', marginBottom: '24px', border: '1px solid #BBF7D0' }}>
+                      <Row justify="space-between" align="middle" style={{ marginBottom: 12 }}>
+                        <Title level={5} style={{ margin: 0 }}>📋 Situational Judgment Test</Title>
+                        <Space>
+                          <Tag color="green" style={{ fontSize: 13, padding: '2px 10px' }}>Avg: {avgScore}/100</Tag>
+                          <span style={{ background: verdict.bg, color: verdict.color, border: `1px solid ${verdict.color}44`, borderRadius: 8, padding: '2px 10px', fontSize: 12, fontWeight: 600 }}>
+                            {verdict.label}
+                          </span>
+                        </Space>
+                      </Row>
+
+                      {/* Score pills */}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
+                        {Object.entries(overall).map(([key, val]) => {
+                          const score = val as number;
+                          const color = score >= 70 ? '#10B981' : score >= 50 ? '#F59E0B' : '#EF4444';
+                          return (
+                            <div key={key} style={{ background: 'white', borderRadius: 8, padding: '4px 10px', border: `1px solid ${color}40`, display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <Text style={{ fontSize: 12 }}>{labels[key] || key}</Text>
+                              <Text strong style={{ fontSize: 13, color }}>{score}</Text>
+                              <div style={{ width: 36, height: 4, background: '#e8e8e8', borderRadius: 2 }}>
+                                <div style={{ width: `${score}%`, height: '100%', background: color, borderRadius: 2 }} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Per-scenario feedback */}
+                      {sjt.scenarioResults && sjt.scenarioResults.length > 0 && (
+                        <div style={{ marginBottom: 14 }}>
+                          <Text strong style={{ fontSize: 12, color: '#374151', display: 'block', marginBottom: 8 }}>Scenario-by-Scenario Analysis:</Text>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            {sjt.scenarioResults.map((sr, idx) => {
+                              const srAvg = Math.round(Object.values(sr.scores).reduce((a, b) => a + b, 0) / Object.values(sr.scores).length);
+                              const srColor = srAvg >= 70 ? '#10B981' : srAvg >= 50 ? '#F59E0B' : '#EF4444';
+                              return (
+                                <div key={idx} style={{ background: 'white', borderRadius: 10, padding: '10px 14px', border: '1px solid #D1FAE5', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                                  <div style={{ minWidth: 36, height: 36, borderRadius: 8, background: `${srColor}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                    <Text strong style={{ fontSize: 13, color: srColor }}>{srAvg}</Text>
+                                  </div>
+                                  <div>
+                                    <Text strong style={{ fontSize: 12, color: '#374151' }}>Scenario {sr.scenarioId}</Text>
+                                    <Text type="secondary" style={{ fontSize: 12, display: 'block', fontStyle: 'italic', marginTop: 2, lineHeight: 1.5 }}>{sr.feedback}</Text>
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
-                        );
-                      })}
+                        </div>
+                      )}
+
+                      {/* Summary */}
+                      {sjt.personalitySummary && (
+                        <div style={{ background: 'white', borderRadius: 10, padding: '10px 14px', border: '1px solid #BBF7D0' }}>
+                          <Text style={{ fontSize: 12, color: '#065F46', fontWeight: 600, display: 'block', marginBottom: 4 }}>Personality Insight</Text>
+                          <Text type="secondary" style={{ fontSize: 13, fontStyle: 'italic', lineHeight: 1.6 }}>{sjt.personalitySummary}</Text>
+                        </div>
+                      )}
                     </div>
-                    {selectedCandidate.sjtScores.personalitySummary && (
-                      <Text type="secondary" style={{ fontSize: 13, fontStyle: 'italic' }}>
-                        {selectedCandidate.sjtScores.personalitySummary}
-                      </Text>
-                    )}
-                  </div>
-                )}
+                  );
+                })()}
 
                 <Row gutter={28}>
                    <Col span={11}>
@@ -568,15 +679,51 @@ const Candidates = () => {
                 </div>
 
                 {/* Final Bar */}
-                <div style={{ marginTop: '28px', padding: '20px', background: '#F9FAFB', borderRadius: '14px', display: 'flex', justifyContent: 'space-between' }}>
-                  {selectedCandidate.status === 'new' || selectedCandidate.status === 'under_review' ? (
+                <div style={{ marginTop: '28px', padding: '20px', background: '#F9FAFB', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  {selectedCandidate.status === 'new' || selectedCandidate.status === 'under_review' ? (() => {
+                    const hasCerts = selectedCandidate.ieltsFilePath || selectedCandidate.untFilePath;
+                    const certsApproved = (!selectedCandidate.ieltsFilePath || selectedCandidate.ieltsApproved)
+                      && (!selectedCandidate.untFilePath || selectedCandidate.untApproved);
+                    const interviewEnabled = !hasCerts || certsApproved;
+                    return (
+                      <Space>
+                        <Button danger icon={<XCircle size={16} />} onClick={() => handleStatusChange(selectedCandidate.id, 'declined')}>Decline</Button>
+                        <Button icon={<FileText size={16} />} onClick={() => handleStatusChange(selectedCandidate.id, 'under_review')}>Mark Review</Button>
+                        <Button
+                          type="primary"
+                          icon={<Send size={16} />}
+                          disabled={!interviewEnabled}
+                          title={!interviewEnabled ? 'Please verify certificates first' : ''}
+                          onClick={() => {
+                            if (!interviewEnabled) {
+                              message.warning('Please verify and approve certificates first');
+                              return;
+                            }
+                            handleStatusChange(selectedCandidate.id, 'interview');
+                          }}
+                          style={!interviewEnabled ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                        >
+                          Approve Interview {interviewEnabled ? '' : '🔒'}
+                        </Button>
+                        {!interviewEnabled && (
+                          <Text type="secondary" style={{ fontSize: 11 }}>
+                            Verify certificates first
+                          </Text>
+                        )}
+                      </Space>
+                    );
+                  })() : (
                     <Space>
-                      <Button danger icon={<XCircle size={16} />} onClick={() => handleStatusChange(selectedCandidate.id, 'declined')}>Decline</Button>
-                      <Button icon={<FileText size={16} />} onClick={() => handleStatusChange(selectedCandidate.id, 'under_review')}>Mark Review</Button>
-                      <Button type="primary" icon={<Send size={16} />} onClick={() => handleStatusChange(selectedCandidate.id, 'interview')}>Approve Interview</Button>
+                      <CheckCircle2 size={24} color="#10B981" />
+                      <Text strong>Решение зафиксировано в Audit Log.</Text>
+                      <Button
+                        type="primary" size="small"
+                        style={{ borderRadius: 8 }}
+                        onClick={() => navigate(`/admin/review/${selectedCandidate.id}`)}
+                      >
+                        Open Full Review →
+                      </Button>
                     </Space>
-                  ) : (
-                    <Space><CheckCircle2 size={24} color="#10B981" /><Text strong>Решение зафиксировано в Audit Log.</Text></Space>
                   )}
                 </div>
               </div>
@@ -589,26 +736,127 @@ const Candidates = () => {
 
       {/* ARBITRATION MODAL */}
       <Modal
-        title={<Space><Bot size={20} color="#006CFF" /> Арбитраж: Сопоставление данных</Space>}
+        title={<Space><Bot size={20} color="#006CFF" /> Арбитраж: AI-анализ расхождения оценок</Space>}
         open={isArbModalOpen}
         onCancel={() => setIsArbModalOpen(false)}
         footer={[<Button key="ok" type="primary" onClick={() => setIsArbModalOpen(false)}>Принято</Button>]}
-        width={700}
+        width={720}
       >
         {arbReport && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <Alert title="AI Анализ конфликта" description={arbReport.summary} type="warning" showIcon />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            <Alert title="AI-анализ конфликта" description={arbReport.summary} type="warning" showIcon />
+
             <Row gutter={16}>
-              <Col span={12}><Card title="Panel A (Tech)" size="small" style={{ background: '#F0FDF4' }}><Text strong style={{ fontSize: 24, color: '#10B981' }}>{arbReport.panelA.score}</Text><Paragraph italic>{arbReport.panelA.note}</Paragraph></Card></Col>
-              <Col span={12}><Card title="Panel B (Soft)" size="small" style={{ background: '#FEF2F2' }}><Text strong style={{ fontSize: 24, color: '#EF4444' }}>{arbReport.panelB.score}</Text><Paragraph italic>{arbReport.panelB.note}</Paragraph></Card></Col>
+              <Col span={12}>
+                <Card title={<Space><ShieldCheck size={14} color="#10B981" /> Panel A — Technical</Space>} size="small" style={{ background: '#F0FDF4', border: '1px solid #BBF7D0' }}>
+                  <Text strong style={{ fontSize: 28, color: '#10B981', display: 'block' }}>{arbReport.panelA.score}<Text style={{ fontSize: 14, color: '#6B7280' }}>/100</Text></Text>
+                  <Paragraph italic style={{ fontSize: 12, marginTop: 6, marginBottom: 4 }}>{arbReport.panelA.note}</Paragraph>
+                  {arbReport.panelA.analysis && arbReport.panelA.analysis !== arbReport.panelA.note && (
+                    <Text type="secondary" style={{ fontSize: 12 }}>{arbReport.panelA.analysis}</Text>
+                  )}
+                </Card>
+              </Col>
+              <Col span={12}>
+                <Card title={<Space><AlertTriangle size={14} color="#EF4444" /> Panel B — Soft Skills</Space>} size="small" style={{ background: '#FEF2F2', border: '1px solid #FECACA' }}>
+                  <Text strong style={{ fontSize: 28, color: '#EF4444', display: 'block' }}>{arbReport.panelB.score}<Text style={{ fontSize: 14, color: '#6B7280' }}>/100</Text></Text>
+                  <Paragraph italic style={{ fontSize: 12, marginTop: 6, marginBottom: 4 }}>{arbReport.panelB.note}</Paragraph>
+                  {arbReport.panelB.analysis && arbReport.panelB.analysis !== arbReport.panelB.note && (
+                    <Text type="secondary" style={{ fontSize: 12 }}>{arbReport.panelB.analysis}</Text>
+                  )}
+                </Card>
+              </Col>
             </Row>
-            <div style={{ background: '#F8FAFC', padding: '16px', borderRadius: '12px' }}>
-               <Title level={5}>Вердикт AI:</Title>
-               <Paragraph style={{ margin: 0 }}>{arbReport.verdict}</Paragraph>
+
+            {arbReport.disagreementFactors && arbReport.disagreementFactors.length > 0 && (
+              <div style={{ background: '#FFFBEB', padding: '14px', borderRadius: 10, border: '1px solid #FDE68A' }}>
+                <Text strong style={{ fontSize: 12, color: '#92400E', display: 'block', marginBottom: 8 }}>⚡ Factors Causing Disagreement</Text>
+                {arbReport.disagreementFactors.map((f, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 4 }}>
+                    <Text style={{ color: '#F59E0B', fontSize: 12 }}>•</Text>
+                    <Text style={{ fontSize: 12 }}>{f}</Text>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div style={{ background: '#F0F7FF', padding: '16px', borderRadius: 12, border: '1px solid #BFDBFE' }}>
+              <Title level={5} style={{ color: '#1D4ED8', marginBottom: 8 }}>🎯 AI Verdict & Recommendation</Title>
+              <Paragraph style={{ margin: 0, fontSize: 13 }}>{arbReport.verdict}</Paragraph>
+              {arbReport.suggestedScore !== undefined && (
+                <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Text type="secondary" style={{ fontSize: 12 }}>Suggested final score:</Text>
+                  <Text strong style={{ fontSize: 20, color: getScoreColor(arbReport.suggestedScore) }}>{arbReport.suggestedScore}/100</Text>
+                </div>
+              )}
             </div>
           </div>
         )}
       </Modal>
+
+      {/* ESSAY MODAL */}
+      {selectedCandidate && (
+        <Modal
+          title={<Space><FileText size={16} /> Essay — {selectedCandidate.name}</Space>}
+          open={essayModalOpen}
+          onCancel={() => setEssayModalOpen(false)}
+          footer={[<Button key="ok" onClick={() => setEssayModalOpen(false)}>Close</Button>]}
+          width={720}
+        >
+          <div style={{ maxHeight: 500, overflowY: 'auto', padding: '4px 0' }}>
+            <Paragraph style={{ fontSize: 14, lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
+              {selectedCandidate.essayText || 'No essay text available.'}
+            </Paragraph>
+          </div>
+        </Modal>
+      )}
+
+      {/* CERTIFICATE MODAL */}
+      {selectedCandidate && certModal.open && (
+        <Modal
+          title={
+            <Space>
+              <FileText size={16} />
+              {certModal.type === 'ielts' ? 'IELTS Certificate' : 'UBT Certificate'} — {selectedCandidate.name}
+              {(certModal.type === 'ielts' ? selectedCandidate.ieltsApproved : selectedCandidate.untApproved) && (
+                <Badge color="green" text="Approved ✅" />
+              )}
+            </Space>
+          }
+          open={certModal.open}
+          onCancel={() => setCertModal(prev => ({ ...prev, open: false }))}
+          footer={[
+            <Button key="close" onClick={() => setCertModal(prev => ({ ...prev, open: false }))}>Close</Button>,
+            !(certModal.type === 'ielts' ? selectedCandidate.ieltsApproved : selectedCandidate.untApproved) && (
+              <Button
+                key="approve"
+                type="primary"
+                loading={certApproving}
+                icon={<CheckCircle2 size={14} />}
+                style={{ background: '#10B981', borderColor: '#10B981' }}
+                onClick={async () => {
+                  await approveCert(selectedCandidate.id, certModal.type);
+                  setCertModal(prev => ({ ...prev, open: false }));
+                }}
+              >
+                Approve ✅
+              </Button>
+            ),
+          ].filter(Boolean)}
+          width={800}
+        >
+          {(() => {
+            const filePath = certModal.type === 'ielts' ? selectedCandidate.ieltsFilePath : selectedCandidate.untFilePath;
+            if (!filePath) return <Text type="secondary">No certificate uploaded.</Text>;
+            const url = filePath.startsWith('/uploads/') ? `http://localhost:5000${filePath}` : filePath;
+            const isPdf = url.toLowerCase().endsWith('.pdf');
+            return isPdf ? (
+              <iframe src={url} style={{ width: '100%', height: 480, border: 'none', borderRadius: 8 }} title="Certificate" />
+            ) : (
+              <img src={url} alt="Certificate" style={{ maxWidth: '100%', borderRadius: 8, border: '1px solid #E2E8F0' }} />
+            );
+          })()}
+        </Modal>
+      )}
     </Layout>
   );
 };

@@ -1,20 +1,23 @@
-import { useState, useEffect } from 'react';
-import { Layout, Card, Typography, Steps, Row, Col, Badge, Button, Input, Modal, message, Tag, Space, Divider, Result, DatePicker, Empty, Avatar } from 'antd';
-import { 
-  CheckCircleOutlined, 
-  LoadingOutlined, 
-  LockOutlined, 
-  CalendarOutlined, 
+import { useState, useEffect, useRef } from 'react';
+import { Layout, Card, Typography, Steps, Row, Col, Badge, Button, Input, Modal, message, Tag, Space, Divider, Result, DatePicker, Empty, Avatar, Alert } from 'antd';
+import {
+  CheckCircleOutlined,
+  LoadingOutlined,
+  LockOutlined,
+  CalendarOutlined,
   FileTextOutlined,
   UserOutlined,
   LogoutOutlined,
   ScheduleOutlined,
-  VideoCameraOutlined 
+  VideoCameraOutlined,
+  DownloadOutlined,
+  PrinterOutlined,
+  TrophyOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import dayjs from 'dayjs';
-import VideoConference from '../components/VideoConference'; // Импорт MiroTalk
+import VideoConference from '../components/VideoConference';
 
 const { Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
@@ -26,11 +29,92 @@ const getAvatar = (candidate: any) => {
   return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(candidate.name)}`;
 };
 
+const CertificatePrint = ({ candidate }: { candidate: any }) => {
+  const appId = candidate.id.slice(0, 8).toUpperCase();
+  const approvedDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  return (
+    <div className="certificate-print-area" style={{
+      width: 794, minHeight: 560, background: 'white', position: 'relative',
+      fontFamily: '"Times New Roman", Times, serif', boxSizing: 'border-box',
+    }}>
+      {/* Outer border */}
+      <div style={{ position: 'absolute', inset: 16, border: '3px solid #006CFF', borderRadius: 4, pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', inset: 22, border: '1px solid #00D8E6', borderRadius: 2, pointerEvents: 'none' }} />
+
+      {/* Content */}
+      <div style={{ padding: '48px 72px', textAlign: 'center' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginBottom: 8 }}>
+          <div style={{ width: 48, height: 48, background: 'linear-gradient(135deg,#006CFF,#00D8E6)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 900, fontSize: 22, flexShrink: 0 }}>N</div>
+          <div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: '#006CFF', fontFamily: 'Inter, sans-serif', letterSpacing: 1 }}>nVision U</div>
+            <div style={{ fontSize: 12, color: '#64748B', fontFamily: 'Inter, sans-serif', letterSpacing: 2 }}>SCHOLARSHIP PROGRAM · KAZAKHSTAN</div>
+          </div>
+        </div>
+
+        <div style={{ width: 80, height: 2, background: 'linear-gradient(90deg,#006CFF,#00D8E6)', margin: '16px auto' }} />
+
+        <div style={{ fontSize: 13, letterSpacing: 4, color: '#64748B', textTransform: 'uppercase', marginBottom: 18, fontFamily: 'Inter, sans-serif' }}>
+          This is to certify that
+        </div>
+
+        <div style={{ fontSize: 38, fontWeight: 700, color: '#1E293B', marginBottom: 12, fontFamily: '"Times New Roman", serif', letterSpacing: 1 }}>
+          {candidate.name}
+        </div>
+
+        <div style={{ fontSize: 14, color: '#475569', lineHeight: 1.8, maxWidth: 520, margin: '0 auto 24px', fontFamily: 'Inter, sans-serif' }}>
+          has successfully completed the <strong>nVision U Selection Process</strong> and is officially
+          confirmed as eligible for the next stage — the <strong>Offline Selection</strong>.
+        </div>
+
+        <div style={{ width: 80, height: 1, background: '#E2E8F0', margin: '0 auto 24px' }} />
+
+        {/* Details row */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 48, marginBottom: 32 }}>
+          <div>
+            <div style={{ fontSize: 11, color: '#94A3B8', letterSpacing: 2, textTransform: 'uppercase', fontFamily: 'Inter, sans-serif' }}>Application ID</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#006CFF', fontFamily: 'Inter, sans-serif', letterSpacing: 2 }}>#{appId}</div>
+          </div>
+          <div style={{ width: 1, background: '#E2E8F0' }} />
+          <div>
+            <div style={{ fontSize: 11, color: '#94A3B8', letterSpacing: 2, textTransform: 'uppercase', fontFamily: 'Inter, sans-serif' }}>Date of Approval</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#1E293B', fontFamily: 'Inter, sans-serif' }}>{approvedDate}</div>
+          </div>
+          <div style={{ width: 1, background: '#E2E8F0' }} />
+          <div>
+            <div style={{ fontSize: 11, color: '#94A3B8', letterSpacing: 2, textTransform: 'uppercase', fontFamily: 'Inter, sans-serif' }}>Certificate No.</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#1E293B', fontFamily: 'Inter, sans-serif' }}>NVSU-{new Date().getFullYear()}-{appId}</div>
+          </div>
+        </div>
+
+        {/* Signature */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 80 }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ width: 140, borderBottom: '1px solid #94A3B8', marginBottom: 6, height: 36 }} />
+            <div style={{ fontSize: 12, color: '#64748B', fontFamily: 'Inter, sans-serif' }}>Head of Admissions</div>
+            <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>nVision U</div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ width: 140, borderBottom: '1px solid #94A3B8', marginBottom: 6, height: 36 }} />
+            <div style={{ fontSize: 12, color: '#64748B', fontFamily: 'Inter, sans-serif' }}>Program Director</div>
+            <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>nVision U</div>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 24, fontSize: 11, color: '#CBD5E1', letterSpacing: 1, fontFamily: 'Inter, sans-serif' }}>
+          This certificate is digitally generated and verified by nVision U Admissions System
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const StudentStatus = () => {
   const navigate = useNavigate();
   const [candidate, setCandidate] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [certModalOpen, setCertModalOpen] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   
   const [selectedDate, setSelectedDate] = useState<any>(null);
@@ -122,6 +206,10 @@ const StudentStatus = () => {
     navigate('/login');
   };
 
+  const printCertificate = () => {
+    window.print();
+  };
+
   if (loading) return <div style={{ textAlign: 'center', padding: '100px' }}><LoadingOutlined style={{ fontSize: 40, color: '#006CFF' }} /></div>;
   if (!candidate) return <Result status="404" title="Application not found" />;
 
@@ -129,10 +217,22 @@ const StudentStatus = () => {
     const s = candidate.status;
     if (s === 'new') return 0;
     if (s === 'under_review') return 1;
-    if (s === 'interview') return 2;
-    if (s === 'accepted' || s === 'declined') return 3;
+    if (s === 'interview' || s === 'arbitration') return 2;
+    if (s === 'waitlisted') return 3;
+    if (s === 'accepted' || s === 'declined') return 4;
     return 0;
   };
+
+  const statusInfo: Record<string, { label: string; color: string; bg: string; text: string }> = {
+    new: { label: 'Application Submitted', color: '#3B82F6', bg: '#EFF6FF', text: 'Your application has been received and is awaiting review.' },
+    under_review: { label: 'Under Review', color: '#F59E0B', bg: '#FFFBEB', text: 'Our committee is currently reviewing your application and test results.' },
+    interview: { label: 'Interview Stage', color: '#8B5CF6', bg: '#F5F3FF', text: 'Congratulations! You have been selected for an interview. Please schedule your slot below.' },
+    arbitration: { label: 'Under Additional Review', color: '#EF4444', bg: '#FEF2F2', text: 'Your evaluation is undergoing an additional review by the committee.' },
+    waitlisted: { label: 'Waitlisted', color: '#64748B', bg: '#F8FAFC', text: 'You have been placed on the waitlist. We will notify you if a spot opens up.' },
+    accepted: { label: 'Accepted — Congratulations!', color: '#10B981', bg: '#F0FDF4', text: 'You have successfully passed all stages of the nVision U selection process!' },
+    declined: { label: 'Application Not Accepted', color: '#EF4444', bg: '#FEF2F2', text: 'Unfortunately, your application was not successful at this stage. Thank you for applying.' },
+  };
+  const currentStatus = statusInfo[candidate.status] || statusInfo['new'];
 
   return (
     <Layout style={{ minHeight: '100vh', background: '#F8FAFC' }}>
@@ -148,6 +248,15 @@ const StudentStatus = () => {
 
         <Row gutter={[24, 24]}>
           <Col span={16}>
+            {/* Status banner */}
+            <div style={{ background: currentStatus.bg, border: `1px solid ${currentStatus.color}30`, borderRadius: 16, padding: '16px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ width: 12, height: 12, borderRadius: '50%', background: currentStatus.color, flexShrink: 0, boxShadow: `0 0 0 4px ${currentStatus.color}30` }} />
+              <div>
+                <Text strong style={{ color: currentStatus.color, fontSize: 15, display: 'block' }}>{currentStatus.label}</Text>
+                <Text style={{ color: '#475569', fontSize: 13 }}>{currentStatus.text}</Text>
+              </div>
+            </div>
+
             <Card variant="borderless" style={{ borderRadius: '20px', marginBottom: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
               <Steps
                 current={getStatusStep()}
@@ -155,10 +264,65 @@ const StudentStatus = () => {
                   { title: 'Application', icon: <FileTextOutlined /> },
                   { title: 'AI Screening', icon: candidate.status === 'new' ? <LoadingOutlined /> : <CheckCircleOutlined /> },
                   { title: 'Interview', icon: <ScheduleOutlined /> },
-                  { title: 'Result', icon: <CheckCircleOutlined /> },
+                  { title: 'Review', icon: <CheckCircleOutlined /> },
+                  { title: 'Result', icon: <TrophyOutlined /> },
                 ]}
               />
             </Card>
+
+            {/* ACCEPTED: Congratulations + Certificate */}
+            {candidate.status === 'accepted' && (
+              <Card
+                style={{ borderRadius: 20, marginBottom: 24, border: '2px solid #10B981', background: 'linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%)', overflow: 'hidden' }}
+                styles={{ body: { padding: 0 } }}
+              >
+                <div style={{ padding: '28px 32px' }}>
+                  <Space size={16} align="start">
+                    <div style={{ width: 56, height: 56, background: '#10B981', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <TrophyOutlined style={{ fontSize: 28, color: 'white' }} />
+                    </div>
+                    <div>
+                      <Title level={3} style={{ color: '#065F46', margin: 0, fontWeight: 800 }}>🎉 Congratulations, {candidate.name}!</Title>
+                      <Text style={{ color: '#047857', fontSize: 15, display: 'block', marginTop: 6, lineHeight: 1.6 }}>
+                        You have successfully passed all stages of the nVision U selection process.<br />
+                        You are now eligible for the <strong>Offline Selection stage</strong>. Your digital certificate is ready.
+                      </Text>
+                    </div>
+                  </Space>
+
+                  <div style={{ marginTop: 24, display: 'flex', gap: 12 }}>
+                    <Button
+                      type="primary"
+                      size="large"
+                      icon={<PrinterOutlined />}
+                      style={{ background: '#10B981', borderColor: '#10B981', borderRadius: 12, height: 48 }}
+                      onClick={() => setCertModalOpen(true)}
+                    >
+                      View Certificate
+                    </Button>
+                    <Button
+                      size="large"
+                      icon={<DownloadOutlined />}
+                      style={{ borderRadius: 12, height: 48, borderColor: '#10B981', color: '#10B981' }}
+                      onClick={() => { setCertModalOpen(true); setTimeout(() => window.print(), 400); }}
+                    >
+                      Download PDF
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* DECLINED */}
+            {candidate.status === 'declined' && (
+              <Alert
+                title="Application Not Accepted"
+                description="Thank you for your effort and time applying to nVision U. We encourage you to continue developing your skills and apply again in the future."
+                type="error"
+                showIcon
+                style={{ borderRadius: 16, marginBottom: 24 }}
+              />
+            )}
 
             {candidate.status === 'interview' && !candidate.interviewTime && (
               <Card 
@@ -334,7 +498,7 @@ const StudentStatus = () => {
           </div>
         </Modal>
 
-        {/* МОДАЛКА ДЛЯ ВИДЕОСВЯЗИ */}
+        {/* ВИДЕОСВЯЗЬ */}
         <Modal
           open={!!activeCall}
           onCancel={() => setActiveCall(null)}
@@ -345,12 +509,32 @@ const StudentStatus = () => {
           styles={{ body: { padding: 0, overflow: 'hidden', borderRadius: '12px' } }}
         >
           {activeCall && (
-            <VideoConference 
+            <VideoConference
               roomName={`nVisionU-Interview-${activeCall.id}`}
               userName={candidate.name}
               onClose={() => setActiveCall(null)}
             />
           )}
+        </Modal>
+
+        {/* CERTIFICATE MODAL */}
+        <Modal
+          open={certModalOpen}
+          onCancel={() => setCertModalOpen(false)}
+          footer={[
+            <Button key="close" onClick={() => setCertModalOpen(false)}>Close</Button>,
+            <Button key="print" type="primary" icon={<PrinterOutlined />}
+              style={{ background: '#10B981', borderColor: '#10B981' }}
+              onClick={printCertificate}
+            >Print / Save as PDF</Button>,
+          ]}
+          width={860}
+          centered
+          title={<Space><TrophyOutlined style={{ color: '#10B981' }} /> Selection Completion Certificate</Space>}
+        >
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '16px 0' }}>
+            <CertificatePrint candidate={candidate} />
+          </div>
         </Modal>
 
       </Content>
@@ -367,6 +551,23 @@ const StudentStatus = () => {
         }
         .calendar-fix-wrapper .ant-picker-panel-container {
           box-shadow: none !important;
+        }
+        @media print {
+          body * { visibility: hidden !important; }
+          .certificate-print-area,
+          .certificate-print-area * { visibility: visible !important; }
+          .certificate-print-area {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 9999 !important;
+            background: white !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
         }
       `}</style>
     </Layout>
