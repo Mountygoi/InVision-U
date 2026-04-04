@@ -63,8 +63,16 @@ const Candidates = () => {
   const [certModal, setCertModal] = useState<{ type: 'ielts' | 'unt'; open: boolean }>({ type: 'ielts', open: false });
   const [certApproving, setCertApproving] = useState(false);
 
+  // Оценка интервью
+  const [evalModalOpen, setEvalModalOpen] = useState(false);
+  const [evalSaving, setEvalSaving] = useState(false);
+  const [techScore, setTechScore] = useState<number | ''>('');
+  const [softScore, setSoftScore] = useState<number | ''>('');
+  const [techNotes, setTechNotes] = useState('');
+  const [softNotes, setSoftNotes] = useState('');
+
   const isDataHidden = (status: string) => {
-    return status === 'new' || status === 'under_review';
+    return status === 'new';
   };
 
   const fetchCandidates = useCallback(async () => {
@@ -172,6 +180,33 @@ const Candidates = () => {
       message.error('Failed to approve certificate');
     } finally {
       setCertApproving(false);
+    }
+  };
+
+  // Сохранение оценок интервью
+  const handleSaveEval = async () => {
+    if (!selectedId) return;
+    if (techScore === '' || softScore === '') {
+      message.warning('Введите оценки обеих панелей');
+      return;
+    }
+    setEvalSaving(true);
+    try {
+      await axios.patch(`http://localhost:5000/api/candidates/${selectedId}/status`, {
+        status: 'under_review',
+        tech_score: Number(techScore),
+        soft_score: Number(softScore),
+        tech_notes: techNotes,
+        soft_notes: softNotes,
+      });
+      message.success('Оценки сохранены. Статус: На проверке');
+      setEvalModalOpen(false);
+      setTechScore(''); setSoftScore(''); setTechNotes(''); setSoftNotes('');
+      fetchCandidates();
+    } catch (err) {
+      message.error('Ошибка при сохранении оценок');
+    } finally {
+      setEvalSaving(false);
     }
   };
 
@@ -680,7 +715,7 @@ const Candidates = () => {
 
                 {/* Final Bar */}
                 <div style={{ marginTop: '28px', padding: '20px', background: '#F9FAFB', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  {selectedCandidate.status === 'new' || selectedCandidate.status === 'under_review' ? (() => {
+                  {(selectedCandidate.status === 'new' || (selectedCandidate.status === 'under_review' && selectedCandidate.techScore == null)) ? (() => {
                     const hasCerts = selectedCandidate.ieltsFilePath || selectedCandidate.untFilePath;
                     const certsApproved = (!selectedCandidate.ieltsFilePath || selectedCandidate.ieltsApproved)
                       && (!selectedCandidate.untFilePath || selectedCandidate.untApproved);
@@ -712,7 +747,25 @@ const Candidates = () => {
                         )}
                       </Space>
                     );
-                  })() : (
+                  })() : selectedCandidate.status === 'interview' ? (
+                    <Space>
+                      <Button danger icon={<XCircle size={16} />} onClick={() => handleStatusChange(selectedCandidate.id, 'declined')}>Decline</Button>
+                      <Button
+                        type="primary"
+                        icon={<CheckCircle2 size={16} />}
+                        style={{ background: '#7C3AED', borderColor: '#7C3AED', borderRadius: 8 }}
+                        onClick={() => {
+                          setTechScore(selectedCandidate.techScore ?? '');
+                          setSoftScore(selectedCandidate.softScore ?? '');
+                          setTechNotes(selectedCandidate.techNotes || '');
+                          setSoftNotes(selectedCandidate.softNotes || '');
+                          setEvalModalOpen(true);
+                        }}
+                      >
+                        Evaluate Candidate
+                      </Button>
+                    </Space>
+                  ) : (
                     <Space>
                       <CheckCircle2 size={24} color="#10B981" />
                       <Text strong>Решение зафиксировано в Audit Log.</Text>
@@ -809,6 +862,66 @@ const Candidates = () => {
           </div>
         </Modal>
       )}
+
+      {/* EVALUATE MODAL */}
+      <Modal
+        title={<Space><CheckCircle2 size={18} color="#7C3AED" /> Оценка интервью — {selectedCandidate?.name}</Space>}
+        open={evalModalOpen}
+        onCancel={() => setEvalModalOpen(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setEvalModalOpen(false)}>Отмена</Button>,
+          <Button key="save" type="primary" loading={evalSaving} onClick={handleSaveEval}
+            style={{ background: '#7C3AED', borderColor: '#7C3AED' }}>
+            Сохранить и отправить на проверку
+          </Button>,
+        ]}
+        width={600}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20, paddingTop: 8 }}>
+          <div style={{ background: '#F0FDF4', padding: 16, borderRadius: 12, border: '1px solid #BBF7D0' }}>
+            <Text strong style={{ display: 'block', marginBottom: 10, color: '#065F46' }}>Panel A — Technical Skills (0–100)</Text>
+            <Input
+              type="number"
+              min={0} max={100}
+              value={techScore}
+              onChange={e => setTechScore(e.target.value === '' ? '' : Math.min(100, Math.max(0, Number(e.target.value))))}
+              placeholder="Оценка 0–100"
+              size="large"
+              style={{ marginBottom: 10 }}
+            />
+            <TextArea
+              value={techNotes}
+              onChange={e => setTechNotes(e.target.value)}
+              rows={2}
+              placeholder="Комментарий панели A (необязательно)..."
+            />
+          </div>
+          <div style={{ background: '#EFF6FF', padding: 16, borderRadius: 12, border: '1px solid #BFDBFE' }}>
+            <Text strong style={{ display: 'block', marginBottom: 10, color: '#1E3A8A' }}>Panel B — Soft Skills (0–100)</Text>
+            <Input
+              type="number"
+              min={0} max={100}
+              value={softScore}
+              onChange={e => setSoftScore(e.target.value === '' ? '' : Math.min(100, Math.max(0, Number(e.target.value))))}
+              placeholder="Оценка 0–100"
+              size="large"
+              style={{ marginBottom: 10 }}
+            />
+            <TextArea
+              value={softNotes}
+              onChange={e => setSoftNotes(e.target.value)}
+              rows={2}
+              placeholder="Комментарий панели B (необязательно)..."
+            />
+          </div>
+          <Alert
+            title="Автоматический арбитраж"
+            description="Если разница оценок превысит 40 баллов — статус автоматически переключится на «Арбитраж» для независимого разбора."
+            type="info"
+            showIcon
+          />
+        </div>
+      </Modal>
 
       {/* CERTIFICATE MODAL */}
       {selectedCandidate && certModal.open && (
