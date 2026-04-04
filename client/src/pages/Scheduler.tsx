@@ -88,50 +88,45 @@ const [evalData, setEvalData] = useState({
     fetchCandidates();
   }, [fetchCandidates]);
 
-  const handleScoreSubmit = async (passedId?: string) => {
-  console.log("--- Начало сабмита ---");
-  
-  // ПРАВКА: берем ID из нашего нового надежного стейта
-  const id = evaluatingId; 
-
-  console.log("ID из стейта оценивания:", id);
-
+  const handleScoreSubmit = async () => {
+  const id = evaluatingId;
   if (!id) {
-    console.error("Ошибка: ID не найден в стейте оценивания!");
     message.error("Критическая ошибка: ID потерян");
     return;
   }
 
   try {
     const finalScore = calculateTotalScore();
-    const payload: any = {
-      status: finalScore < 45 ? 'arbitration' : 'interview'
-    };
+    const payload: any = {};
 
     if (evalData.panelType === 'Technical') {
       payload.tech_score = finalScore;
-      payload.tech_notes = evalData.techNotes; 
+      payload.tech_notes = evalData.techNotes;
     } else {
       payload.soft_score = finalScore;
-      payload.soft_notes = evalData.softNotes; 
+      payload.soft_notes = evalData.softNotes;
     }
 
-    console.log("Отправка на сервер по ID:", id);
-
     const response = await axios.patch(
-      `http://localhost:5000/api/candidates/${id}/status`, 
+      `http://localhost:5000/api/candidates/${id}/status`,
       payload
     );
 
     if (response.status === 200) {
-      message.success('Оценка сохранена!');
+      const updated = response.data;
+      if (updated.status === 'under_review') {
+        message.success('Обе панели оценили! Кандидат отправлен на проверку ✅');
+      } else if (updated.status === 'arbitration') {
+        message.warning('Конфликт оценок панелей! Кандидат отправлен на арбитраж ⚠️');
+      } else {
+        message.success(`Оценка панели сохранена. Ожидается оценка второй панели.`);
+      }
       setIsEvalModalOpen(false);
-      setEvaluatingId(null); // Очищаем после успеха
+      setEvaluatingId(null);
       setViewCandidate(null);
       fetchCandidates();
     }
   } catch (err: any) {
-    console.error("Ошибка запроса:", err.message);
     message.error("Сервер недоступен или ошибка в базе");
   }
 };
@@ -414,11 +409,7 @@ footer={[
   title={<Space><ShieldCheck size={20} color="#006CFF" /> <Text strong>Evidence-Based Scorecard: {viewCandidate?.name}</Text></Space>}
   open={isEvalModalOpen}
   onCancel={() => setIsEvalModalOpen(false)}
-  // ИСПРАВЛЕНИЕ: Используем стрелочную функцию, чтобы пробросить ID
-  onOk={() => {
-    console.log("ID из модалки:", viewCandidate?.id); // Добавь этот лог для проверки
-    handleScoreSubmit(viewCandidate?.id);
-  }} 
+  onOk={() => handleScoreSubmit()}
   okText="Submit Scorecard"
   centered
   width={650}

@@ -514,22 +514,29 @@ router.patch('/:id/status', async (req, res) => {
     const result = await pool.query(updateQuery, [status, tech_score, soft_score, tech_notes, soft_notes, reviewer_notes, id]);
     let updatedCandidate = result.rows[0];
 
-    // 4. ЛОГИКА АВТО-АРБИТРАЖА (Киллер-фича для хакатона)
-    // Проверяем разрыв, если обе оценки теперь в наличии
+    // 4. ЛОГИКА АВТО-СТАТУСА: если обе панели оценили → под_ревью или арбитраж
     if (updatedCandidate.tech_score !== null && updatedCandidate.soft_score !== null) {
       const diff = Math.abs(updatedCandidate.tech_score - updatedCandidate.soft_score);
-      if (diff > 40 && updatedCandidate.status !== 'arbitration') {
-        const arbResult = await pool.query(
-          "UPDATE candidates SET status = 'arbitration', updated_at = NOW() WHERE id = $1 RETURNING *",
+      if (diff > 40) {
+        // Конфликт оценок → арбитраж
+        if (updatedCandidate.status !== 'arbitration') {
+          const arbResult = await pool.query(
+            "UPDATE candidates SET status = 'arbitration', updated_at = NOW() WHERE id = $1 RETURNING *",
+            [id]
+          );
+          updatedCandidate = arbResult.rows[0];
+          await pool.query(
+            'INSERT INTO audit_log (candidate_id, action, new_value) VALUES ($1, $2, $3)',
+            [id, 'auto_arbitration_triggered', `Gap: ${diff}`]
+          );
+        }
+      } else if (updatedCandidate.status === 'interview') {
+        // Обе оценки есть, конфликта нет → отправляем на проверку
+        const urResult = await pool.query(
+          "UPDATE candidates SET status = 'under_review', updated_at = NOW() WHERE id = $1 RETURNING *",
           [id]
         );
-        updatedCandidate = arbResult.rows[0];
-        
-        // Логируем триггер арбитража
-        await pool.query(
-          'INSERT INTO audit_log (candidate_id, action, new_value) VALUES ($1, $2, $3)',
-          [id, 'auto_arbitration_triggered', `Gap: ${diff}`]
-        );
+        updatedCandidate = urResult.rows[0];
       }
     }
 
