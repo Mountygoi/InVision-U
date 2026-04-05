@@ -89,8 +89,13 @@ app.get('/api/audit-log', async (_req, res) => {
 });
 
 // Serve client static build in production
-const clientDist = path.join(__dirname, '..', 'client', 'dist');
+const clientDistCandidates = [
+  path.join(__dirname, '..', '..', 'client', 'dist'),  // Docker: /app/server/dist/../../client/dist
+  path.join(__dirname, '..', 'client', 'dist'),          // Local dev
+];
+const clientDist = clientDistCandidates.find(p => fs.existsSync(p)) || clientDistCandidates[0];
 if (fs.existsSync(clientDist)) {
+  console.log(`📁 Serving client from: ${clientDist}`);
   app.use(express.static(clientDist));
   app.get(/^(?!\/api|\/uploads).*/, (_req, res) => {
     res.sendFile(path.join(clientDist, 'index.html'));
