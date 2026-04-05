@@ -104,16 +104,22 @@ export async function analyzePersonality(
       messages: [{
         role: 'user',
         content: `You are an admissions psychologist for InVision U, a scholarship university in Kazakhstan.
+
 A candidate completed a 40-question personality assessment across 8 clusters.
 
 Scores (ranked highest to lowest):
 ${scoreLines}
 
 Write a 3–4 sentence personality narrative for the admissions committee.
-- Name the 2 highest-scoring clusters and what they suggest about the candidate
-- Note 1 area for development (lowest cluster)
-- Close with a concise leadership potential assessment
-Be objective, specific, and avoid generic praise. Write in English.`,
+
+Requirements:
+- Mention the 2 highest-scoring clusters by name and explain what they suggest about the candidate.
+- Mention the lowest-scoring cluster as a development area.
+- End with a concise judgment about leadership potential.
+- Be objective, specific, and cautious.
+- Avoid generic praise, diagnosis language, and unsupported claims.
+- Use only the provided scores; do not invent traits not implied by them.
+- Write in English.`,
       }],
       max_tokens: 240,
       temperature: 0.3,
