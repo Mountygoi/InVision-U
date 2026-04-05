@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Row, Col, Avatar, Tag, Button, Typography, Space, Empty, message, Input, Layout, Card, Divider, Select, Progress, Badge, Alert, Modal, Slider, Popover, Checkbox } from 'antd';
-import { ShieldCheck, FileText, Send, XCircle, MapPin, GraduationCap, CheckCircle2, AlertTriangle, Bot, TrendingUp, User, EyeOff, Scale, SlidersHorizontal } from 'lucide-react';
+import { ShieldCheck, FileText, Send, XCircle, MapPin, GraduationCap, CheckCircle2, AlertTriangle, Bot, TrendingUp, User, EyeOff, Scale, SlidersHorizontal, RefreshCw } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, PolarRadiusAxis, Radar as RadarArea } from 'recharts';
@@ -85,6 +85,7 @@ const Candidates = () => {
   const [techNotes, setTechNotes] = useState('');
   const [softNotes, setSoftNotes] = useState('');
   const [assessmentTab, setAssessmentTab] = useState<'simulation' | 'sjt' | 'personality'>('simulation');
+  const [aiRechecking, setAiRechecking] = useState(false);
 
   const isDataHidden = (_status: string) => {
     return false;
@@ -166,6 +167,25 @@ const Candidates = () => {
     } catch (error) {
       console.error('Save notes error:', error);
       message.error(t('errorSaveNotes'));
+    }
+  };
+
+  const handleAiRecheck = async () => {
+    if (!selectedId) return;
+    try {
+      setAiRechecking(true);
+      const res = await axios.post(`${API}/candidates/${selectedId}/analyze`);
+      setCandidates(prev => prev.map(cand =>
+        cand.id === selectedId
+          ? { ...cand, aiScores: res.data.ai_scores, aiSummary: res.data.ai_summary, aiFlags: res.data.ai_flags, compositeScore: res.data.composite_score }
+          : cand
+      ));
+      message.success(t('aiRecheckSuccess'));
+    } catch (err) {
+      console.error('AI recheck error:', err);
+      message.error(t('aiRecheckFailed'));
+    } finally {
+      setAiRechecking(false);
     }
   };
 
@@ -567,13 +587,24 @@ const Candidates = () => {
                   </div>
                 )}
 
-                {/* AI Assessment Summary */}
-                {selectedCandidate.aiSummary && (
-                  <div style={{ background: c.pageBg, padding: '20px', borderRadius: '14px', marginBottom: '24px', border: `1px solid ${c.border}` }}>
-                    <Title level={5} style={{ display: 'flex', alignItems: 'center' }}><ShieldCheck size={18} style={{ marginRight: 8 }} /> {t('aiAssessment')}</Title>
-                    <Paragraph style={{ fontSize: '14px', lineHeight: '1.6' }}>{selectedCandidate.aiSummary}</Paragraph>
+                {/* AI Assessment Summary + Recheck Button */}
+                <div style={{ background: c.pageBg, padding: '20px', borderRadius: '14px', marginBottom: '24px', border: `1px solid ${c.border}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: selectedCandidate.aiSummary ? 12 : 0 }}>
+                    <Title level={5} style={{ display: 'flex', alignItems: 'center', margin: 0 }}><ShieldCheck size={18} style={{ marginRight: 8 }} /> {t('aiAssessment')}</Title>
+                    <Button
+                      icon={<RefreshCw size={14} style={aiRechecking ? { animation: 'spin 1s linear infinite' } : undefined} />}
+                      loading={aiRechecking}
+                      onClick={handleAiRecheck}
+                      size="small"
+                      type="default"
+                    >
+                      {aiRechecking ? t('aiRecheckRunning') : t('aiRecheck')}
+                    </Button>
                   </div>
-                )}
+                  {selectedCandidate.aiSummary && (
+                    <Paragraph style={{ fontSize: '14px', lineHeight: '1.6', margin: 0 }}>{selectedCandidate.aiSummary}</Paragraph>
+                  )}
+                </div>
 
                 {/* AI Flags */}
                 {selectedCandidate.aiFlags && (() => {

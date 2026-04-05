@@ -289,6 +289,13 @@ router.post(
         [candidateId, 'application_submitted', name]
       );
 
+      // Trigger AI essay analysis in background (don't block the student's response)
+      if (finalEssayText) {
+        analyzeAndUpdate(candidateId, finalEssayText, name, parsedAchievements, university || '', city, weights)
+          .then(() => console.log(`AI analysis completed for candidate ${candidateId}`))
+          .catch((err) => console.error(`AI analysis failed for candidate ${candidateId}:`, err));
+      }
+
       res.status(201).json({
         id: candidateId,
         tempPassword,
