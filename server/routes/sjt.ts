@@ -72,7 +72,6 @@ router.post('/analyze', async (req, res) => {
 
           if (c.essay_text) {
             try {
-              console.log(`Triggering full AI analysis for candidate ${candidateId}...`);
               const analysis = await analyzeEssay(
                 c.essay_text,
                 c.name,

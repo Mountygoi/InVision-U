@@ -18,7 +18,6 @@ import pool from './db.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 1. ИСПРАВЛЕНИЕ: Используем абсолютный путь от корня процесса для надежности
 const rootDir = process.cwd();
 const uploadsDir = path.join(rootDir, 'uploads');
 

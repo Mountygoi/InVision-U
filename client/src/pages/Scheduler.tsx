@@ -371,7 +371,6 @@ footer={[
   key="eval" 
   type="primary" 
   onClick={() => {
-    console.log("Запоминаю ID:", viewCandidate?.id);
     setEvaluatingId(viewCandidate?.id || null); // Сохраняем ID в отдельную память
     setViewCandidate(null);
     setIsEvalModalOpen(true);
