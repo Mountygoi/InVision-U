@@ -187,6 +187,41 @@ const Dashboard = () => {
           </Card>
         </Col>
       </Row>
+
+      {/* Diamond Talents */}
+      {stats.topTalents && stats.topTalents.length > 0 && (
+        <Card
+          title={<Text strong style={{ fontSize: 16, color: c.text }}>{t('diamondTalents')}</Text>}
+          style={{ borderRadius: '16px', border: `1px solid ${c.border}`, background: c.cardBg, marginTop: 24 }}
+        >
+          <Row gutter={[16, 16]}>
+            {stats.topTalents.map(talent => {
+              const icons: Record<string, string> = { diamond: '💎', leader: '🏆', rising_star: '⭐' };
+              const labels: Record<string, string> = { diamond: t('diamondLabel'), leader: t('leaderLabel'), rising_star: t('risingStarLabel') };
+              const colors: Record<string, string> = { diamond: '#8B5CF6', leader: '#F59E0B', rising_star: '#10B981' };
+              return (
+                <Col key={talent.id} xs={24} sm={12} md={8} lg={6}>
+                  <div style={{
+                    background: isDark ? '#1e293b' : '#fafafa',
+                    borderRadius: 12,
+                    padding: '16px',
+                    border: `1px solid ${colors[talent.category]}40`,
+                    textAlign: 'center',
+                  }}>
+                    <div style={{ fontSize: 28, marginBottom: 8 }}>{icons[talent.category]}</div>
+                    <Text strong style={{ fontSize: 14, display: 'block' }}>{talent.name}</Text>
+                    <Text type="secondary" style={{ fontSize: 12 }}>{talent.city}</Text>
+                    <div style={{ marginTop: 8 }}>
+                      <Tag color={colors[talent.category]} style={{ borderRadius: 6, fontSize: 11 }}>{labels[talent.category]}</Tag>
+                      <Text strong style={{ color: colors[talent.category], fontSize: 15, marginLeft: 8 }}>{Math.round(talent.score)}</Text>
+                    </div>
+                  </div>
+                </Col>
+              );
+            })}
+          </Row>
+        </Card>
+      )}
     </div>
   );
 };

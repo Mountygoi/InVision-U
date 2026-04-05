@@ -84,9 +84,10 @@ const Candidates = () => {
   const [softScore, setSoftScore] = useState<number | ''>('');
   const [techNotes, setTechNotes] = useState('');
   const [softNotes, setSoftNotes] = useState('');
+  const [assessmentTab, setAssessmentTab] = useState<'simulation' | 'sjt' | 'personality'>('simulation');
 
-  const isDataHidden = (status: string) => {
-    return status === 'new';
+  const isDataHidden = (_status: string) => {
+    return false;
   };
 
   const fetchCandidates = useCallback(async () => {
@@ -643,8 +644,24 @@ const Candidates = () => {
                   </div>
                 )}
 
+                {/* Assessment Dropdown */}
+                {(selectedCandidate.simulationScores || selectedCandidate.sjtScores || selectedCandidate.personalityScores) && (
+                  <div style={{ marginBottom: 16 }}>
+                    <Select
+                      value={assessmentTab}
+                      onChange={setAssessmentTab}
+                      style={{ width: 260 }}
+                      options={[
+                        ...(selectedCandidate.simulationScores ? [{ value: 'simulation', label: t('simTitle') }] : []),
+                        ...(selectedCandidate.sjtScores ? [{ value: 'sjt', label: t('sjtTitle') }] : []),
+                        ...(selectedCandidate.personalityScores ? [{ value: 'personality', label: t('personalityTitle') }] : []),
+                      ]}
+                    />
+                  </div>
+                )}
+
                 {/* Simulation Assessment Results */}
-                {selectedCandidate.simulationScores && (
+                {assessmentTab === 'simulation' && selectedCandidate.simulationScores && (
                   <div style={{ background: c.orangeBg, padding: '20px', borderRadius: '14px', marginBottom: '24px', border: `1px solid ${c.orangeBorder}` }}>
                     <Row justify="space-between" align="middle" style={{ marginBottom: 12 }}>
                       <Title level={5} style={{ margin: 0 }}>{t('simTitle')}</Title>
@@ -700,7 +717,7 @@ const Candidates = () => {
                 )}
 
                 {/* SJT Assessment Results */}
-                {selectedCandidate.sjtScores && (() => {
+                {assessmentTab === 'sjt' && selectedCandidate.sjtScores && (() => {
                   const sjt = selectedCandidate.sjtScores!;
                   const overall = sjt.overallScores || {};
                   const overallValues = Object.values(overall) as number[];
@@ -805,7 +822,7 @@ const Candidates = () => {
                 </Row>
 
                 {/* Personality Assessment Results */}
-                {selectedCandidate.personalityScores && (
+                {assessmentTab === 'personality' && selectedCandidate.personalityScores && (
                   <div style={{ background: c.greenBg, padding: '20px', borderRadius: '14px', marginBottom: '24px', border: `1px solid ${c.greenBorder}` }}>
                     <Row justify="space-between" align="middle" style={{ marginBottom: 12 }}>
                       <Title level={5} style={{ margin: 0 }}>{t('personalityTitle')}</Title>
@@ -842,6 +859,40 @@ const Candidates = () => {
                     )}
                   </div>
                 )}
+
+                {/* Video Embed */}
+                {selectedCandidate.videoUrl && (() => {
+                  const url = selectedCandidate.videoUrl!;
+                  const ALLOWED_DOMAINS = ['youtube.com', 'youtu.be', 'loom.com', 'drive.google.com', 'vimeo.com'];
+                  const isSafe = (() => { try { const h = new URL(url).hostname; return ALLOWED_DOMAINS.some(d => h === d || h.endsWith('.' + d)); } catch { return false; } })();
+                  let embedUrl = '';
+                  if (isSafe) {
+                    const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/);
+                    if (ytMatch) embedUrl = `https://www.youtube.com/embed/${ytMatch[1]}`;
+                    const loomMatch = url.match(/loom\.com\/share\/([\w-]+)/);
+                    if (loomMatch) embedUrl = `https://www.loom.com/embed/${loomMatch[1]}`;
+                    const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+                    if (vimeoMatch) embedUrl = `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+                  }
+                  return (
+                    <div style={{ background: c.surfaceBg, padding: '20px', borderRadius: '14px', marginBottom: '24px', border: `1px solid ${c.borderLight}` }}>
+                      <Title level={5} style={{ margin: '0 0 12px' }}>🎥 {t('watchVideo')}</Title>
+                      {embedUrl ? (
+                        <iframe
+                          src={embedUrl}
+                          style={{ width: '100%', height: 280, borderRadius: 10, border: 'none' }}
+                          sandbox="allow-scripts allow-same-origin allow-presentation"
+                          allowFullScreen
+                          title="Candidate video"
+                        />
+                      ) : isSafe ? (
+                        <Button type="link" href={url} target="_blank" rel="noopener noreferrer">{url}</Button>
+                      ) : (
+                        <Alert type="warning" message={t('unsafeVideoLink')} showIcon />
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* Learnability / Coachability Section */}
                 {selectedCandidate.learnabilityScore && (
@@ -913,7 +964,6 @@ const Candidates = () => {
                     return (
                       <Space>
                         <Button danger icon={<XCircle size={16} />} onClick={() => handleStatusChange(selectedCandidate.id, 'declined')}>{t('decline')}</Button>
-                        <Button icon={<FileText size={16} />} onClick={() => handleStatusChange(selectedCandidate.id, 'under_review')}>{t('markReview')}</Button>
                         <Button
                           type="primary"
                           icon={<Send size={16} />}

@@ -39,7 +39,6 @@ export interface ScoringWeights {
   resilience: number;
   socialImpact: number;
   achievementBonus: number;
-  ruralBonus: number;
 }
 
 export interface NudgeAnswer {
@@ -162,6 +161,15 @@ export interface Candidate {
   // Contact
   contactMethod?: string;
   contactHandle?: string;
+  videoUrl?: string;
+}
+
+export interface TopTalent {
+  id: string;
+  name: string;
+  city: string;
+  score: number;
+  category: 'diamond' | 'leader' | 'rising_star';
 }
 
 export interface DashboardStats {
@@ -185,4 +193,5 @@ export interface DashboardStats {
     compositeScore: number;
     createdAt: string;
   }[];
+  topTalents?: TopTalent[];
 }

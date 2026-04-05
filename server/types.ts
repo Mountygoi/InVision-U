@@ -84,7 +84,6 @@ export interface ScoringWeights {
   resilience: number;
   socialImpact: number;
   achievementBonus: number;
-  ruralBonus: number;
 }
 
 export const DEFAULT_WEIGHTS: ScoringWeights = {
@@ -95,7 +94,6 @@ export const DEFAULT_WEIGHTS: ScoringWeights = {
   resilience: 20,
   socialImpact: 0,
   achievementBonus: 15,
-  ruralBonus: 10,
 };
 
 export interface DashboardStats {

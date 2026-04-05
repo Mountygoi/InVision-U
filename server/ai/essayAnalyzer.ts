@@ -10,7 +10,7 @@ async function callGroq(systemPrompt: string, userPrompt: string): Promise<strin
     ],
     model: GROQ_MODEL,
     temperature: 0.3,
-    max_tokens: 1500,
+    max_tokens: 2500,
   });
 
   return completion.choices[0]?.message?.content || '{}';

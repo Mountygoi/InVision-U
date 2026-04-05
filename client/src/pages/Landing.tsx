@@ -10,7 +10,7 @@ const { Text } = Typography;
 const Landing = () => {
   const navigate = useNavigate();
   const { t, lang, setLang } = useLanguage();
-  const { theme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const isDark = theme === 'dark';
 
   return (
@@ -26,8 +26,16 @@ const Landing = () => {
       fontFamily: "'Raleway', Arial, sans-serif",
       padding: '40px 20px',
     }}>
-      {/* Language switcher */}
-      <div style={{ position: 'absolute', top: 24, right: 32 }}>
+      {/* Theme toggle + Language switcher */}
+      <div style={{ position: 'absolute', top: 24, right: 32, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Button
+          type="text"
+          size="small"
+          onClick={toggleTheme}
+          style={{ color: isDark ? '#94a3b8' : '#64748b', fontSize: 16 }}
+        >
+          {isDark ? '☀️' : '🌙'}
+        </Button>
         <Space size={4}>
           {(['ru', 'kz'] as const).map(l => (
             <Button

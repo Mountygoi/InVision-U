@@ -6,7 +6,7 @@ const router = Router();
 // GET /api/stats - Dashboard statistics
 router.get('/', async (_req, res) => {
   try {
-    const [totals, avgScore, scoreDistribution, regionBreakdown, statusFunnel, recentApplications] = await Promise.all([
+    const [totals, avgScore, scoreDistribution, regionBreakdown, statusFunnel, recentApplications, topTalents] = await Promise.all([
       pool.query(`SELECT
         COUNT(*) as total,
         COUNT(*) FILTER (WHERE status = 'new') as new,
@@ -55,7 +55,17 @@ router.get('/', async (_req, res) => {
       pool.query(`SELECT id, name, city, university, status, composite_score, created_at
       FROM candidates
       ORDER BY created_at DESC
-      LIMIT 5`)
+      LIMIT 5`),
+
+      pool.query(`SELECT id, name, city, composite_score,
+        (ai_scores->>'motivation')::jsonb->>'score' as motivation_score,
+        (ai_scores->>'leadership')::jsonb->>'score' as leadership_score,
+        (ai_scores->>'resilience')::jsonb->>'score' as resilience_score,
+        COALESCE((ai_flags->>'high_potential_outlier')::boolean, false) as high_potential
+      FROM candidates
+      WHERE composite_score > 0
+      ORDER BY composite_score DESC
+      LIMIT 30`)
     ]);
 
     const t = totals.rows[0];
@@ -81,6 +91,18 @@ router.get('/', async (_req, res) => {
         compositeScore: r.composite_score,
         createdAt: r.created_at,
       })),
+      topTalents: topTalents.rows.map(r => {
+        const score = parseFloat(r.composite_score) || 0;
+        const leadership = parseFloat(r.leadership_score) || 0;
+        const resilience = parseFloat(r.resilience_score) || 0;
+        const highPotential = r.high_potential === true || r.high_potential === 't';
+        let category: 'diamond' | 'leader' | 'rising_star' | null = null;
+        if (score >= 85 && highPotential) category = 'diamond';
+        else if (score >= 78 && leadership >= 75) category = 'leader';
+        else if (resilience >= 80 && score >= 70) category = 'rising_star';
+        if (!category) return null;
+        return { id: r.id, name: r.name, city: r.city, score, category };
+      }).filter(Boolean),
     });
   } catch (err) {
     console.error('Error fetching stats:', err);

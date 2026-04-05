@@ -14,6 +14,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { t, lang, setLang } = useLanguage();
   const { theme, toggleTheme } = useTheme();
+  const isDark = theme === 'dark';
 
   const onFinish = async (values: { email: string; password: string }) => {
     setLoading(true);
@@ -37,16 +38,16 @@ const Login = () => {
   };
 
   return (
-    <Layout style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'linear-gradient(160deg, #fafafa 0%, #ecfdf5 100%)' }}>
+    <Layout style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: isDark ? 'linear-gradient(160deg, #0f172a 0%, #1e293b 100%)' : 'linear-gradient(160deg, #fafafa 0%, #ecfdf5 100%)' }}>
       <div style={{ animation: 'fadeInUp 0.6s cubic-bezier(0.16,1,0.3,1) both' }}>
       <Card 
         style={{ 
           width: '100%',
           maxWidth: 440, 
           borderRadius: 24, 
-          boxShadow: '0 24px 64px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.03)',
+          boxShadow: isDark ? '0 24px 64px rgba(0,0,0,0.3)' : '0 24px 64px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.03)',
           padding: '28px 24px',
-          background: '#ffffff',
+          background: isDark ? '#1e293b' : '#ffffff',
           border: 'none',
         }}
       >
@@ -60,8 +61,8 @@ const Login = () => {
             fontFamily: "'Raleway', sans-serif",
             boxShadow: '0 4px 20px rgba(22, 163, 74, 0.3)',
           }}>iU</div>
-          <Title level={3} style={{ margin: '0 0 4px', color: '#1E293B', fontFamily: "'Raleway', sans-serif" }}>{t('candidateLogin')}</Title>
-          <Text style={{ color: '#64748B', fontSize: 14 }}>{t('loginSubtitle')}</Text>
+          <Title level={3} style={{ margin: '0 0 4px', color: isDark ? '#f1f5f9' : '#1E293B', fontFamily: "'Raleway', sans-serif" }}>{t('candidateLogin')}</Title>
+          <Text style={{ color: isDark ? '#94a3b8' : '#64748B', fontSize: 14 }}>{t('loginSubtitle')}</Text>
         </div>
 
         <Form layout="vertical" onFinish={onFinish} size="large">
@@ -73,10 +74,10 @@ const Login = () => {
               prefix={<MailOutlined style={{ color: '#94A3B8' }} />} 
               placeholder={t('emailPlaceholder')} 
               style={{ 
-                background: '#f8f9fa', 
-                border: '1px solid #E2E8F0', 
+                background: isDark ? '#334155' : '#f8f9fa', 
+                border: `1px solid ${isDark ? '#475569' : '#E2E8F0'}`, 
                 borderRadius: 12,
-                color: '#1E293B',
+                color: isDark ? '#f1f5f9' : '#1E293B',
                 height: 50,
               }}
             />
@@ -90,10 +91,10 @@ const Login = () => {
               prefix={<LockOutlined style={{ color: '#94A3B8' }} />} 
               placeholder={t('passwordPlaceholder')}
               style={{ 
-                background: '#f8f9fa', 
-                border: '1px solid #E2E8F0', 
+                background: isDark ? '#334155' : '#f8f9fa', 
+                border: `1px solid ${isDark ? '#475569' : '#E2E8F0'}`, 
                 borderRadius: 12,
-                color: '#1E293B',
+                color: isDark ? '#f1f5f9' : '#1E293B',
                 height: 50,
               }}
             />
@@ -124,7 +125,7 @@ const Login = () => {
         </Form>
         
         <div style={{ textAlign: 'center', marginTop: 28 }}>
-          <Text style={{ color: '#94A3B8', fontSize: 13 }}>{t('noAccountYet')}</Text>
+          <Text style={{ color: isDark ? '#64748b' : '#94A3B8', fontSize: 13 }}>{t('noAccountYet')}</Text>
           <Button type="link" onClick={() => navigate('/apply')} style={{ padding: 0, color: '#15803d', fontWeight: 600, fontSize: 13 }}>{t('applyNow')}</Button>
         </div>
 

@@ -4,6 +4,7 @@ import { Globe, Brain, Save } from 'lucide-react';
 import axios from 'axios';
 import type { ScoringWeights } from '../types';
 import { useLanguage } from '../i18n/LanguageContext';
+import { useTheme } from '../i18n/ThemeContext';
 import { API } from '../config';
 
 const { Title, Text } = Typography;
@@ -16,11 +17,12 @@ const DEFAULT_WEIGHTS: ScoringWeights = {
   resilience: 20,
   socialImpact: 0,
   achievementBonus: 15,
-  ruralBonus: 10,
 };
 
 const Settings = () => {
   const { t } = useLanguage();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [weights, setWeights] = useState<ScoringWeights>(DEFAULT_WEIGHTS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -58,7 +60,7 @@ const Settings = () => {
   const totalDimensionWeight = weights.motivation + weights.leadership + weights.technicalPotential + weights.creativity + weights.resilience;
 
   return (
-    <div style={{ padding: '32px 40px', maxWidth: '900px', fontFamily: "'Raleway', sans-serif", animation: 'fadeInUp 0.5s cubic-bezier(0.16,1,0.3,1) both' }}>
+    <div style={{ padding: '32px 40px', maxWidth: '900px', fontFamily: "'Raleway', sans-serif", animation: 'fadeInUp 0.5s cubic-bezier(0.16,1,0.3,1) both', background: isDark ? '#0f172a' : undefined, minHeight: '100vh' }}>
       <Title level={2} style={{ letterSpacing: '-0.02em' }}>{t('scoringConfig')}</Title>
       <Text type="secondary">{t('scoringConfigDesc')}</Text>
 
@@ -98,7 +100,6 @@ const Settings = () => {
             <strong>{t('compositeScore')}</strong> = {t('formulaText1')}<br />
             <strong>AI</strong>: {t('formulaText2')}<br />
             <strong>{t('achievements')}</strong>: {t('formulaText3')}<br />
-            <strong>{t('ruralBonus')}</strong>: {t('formulaText4')}<br />
             <strong>{t('formulaText5')}</strong>
           </Text>
         </Card>

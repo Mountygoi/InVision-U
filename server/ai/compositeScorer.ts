@@ -20,8 +20,7 @@ export function calculateCompositeScore(
   // 1. Расчет базовой части (как и было)
   if (!aiScores) {
     const base = (achievementScore / 50) * 30; 
-    const rural = isRural ? weights.ruralBonus : 0;
-    baseScore = base + rural;
+    baseScore = base;
   } else {
     const dimensionWeightSum =
       weights.motivation +
@@ -41,9 +40,8 @@ export function calculateCompositeScore(
       dimensionWeightSum;
 
     const achievementBonus = (achievementScore / 50) * weights.achievementBonus;
-    const ruralBonus = isRural ? weights.ruralBonus : 0;
 
-    baseScore = weightedAI * 0.75 + achievementBonus + ruralBonus;
+    baseScore = weightedAI * 0.75 + achievementBonus;
   }
 
   // 2. Логика "Conservative Scoring" (Штрафы за несоответствие критериям)
