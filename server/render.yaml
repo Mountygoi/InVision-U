@@ -3,6 +3,7 @@ services:
     name: invision-u-api
     runtime: node
     plan: free
+    rootDir: server
     buildCommand: npm ci && npm run build
     startCommand: npm start
     envVars:
