@@ -201,7 +201,7 @@ const [evalData, setEvalData] = useState({
   );
 
   return (
-    <Content style={{ 
+    <Content className="scheduler-content" style={{ 
       padding: '24px', 
       background: c.pageBg, 
       height: 'calc(100vh - 64px)', 

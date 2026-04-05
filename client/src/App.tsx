@@ -67,7 +67,7 @@ const AppInner = () => {
           element={
             <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', width: '100%' }}>
               <AppHeader />
-              <main style={{ flex: 1, width: '100%', marginTop: '72px', display: 'flex', flexDirection: 'column' }}>
+              <main className="admin-main" style={{ flex: 1, width: '100%', marginTop: '72px', display: 'flex', flexDirection: 'column' }}>
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/candidates" element={<Candidates />} />

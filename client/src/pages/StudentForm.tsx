@@ -293,6 +293,7 @@ const StudentForm = () => {
       fontFamily: "'Raleway', sans-serif"
     }}>
       <Card
+        className="student-form-card"
         variant="borderless"
         style={{
           maxWidth: 860,

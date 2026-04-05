@@ -192,8 +192,10 @@
   .ant-layout-header .ant-menu-horizontal {
     display: none !important;
   }
-  .ant-layout-header .ant-menu-horizontal {
-    line-height: 56px !important;
+
+  /* Admin main: adjust for shorter header */
+  .admin-main {
+    margin-top: 56px !important;
   }
 
   /* Candidates page: stack panels vertically */
@@ -202,6 +204,7 @@
     min-height: 100vh !important;
     overflow: auto !important;
   }
+  .candidates-layout > .ant-row,
   .candidates-layout .ant-row {
     flex-direction: column !important;
   }
@@ -214,9 +217,34 @@
   .candidates-layout .ant-col-9 {
     height: auto !important;
     max-height: 50vh !important;
+    border-right: none !important;
+    border-bottom: 1px solid #e2e8f0;
   }
   .candidates-layout .ant-col-15 {
     height: auto !important;
+  }
+  /* Candidate list item inner cols: stack */
+  .candidates-layout .ant-col-4,
+  .candidates-layout .ant-col-6,
+  .candidates-layout .ant-col-14 {
+    flex: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+  /* Candidate detail inner cols */
+  .candidates-layout .ant-col-8,
+  .candidates-layout .ant-col-11,
+  .candidates-layout .ant-col-13,
+  .candidates-layout .ant-col-12 {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Scheduler: allow scroll on mobile */
+  .scheduler-content {
+    height: auto !important;
+    min-height: calc(100vh - 56px) !important;
+    overflow: auto !important;
   }
 
   /* Dashboard metric cards: single column */
@@ -274,6 +302,9 @@
   /* StudentForm card */
   .ant-card {
     border-radius: 16px !important;
+  }
+  .student-form-card {
+    max-width: 100% !important;
   }
 
   /* Radar chart: smaller on mobile */
@@ -345,6 +376,11 @@
   .ant-layout-header {
     padding: 0 12px !important;
     height: 48px !important;
+  }
+
+  /* Admin main: adjust for even shorter header */
+  .admin-main {
+    margin-top: 48px !important;
   }
 
   /* Even smaller card padding */

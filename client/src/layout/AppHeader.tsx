@@ -73,8 +73,8 @@ const AppHeader = () => {
         }} 
       />
 
-      {/* RIGHT: Профиль */}
-      <div style={{ 
+      {/* RIGHT: Profile */}
+      <div className="header-profile" style={{ 
         display: 'flex', 
         justifyContent: 'flex-end', 
         flexShrink: 0,
@@ -169,7 +169,11 @@ const AppHeader = () => {
         @media (max-width: 768px) {
           .ant-layout-header .ant-menu-horizontal { display: none !important; }
           .mobile-menu-btn { display: inline-flex !important; }
-          .ant-layout-header { padding: 0 16px !important; }
+          .ant-layout-header { padding: 0 16px !important; height: 56px !important; }
+          .header-profile { display: none !important; }
+        }
+        @media (max-width: 480px) {
+          .ant-layout-header { height: 48px !important; }
         }
       `}</style>
     </Header>
