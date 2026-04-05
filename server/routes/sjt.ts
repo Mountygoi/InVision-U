@@ -4,7 +4,7 @@ import type { SJTAnswer } from '../ai/sjtAnalyzer.js';
 import pool from '../db.js';
 import { analyzeEssay, isAIAvailable } from '../ai/essayAnalyzer.js';
 import { calculateCompositeScore } from '../ai/compositeScorer.js';
-import type { ScoringWeights, Achievement } from '../types.js';
+import type { ScoringWeights } from '../types.js';
 import { DEFAULT_WEIGHTS } from '../types.js';
 
 const router = Router();
@@ -33,8 +33,6 @@ router.post('/analyze', async (req, res) => {
         return;
       }
     }
-
-    console.log(`SJT analysis requested for candidate: ${candidateId || 'anonymous'}, ${answers.length} scenarios`);
 
     // 1. Analyze SJT with AI
     const sjtResult = await analyzeSJT(answers);
@@ -108,10 +106,8 @@ router.post('/analyze', async (req, res) => {
                   candidateId,
                 ]
               );
-
-              console.log(`Full AI analysis complete for ${candidateId}, composite: ${compositeScore}`);
-            } catch (aiErr: any) {
-              console.error('Essay AI analysis failed (SJT saved anyway):', aiErr?.message);
+            } catch (aiErr: unknown) {
+              // SJT results saved regardless of essay analysis failure
             }
           }
         }

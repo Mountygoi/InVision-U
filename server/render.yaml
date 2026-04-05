@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: invision-u-api
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: GROQ_API_KEY
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: invision-u-db
+          property: connectionString
+
+databases:
+  - name: invision-u-db
+    plan: free
+    databaseName: invision_u

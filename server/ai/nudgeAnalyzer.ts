@@ -1,7 +1,4 @@
-import Groq from 'groq-sdk';
-
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-const MODEL = 'llama-3.3-70b-versatile';
+import { getGroqClient, GROQ_MODEL, parseAIJson } from './constants.js';
 
 const NUDGE_SYSTEM_PROMPT = `Ты — AI-ассистент для кандидатов на стипендию InVision U.
 
@@ -103,38 +100,23 @@ ${skillsPart}
 
 Проанализируй черновик заявки и сгенерируй персональные вопросы. Ответь строго в JSON.`;
 
-  const completion = await groq.chat.completions.create({
+  const completion = await getGroqClient().chat.completions.create({
     messages: [
       { role: 'system' as const, content: NUDGE_SYSTEM_PROMPT },
       { role: 'user' as const, content: userPrompt }
     ],
-    model: MODEL,
+    model: GROQ_MODEL,
     temperature: 0.4,
     max_tokens: 1000,
   });
 
   const responseText = completion.choices[0]?.message?.content || '{}';
 
-  let jsonStr = responseText.trim();
-  const firstBrace = jsonStr.indexOf('{');
-  const lastBrace = jsonStr.lastIndexOf('}');
-  if (firstBrace !== -1 && lastBrace > firstBrace) {
-    jsonStr = jsonStr.substring(firstBrace, lastBrace + 1);
-  }
-  jsonStr = jsonStr.replace(/,\s*([}\]])/g, '$1');
-
-  let parsed: any;
-  try {
-    parsed = JSON.parse(jsonStr);
-  } catch (e: any) {
-    console.error('Nudge JSON parse error:', e.message);
-    jsonStr = jsonStr.replace(/(?<=:\s*"[^"]*)\n/g, '\\n');
-    parsed = JSON.parse(jsonStr);
-  }
+  const parsed = parseAIJson<{ questions?: NudgeQuestion[]; overallStrength?: string; encouragement?: string }>(responseText);
 
   return {
     questions: parsed.questions || [],
-    overallStrength: parsed.overallStrength || 'moderate',
+    overallStrength: (parsed.overallStrength as NudgeResult['overallStrength']) || 'moderate',
     encouragement: parsed.encouragement || '',
   };
 }

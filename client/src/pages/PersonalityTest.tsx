@@ -9,6 +9,7 @@ import {
 import axios from 'axios';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTheme } from '../i18n/ThemeContext';
+import { API } from '../config';
 
 const { Title, Text } = Typography;
 
@@ -610,7 +611,7 @@ const PersonalityTest = () => {
 
     setLoading(true);
     try {
-      await axios.post('http://localhost:5000/api/personality/analyze', {
+      await axios.post(`${API}/personality/analyze`, {
         candidateId: candidateId || undefined,
         answers: answersArray,
       });
@@ -843,3 +844,4 @@ const PersonalityTest = () => {
 };
 
 export default PersonalityTest;
+

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useTheme } from '../i18n/ThemeContext';
@@ -13,11 +13,10 @@ import {
 } from '@ant-design/icons';
 import { MapPin, GraduationCap, Mail, Shield } from 'lucide-react';
 import axios from 'axios';
+import { API } from '../config';
 
 const { Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
-
-const API = 'http://localhost:5000';
 
 const score2color = (s: number) => s >= 70 ? '#10B981' : s >= 50 ? '#F59E0B' : '#EF4444';
 
@@ -52,7 +51,7 @@ const ReviewPage = () => {
 
   useEffect(() => {
     if (!id) return;
-    axios.get(`${API}/api/candidates/${id}`)
+    axios.get(`${API}/candidates/${id}`)
       .then(r => setCandidate(r.data))
       .catch(() => message.error(t('failedToLoadCandidate')))
       .finally(() => setLoading(false));
@@ -68,7 +67,7 @@ const ReviewPage = () => {
       onOk: async () => {
         setApproving(true);
         try {
-          await axios.patch(`${API}/api/candidates/${id}/status`, { status: 'accepted' });
+          await axios.patch(`${API}/candidates/${id}/status`, { status: 'accepted' });
           message.success(t('candidateApprovedSuccess'));
           setCandidate((prev: any) => ({ ...prev, status: 'accepted' }));
         } catch {
@@ -90,7 +89,7 @@ const ReviewPage = () => {
       onOk: async () => {
         setDeclining(true);
         try {
-          await axios.patch(`${API}/api/candidates/${id}/status`, { status: 'declined' });
+          await axios.patch(`${API}/candidates/${id}/status`, { status: 'declined' });
           message.success(t('candidateDeclinedSuccess'));
           setCandidate((prev: any) => ({ ...prev, status: 'declined' }));
         } catch {

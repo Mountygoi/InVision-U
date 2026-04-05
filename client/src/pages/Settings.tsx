@@ -4,6 +4,7 @@ import { Globe, Brain, Save } from 'lucide-react';
 import axios from 'axios';
 import type { ScoringWeights } from '../types';
 import { useLanguage } from '../i18n/LanguageContext';
+import { API } from '../config';
 
 const { Title, Text } = Typography;
 
@@ -25,7 +26,7 @@ const Settings = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/scoring-config')
+    axios.get(`${API}/scoring-config`)
       .then(res => setWeights(res.data.weights))
       .catch(() => console.warn('Could not load scoring config, using defaults'))
       .finally(() => setLoading(false));
@@ -38,7 +39,7 @@ const Settings = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await axios.put('http://localhost:5000/api/scoring-config', { weights });
+      await axios.put(`${API}/scoring-config`, { weights });
       message.success(t('weightsSaved'));
     } catch (err) {
       message.error(t('failedSaveConfig'));

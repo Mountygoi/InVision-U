@@ -1,5 +1,11 @@
 import type { AIScores, ScoringWeights } from '../types.js';
 import { DEFAULT_WEIGHTS } from '../types.js';
+import {
+  IELTS_MIN_CRITICAL, IELTS_TARGET,
+  UNT_MIN_CRITICAL, UNT_TARGET,
+  IELTS_CRITICAL_PENALTY, IELTS_BELOW_TARGET_PENALTY,
+  UNT_CRITICAL_PENALTY, UNT_BELOW_TARGET_PENALTY,
+} from './constants.js';
 
 export function calculateCompositeScore(
   aiScores: AIScores | null,
@@ -45,19 +51,19 @@ export function calculateCompositeScore(
 
   // Критерии IELTS (Целевой 6.5+)
   if (ielts !== null) {
-    if (ielts < 5.5) {
-      finalScore -= 30; // Жесткий штраф за критически низкий уровень
-    } else if (ielts < 6.5) {
-      finalScore -= 10; // Небольшой штраф за недобор до целевого балла
+    if (ielts < IELTS_MIN_CRITICAL) {
+      finalScore -= IELTS_CRITICAL_PENALTY;
+    } else if (ielts < IELTS_TARGET) {
+      finalScore -= IELTS_BELOW_TARGET_PENALTY;
     }
   }
 
   // Критерии ЕНТ (UNT) (Целевой 80+)
   if (unt !== null) {
-    if (unt < 75) {
-      finalScore -= 40; // Очень жесткий штраф: школа не хочет пропускать "слабых"
-    } else if (unt < 85) {
-      finalScore -= 15; // Штраф за пограничный результат
+    if (unt < UNT_MIN_CRITICAL) {
+      finalScore -= UNT_CRITICAL_PENALTY;
+    } else if (unt < UNT_TARGET) {
+      finalScore -= UNT_BELOW_TARGET_PENALTY;
     }
   }
 

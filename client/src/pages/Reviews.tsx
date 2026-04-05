@@ -1,24 +1,19 @@
-﻿import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
-import { Layout, Row, Col, Card, Avatar, Tag, Button, Typography, Space, Spin, Empty, Progress, Badge, Input, Select, Slider } from 'antd';
+import { Layout, Row, Col, Card, Avatar, Tag, Button, Typography, Space, Spin, Empty, Progress, Input, Select, Slider } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, FileTextOutlined, SearchOutlined } from '@ant-design/icons';
 import { GraduationCap, MapPin, Trophy } from 'lucide-react';
 import axios from 'axios';
 import { useTheme } from '../i18n/ThemeContext';
 import { themeColors } from '../i18n/themeColors';
+import { API } from '../config';
+import { getAvatarUrl } from '../utils/helpers';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
 
-const API = 'http://localhost:5000';
-
 const score2color = (s: number) => s >= 70 ? '#10B981' : s >= 50 ? '#F59E0B' : '#EF4444';
-
-const getAvatarUrl = (c: any) => {
-  if (!c?.avatarUrl) return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(c?.name || 'x')}`;
-  return c.avatarUrl.startsWith('/uploads/') ? `${API}${c.avatarUrl}` : c.avatarUrl;
-};
 
 const Reviews = () => {
   const navigate = useNavigate();
@@ -37,7 +32,7 @@ const Reviews = () => {
   const fetchReviews = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API}/api/candidates?status=under_review`);
+      const res = await axios.get(`${API}/candidates?status=under_review`);
       setCandidates(res.data);
     } catch {
       // silent
@@ -49,12 +44,12 @@ const Reviews = () => {
   useEffect(() => { fetchReviews(); }, []);
 
   const handleApprove = async (id: string) => {
-    await axios.patch(`${API}/api/candidates/${id}/status`, { status: 'accepted' });
+    await axios.patch(`${API}/candidates/${id}/status`, { status: 'accepted' });
     fetchReviews();
   };
 
   const handleDecline = async (id: string) => {
-    await axios.patch(`${API}/api/candidates/${id}/status`, { status: 'declined' });
+    await axios.patch(`${API}/candidates/${id}/status`, { status: 'declined' });
     fetchReviews();
   };
 

@@ -5,6 +5,7 @@ import { upload } from '../middleware/upload.js';
 import { analyzeEssay, isAIAvailable } from '../ai/essayAnalyzer.js';
 import { calculateAchievementScore } from '../ai/achievementScorer.js';
 import { calculateCompositeScore } from '../ai/compositeScorer.js';
+import { RURAL_CITIES } from '../ai/constants.js';
 import type { Achievement, ScoringWeights } from '../types.js';
 import { DEFAULT_WEIGHTS } from '../types.js';
 
@@ -38,18 +39,18 @@ router.get('/', async (req, res) => {
     const { search, status, sort = 'composite_score', order = 'desc' } = req.query;
 
     let query = 'SELECT id, name, email, password, avatar_url, university, school, city, region, is_rural, gpa, year_of_study, achievements, skills, essay_text, ai_scores, ai_summary, ai_flags, ai_model_version, ai_analyzed_at, composite_score, achievement_score, status, reviewer_notes, created_at, updated_at, interview_time, personality_scores, sjt_scores, simulation_scores, tech_score, soft_score, tech_notes, soft_notes, ielts_file_path, unt_file_path, ielts_approved, unt_approved, contact_method, contact_handle FROM candidates WHERE 1=1';
-    const params: any[] = [];
+    const params: (string | number)[] = [];
     let paramIdx = 1;
 
     if (search) {
       query += ` AND (email = $${paramIdx} OR name ILIKE $${paramIdx} OR university ILIKE $${paramIdx})`;
-      params.push(search.toString().includes('@') ? search : `%${search}%`);
+      params.push(search.toString().includes('@') ? String(search) : `%${search}%`);
       paramIdx++;
     }
 
     if (status && status !== 'all') {
       query += ` AND status = $${paramIdx}`;
-      params.push(status);
+      params.push(String(status));
       paramIdx++;
     }
 
@@ -206,7 +207,7 @@ router.post(
         videoUrl,
         contactMethod,
         contactHandle,
-      } = req.body as any;
+      } = req.body;
 
       if (!name || !city) {
         return res.status(400).json({ error: 'Name and city are required' });
@@ -214,8 +215,7 @@ router.post(
 
       const tempPassword = generateTempPassword();
 
-      const ruralCities = ['Qyzylorda', 'Atyrau', 'Aktau', 'Turkistan', 'Taraz', 'Oral', 'Kostanay', 'Petropavl'];
-      const isRural = ruralCities.includes(city);
+      const isRural = RURAL_CITIES.includes(city);
 
       const parsedAchievements: Achievement[] =
         typeof achievements === 'string' ? JSON.parse(achievements) : (achievements || []);
@@ -289,7 +289,6 @@ router.post(
         [candidateId, 'application_submitted', name]
       );
 
-      console.log(`New application: ${name} (ID: ${candidateId}, Pass: ${tempPassword})`);
       res.status(201).json({
         id: candidateId,
         tempPassword,
@@ -348,9 +347,8 @@ router.post('/:id/arbitration', async (req, res) => {
     // If Groq is available, run AI analysis
     if (process.env.GROQ_API_KEY) {
       try {
-        const Groq = (await import('groq-sdk')).default;
-        const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-        const MODEL = 'llama-3.3-70b-versatile';
+        const { getGroqClient, GROQ_MODEL: MODEL, parseAIJson } = await import('../ai/constants.js');
+        const groq = getGroqClient();
 
         const prompt = `You are an expert arbitration analyst for InVision U, a prestigious scholarship program.
 
@@ -380,11 +378,8 @@ Analyze this discrepancy and return a JSON object (no markdown, no explanation, 
         });
 
         const text = completion.choices[0]?.message?.content || '';
-        const firstBrace = text.indexOf('{');
-        const lastBrace = text.lastIndexOf('}');
-        if (firstBrace !== -1 && lastBrace !== -1) {
-          const jsonStr = text.slice(firstBrace, lastBrace + 1).replace(/,\s*([}\]])/g, '$1');
-          const parsed = JSON.parse(jsonStr);
+        const parsed = parseAIJson<Record<string, unknown>>(text);
+        if (parsed) {
           return res.json({
             candidateName: c.name,
             panelA: { score: techScore, note: techNotes, analysis: parsed.panelAAnalysis },
@@ -403,7 +398,6 @@ Analyze this discrepancy and return a JSON object (no markdown, no explanation, 
 
     // Deterministic fallback (no AI available)
     const higherPanel = techScore >= softScore ? 'Technical' : 'Soft Skills';
-    const lowerPanel = techScore < softScore ? 'Technical' : 'Soft Skills';
     res.json({
       candidateName: c.name,
       panelA: { score: techScore, note: techNotes, analysis: techNotes },

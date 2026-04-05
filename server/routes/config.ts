@@ -7,7 +7,7 @@ import type { ScoringWeights } from '../types.js';
 const router = Router();
 
 // GET /api/scoring-config
-router.get('/', async (req, res) => {
+router.get('/', async (_req, res) => {
   try {
     const result = await pool.query('SELECT weights, updated_at FROM scoring_config WHERE id = 1');
     if (result.rows.length === 0) {

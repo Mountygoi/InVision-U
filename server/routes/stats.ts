@@ -4,7 +4,7 @@ import pool from '../db.js';
 const router = Router();
 
 // GET /api/stats - Dashboard statistics
-router.get('/', async (req, res) => {
+router.get('/', async (_req, res) => {
   try {
     const [totals, avgScore, scoreDistribution, regionBreakdown, statusFunnel, recentApplications] = await Promise.all([
       pool.query(`SELECT
@@ -89,7 +89,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/stats/baseline - Compare AI composite score vs simple rule-based baseline
-router.get('/baseline', async (req, res) => {
+router.get('/baseline', async (_req, res) => {
   try {
     const result = await pool.query(`
       SELECT

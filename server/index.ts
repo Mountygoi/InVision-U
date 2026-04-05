@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -34,21 +34,18 @@ try {
   }
 } catch { /* .env file not found */ }
 
-console.log('GROQ_API_KEY loaded:', !!process.env.GROQ_API_KEY);
-
 const app = express();
-app.use(cors());
+
+const corsOrigin = process.env.CORS_ORIGIN;
+app.use(cors(corsOrigin ? { origin: corsOrigin.split(',') } : undefined));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 2. ИСПРАВЛЕНИЕ: Проверяем и создаем папку, выводим путь в консоль для проверки
-console.log(`📁 Попытка раздачи статики из: ${uploadsDir}`);
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
-  console.log('✅ Папка uploads создана');
 }
 
-// РАЗДАЧА ФАЙЛОВ (теперь по абсолютному пути)
+// Static file serving
 app.use('/uploads', express.static(uploadsDir));
 
 // Routes
@@ -67,7 +64,7 @@ app.post('/api/apply', (req, res, next) => {
 });
 
 // Audit log
-app.get('/api/audit-log', async (req, res) => {
+app.get('/api/audit-log', async (_req, res) => {
   try {
     const result = await pool.query(
       `SELECT al.*, c.name as candidate_name
@@ -76,7 +73,7 @@ app.get('/api/audit-log', async (req, res) => {
        ORDER BY al.created_at DESC
        LIMIT 50`
     );
-    res.json(result.rows.map((r: any) => ({
+    res.json(result.rows.map((r: Record<string, unknown>) => ({
       id: r.id,
       candidateId: r.candidate_id,
       candidateName: r.candidate_name,
@@ -92,14 +89,23 @@ app.get('/api/audit-log', async (req, res) => {
   }
 });
 
+// Serve client static build in production
+const clientDist = path.join(__dirname, '..', 'client', 'dist');
+if (fs.existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+  app.get(/^(?!\/api|\/uploads).*/, (_req, res) => {
+    res.sendFile(path.join(clientDist, 'index.html'));
+  });
+}
+
 // Health check
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', aiAvailable: !!process.env.GROQ_API_KEY });
 });
 
-// Global error handler — converts any middleware error (incl. multer) to JSON
-app.use((err: any, _req: any, res: any, _next: any) => {
-  console.error('Global error handler caught:', err);
+// Global error handler
+app.use((err: Error & { status?: number; code?: string }, _req: Request, res: Response, _next: NextFunction) => {
+  console.error('Unhandled error:', err.message);
   res.status(err.status || 500).json({
     error: err.message || 'Internal server error',
     code: err.code,
@@ -113,16 +119,8 @@ async function start() {
     await initDatabase();
     await seedDatabase();
 
-    app.listen(PORT, () => {
-      console.log(`
-  InVision U API Server
-  =====================
-  API Base:         http://localhost:${PORT}/api
-  Candidates:       http://localhost:${PORT}/api/candidates
-  Static Assets:    http://localhost:${PORT}/uploads  <-- ПРОВЕРЬ ТУТ
-  AI Available:     ${!!process.env.GROQ_API_KEY ? 'Yes' : 'No'}
-      `);
-      console.log(`Проверь свою картинку тут: http://localhost:${PORT}/uploads/1774736949109-461126575-POSTER-LOA.png`);
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`InVision U API running on port ${PORT} | AI: ${process.env.GROQ_API_KEY ? 'enabled' : 'disabled'}`);
     });
   } catch (err) {
     console.error('Failed to start server:', err);

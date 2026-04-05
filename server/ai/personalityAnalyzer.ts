@@ -1,4 +1,4 @@
-import Groq from 'groq-sdk';
+import { getGroqClient, GROQ_MODEL } from './constants.js';
 
 export type ClusterId =
   | 'leadershipInitiative'
@@ -94,14 +94,13 @@ export async function analyzePersonality(
   // Groq narrative (falls back to deterministic if API fails)
   let narrative = '';
   try {
-    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
     const scoreLines = (Object.entries(clusterScores) as [ClusterId, number][])
       .sort((a, b) => b[1] - a[1])
       .map(([k, v]) => `${CLUSTER_LABELS[k]}: ${v}/100`)
       .join('\n');
 
-    const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+    const completion = await getGroqClient().chat.completions.create({
+      model: GROQ_MODEL,
       messages: [{
         role: 'user',
         content: `You are an admissions psychologist for InVision U, a scholarship university in Kazakhstan.

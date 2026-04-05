@@ -1,7 +1,4 @@
-import Groq from 'groq-sdk';
-
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-const MODEL = 'llama-3.3-70b-versatile';
+import { getGroqClient, GROQ_MODEL } from './constants.js';
 
 const LEARNABILITY_SYSTEM_PROMPT = `Ты — AI-аналитик программы inVision U. Твоя задача: проанализировать обучаемость (coachability) кандидата.
 
@@ -130,8 +127,8 @@ ${data.skills?.length ? data.skills.join(', ') : '(Не указаны)'}
 
 Проанализируй обучаемость кандидата и верни JSON.`;
 
-  const response = await groq.chat.completions.create({
-    model: MODEL,
+  const response = await getGroqClient().chat.completions.create({
+    model: GROQ_MODEL,
     messages: [
       { role: 'system', content: LEARNABILITY_SYSTEM_PROMPT },
       { role: 'user', content: userContent },

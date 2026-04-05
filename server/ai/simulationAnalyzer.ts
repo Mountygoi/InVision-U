@@ -1,4 +1,4 @@
-import Groq from 'groq-sdk';
+import { getGroqClient, GROQ_MODEL, parseAIJson } from './constants.js';
 
 export interface SimulationMessage {
   role: 'candidate' | 'agent';
@@ -71,8 +71,7 @@ export async function generateAgentResponse(
   const agentKey = AGENT_KEYS[turnIndex % 3];
   const agent = AGENTS[agentKey];
 
-  const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-
+  const groq = getGroqClient();
   // Inject candidate's real name into system prompt so agents address them correctly
   const nameNote = candidateName
     ? `\nВАЖНО: Лидера команды зовут ${candidateName}. Обращайся к нему/ней по имени ${candidateName} когда это уместно.`
@@ -113,7 +112,7 @@ export async function generateAgentResponse(
 }
 
 export async function analyzeLeadership(history: SimulationMessage[]): Promise<SimulationScores> {
-  const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+  const groq = getGroqClient();
 
   // Build a readable transcript
   const transcript = history.map(msg => {
@@ -183,7 +182,7 @@ Return ONLY valid JSON — no markdown, no explanation:
 
   try {
     const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: GROQ_MODEL,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: `SIMULATION TRANSCRIPT:\n\n${transcript}\n\nAnalyze and return JSON scores only.` },
@@ -193,15 +192,7 @@ Return ONLY valid JSON — no markdown, no explanation:
     });
 
     const raw = completion.choices[0]?.message?.content?.trim() || '';
-    const firstBrace = raw.indexOf('{');
-    const lastBrace = raw.lastIndexOf('}');
-    if (firstBrace === -1 || lastBrace === -1) throw new Error('No JSON in response');
-
-    let jsonStr = raw.slice(firstBrace, lastBrace + 1);
-    // Strip trailing commas before } or ]
-    jsonStr = jsonStr.replace(/,\s*([}\]])/g, '$1');
-
-    const parsed = JSON.parse(jsonStr);
+    const parsed = parseAIJson<Record<string, unknown>>(raw);
 
     const scores: SimulationScores = {
       leadership: Math.round(Math.max(0, Math.min(100, Number(parsed.leadership) || 50))),
@@ -209,12 +200,12 @@ Return ONLY valid JSON — no markdown, no explanation:
       conflictManagement: Math.round(Math.max(0, Math.min(100, Number(parsed.conflictManagement) || 50))),
       teamOrientation: Math.round(Math.max(0, Math.min(100, Number(parsed.teamOrientation) || 50))),
       decisionMaking: Math.round(Math.max(0, Math.min(100, Number(parsed.decisionMaking) || 50))),
-      leadershipStyle: ['authoritative', 'facilitative', 'democratic', 'passive'].includes(parsed.leadershipStyle)
-        ? parsed.leadershipStyle
+      leadershipStyle: ['authoritative', 'facilitative', 'democratic', 'passive'].includes(String(parsed.leadershipStyle))
+        ? (parsed.leadershipStyle as 'authoritative' | 'facilitative' | 'democratic' | 'passive')
         : 'facilitative',
       narrative: typeof parsed.narrative === 'string' ? parsed.narrative : '',
       simulationScore: 0,
-      modelVersion: 'llama-3.3-70b-versatile',
+      modelVersion: GROQ_MODEL,
       analyzedAt: new Date().toISOString(),
     };
 

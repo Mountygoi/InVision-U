@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Layout, Card, Typography, Steps, Row, Col, Badge, Button, Input, Modal, message, Tag, Space, Divider, Result, DatePicker, Empty, Avatar, Alert } from 'antd';
 import {
   CheckCircleOutlined,
@@ -19,6 +19,7 @@ import dayjs from 'dayjs';
 import VideoConference from '../components/VideoConference';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useTheme } from '../i18n/ThemeContext';
+import { API } from '../config';
 
 const { Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
@@ -143,7 +144,7 @@ const StudentStatus = () => {
   const fetchBookedSlots = async (date: any) => {
     try {
       const dateStr = date.format('DD MMMM YYYY');
-      const res = await axios.get('http://localhost:5000/api/candidates');
+      const res = await axios.get(`${API}/candidates`);
       const booked = res.data
         .filter((c: any) => c.interviewTime && c.interviewTime.includes(dateStr))
         .map((c: any) => {
@@ -165,7 +166,7 @@ const StudentStatus = () => {
 
     const fetchData = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/candidates?search=${email}`);
+        const res = await axios.get(`${API}/candidates?search=${email}`);
         if (res.data.length > 0) {
           setCandidate(res.data[0]);
         }
@@ -184,7 +185,7 @@ const StudentStatus = () => {
     setIsScheduling(true);
     const finalSlot = `${selectedDate.format('DD MMMM YYYY')} at ${selectedTime}`;
     try {
-      await axios.patch(`http://localhost:5000/api/candidates/${candidate.id}/schedule`, {
+      await axios.patch(`${API}/candidates/${candidate.id}/schedule`, {
         interviewTime: finalSlot
       });
       message.success(t('interviewScheduled'));
@@ -199,7 +200,7 @@ const StudentStatus = () => {
   const handlePasswordChange = async () => {
     if (newPassword.length < 4) return message.warning(t('passwordTooShort'));
     try {
-      await axios.patch(`http://localhost:5000/api/candidates/${candidate.id}/password`, { newPassword });
+      await axios.patch(`${API}/candidates/${candidate.id}/password`, { newPassword });
       message.success(t('passwordUpdated'));
       setIsModalVisible(false);
     } catch (err) {
@@ -586,3 +587,4 @@ const StudentStatus = () => {
 };
 
 export default StudentStatus;
+

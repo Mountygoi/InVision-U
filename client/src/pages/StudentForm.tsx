@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Form, Input, Button, Upload, Select, message, Card, Typography, Row, Col, InputNumber, Space, Tag, Divider, Alert } from 'antd';
 import {
   UploadOutlined, UserOutlined, BookOutlined, EnvironmentOutlined,
@@ -11,6 +11,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useTheme } from '../i18n/ThemeContext';
+import { API } from '../config';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -32,7 +33,6 @@ interface AchievementEntry {
 }
 
 // ===== All Kazakhstan cities =====
-const MAJOR_CITIES = ['Almaty', 'Astana', 'Shymkent', 'Karaganda'];
 
 const KZ_CITIES = [
   // Cities of republican significance
@@ -119,7 +119,7 @@ const StudentForm = () => {
 
     setNudgeLoading(true);
     try {
-      const res = await axios.post('http://localhost:5000/api/nudge', {
+      const res = await axios.post(`${API}/nudge`, {
         essayText,
         achievements: achievements.filter(a => a.title),
         skills,
@@ -217,7 +217,7 @@ const StudentForm = () => {
         formData.append('unt_cert', values.untFile[0].originFileObj);
       }
 
-      const res = await axios.post('http://localhost:5000/api/apply', formData);
+      const res = await axios.post(`${API}/apply`, formData);
       const { id: candidateId, tempPassword } = res.data;
 
       localStorage.setItem('candidateId', candidateId);
@@ -684,3 +684,4 @@ const StudentForm = () => {
 };
 
 export default StudentForm;
+

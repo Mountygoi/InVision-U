@@ -5,6 +5,7 @@ import axios from 'axios';
 import { useSearchParams } from 'react-router-dom';
 import type { SimulationChatMessage } from '../types';
 import { useTheme } from '../i18n/ThemeContext';
+import { API } from '../config';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -97,7 +98,7 @@ export default function TeamSimulation() {
     for (let i = 0; i < AGENT_ORDER.length; i++) {
       const agentIndex = i; // 0=aigerim, 1=dauren, 2=nurlan
       try {
-        const response = await axios.post('http://localhost:5000/api/simulation/message', {
+        const response = await axios.post(`${API}/simulation/message`, {
           history: currentHistory,
           candidateMessage: text,
           turnIndex: agentIndex, // use agentIndex directly to pick specific agent
@@ -133,7 +134,7 @@ export default function TeamSimulation() {
     if (finishLoading || candidateTurnCount < TOTAL_TURNS) return;
     setFinishLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/simulation/finish', {
+      await axios.post(`${API}/simulation/finish`, {
         history: messages,
         candidateId: candidateId || undefined,
       });
@@ -481,3 +482,4 @@ export default function TeamSimulation() {
     </div>
   );
 }
+

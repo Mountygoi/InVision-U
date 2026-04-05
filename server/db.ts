@@ -4,11 +4,12 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const pool = new pg.Pool({
-  host: process.env.DB_HOST || '127.0.0.1',
-  port: parseInt(process.env.DB_PORT || '5433'), 
-  database: process.env.DB_NAME || 'invision_u', 
-  user: 'invision',        // МЕНЯЕМ ОБРАТНО НА ТВОЙ ЛОГИН
-  password: 'invision_pass', // МЕНЯЕМ ОБРАТНО НА ТВОЙ ПАРОЛЬ
+  connectionString: process.env.DATABASE_URL || undefined,
+  host: process.env.DATABASE_URL ? undefined : (process.env.DB_HOST || '127.0.0.1'),
+  port: process.env.DATABASE_URL ? undefined : parseInt(process.env.DB_PORT || '5433'),
+  database: process.env.DATABASE_URL ? undefined : (process.env.DB_NAME || 'invision_u'),
+  user: process.env.DATABASE_URL ? undefined : (process.env.DB_USER || 'invision'),
+  password: process.env.DATABASE_URL ? undefined : (process.env.DB_PASSWORD || 'invision_pass'),
 });
 
 export async function initDatabase(): Promise<void> {
@@ -40,9 +41,9 @@ export async function initDatabase(): Promise<void> {
         achievement_score REAL DEFAULT 0,
         status TEXT DEFAULT 'new' CHECK(status IN ('new','under_review','interview','accepted','declined','waitlisted','arbitration')),
         tech_score INTEGER,
-    soft_score INTEGER,
-    tech_notes TEXT,
-    soft_notes TEXT,
+        soft_score INTEGER,
+        tech_notes TEXT,
+        soft_notes TEXT,
         reviewer_notes TEXT,
         reviewed_by TEXT,
         reviewed_at TIMESTAMPTZ,

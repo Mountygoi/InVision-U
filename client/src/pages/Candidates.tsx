@@ -9,6 +9,8 @@ import type { Candidate } from '../types';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useTheme } from '../i18n/ThemeContext';
 import { themeColors } from '../i18n/themeColors';
+import { API, API_BASE } from '../config';
+import { getAvatarUrl } from '../utils/helpers';
 
 
 const { Title, Text, Paragraph } = Typography;
@@ -93,7 +95,7 @@ const Candidates = () => {
       const params: FetchCandidatesParams = { sort: 'composite_score', order: 'desc' };
       if (searchQuery) params.search = searchQuery;
 
-      const res = await axios.get('http://localhost:5000/api/candidates', { params });
+      const res = await axios.get(`${API}/candidates`, { params });
       setCandidates(res.data);
       if (res.data.length > 0 && !selectedId) setSelectedId(res.data[0].id);
     } catch (err) {
@@ -142,7 +144,7 @@ const Candidates = () => {
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     try {
-      await axios.patch(`http://localhost:5000/api/candidates/${id}/status`, { status: newStatus });
+      await axios.patch(`${API}/candidates/${id}/status`, { status: newStatus });
       message.success(t('statusUpdated', { status: newStatus }));
       fetchCandidates();
     } catch (err) {
@@ -154,7 +156,7 @@ const Candidates = () => {
   const handleSaveNotes = async () => {
     if (!selectedId) return;
     try {
-      await axios.patch(`http://localhost:5000/api/candidates/${selectedId}/review`, {
+      await axios.patch(`${API}/candidates/${selectedId}/review`, {
         notes: reviewNotes,
         reviewedBy: 'admin'
       });
@@ -198,7 +200,7 @@ const Candidates = () => {
     setArbLoading(true);
     message.loading({ content: t('aiAnalyzing'), key: 'arb_gen' });
     try {
-      const res = await axios.post(`http://localhost:5000/api/candidates/${candidate.id}/arbitration`);
+      const res = await axios.post(`${API}/candidates/${candidate.id}/arbitration`);
       setArbReport(res.data);
       setIsArbModalOpen(true);
       message.success({ content: t('reportReady'), key: 'arb_gen' });
@@ -214,7 +216,7 @@ const Candidates = () => {
   const approveCert = async (candidateId: string, certType: 'ielts' | 'unt') => {
     setCertApproving(true);
     try {
-      await axios.patch(`http://localhost:5000/api/candidates/${candidateId}/approve-cert`, { certType });
+      await axios.patch(`${API}/candidates/${candidateId}/approve-cert`, { certType });
       message.success(t('certApproved', { type: certType.toUpperCase() }));
       fetchCandidates();
     } catch {
@@ -233,7 +235,7 @@ const Candidates = () => {
     }
     setEvalSaving(true);
     try {
-      await axios.patch(`http://localhost:5000/api/candidates/${selectedId}/status`, {
+      await axios.patch(`${API}/candidates/${selectedId}/status`, {
         status: 'under_review',
         tech_score: Number(techScore),
         soft_score: Number(softScore),
@@ -249,17 +251,6 @@ const Candidates = () => {
     } finally {
       setEvalSaving(false);
     }
-  };
-
-  // Правильный URL аватара
-  const getAvatarUrl = (item: Candidate) => {
-    if (item.avatarUrl) {
-      if (item.avatarUrl.startsWith('/uploads/')) {
-        return `http://localhost:5000${item.avatarUrl}`;
-      }
-      return item.avatarUrl;
-    }
-    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(item.name)}`;
   };
 
   const radarData = selectedCandidate?.aiScores ? [
@@ -534,7 +525,7 @@ const Candidates = () => {
                               title: t('acceptCandidate'),
                               content: `Итоговый балл: ${arbResolveScore}`,
                               onOk: async () => {
-                                await axios.patch(`http://localhost:5000/api/candidates/${selectedCandidate.id}/status`, {
+                                await axios.patch(`${API}/candidates/${selectedCandidate.id}/status`, {
                                   status: 'accepted', reviewer_notes: `[Арбитраж] Балл: ${arbResolveScore}. ${arbResolveNotes}`
                                 });
                                 message.success(t('candidateAccepted'));
@@ -550,7 +541,7 @@ const Candidates = () => {
                               title: t('declineCandidate'),
                               content: `Итоговый балл: ${arbResolveScore}`,
                               onOk: async () => {
-                                await axios.patch(`http://localhost:5000/api/candidates/${selectedCandidate.id}/status`, {
+                                await axios.patch(`${API}/candidates/${selectedCandidate.id}/status`, {
                                   status: 'declined', reviewer_notes: `[Арбитраж] Балл: ${arbResolveScore}. ${arbResolveNotes}`
                                 });
                                 message.success(t('candidateDeclined'));
@@ -562,7 +553,7 @@ const Candidates = () => {
                         </Button>
                         <Button size="small" style={{ borderRadius: 8, borderColor: '#8B5CF6', color: '#8B5CF6' }}
                           onClick={async () => {
-                            await axios.patch(`http://localhost:5000/api/candidates/${selectedCandidate.id}/status`, {
+                            await axios.patch(`${API}/candidates/${selectedCandidate.id}/status`, {
                               status: 'interview', reviewer_notes: `[Арбитраж → повторное интервью] ${arbResolveNotes}`
                             });
                             message.success(t('reInterviewScheduled'));
@@ -1159,7 +1150,7 @@ const Candidates = () => {
           {(() => {
             const filePath = certModal.type === 'ielts' ? selectedCandidate.ieltsFilePath : selectedCandidate.untFilePath;
             if (!filePath) return <Text type="secondary">{t('noCertUploaded')}</Text>;
-            const url = filePath.startsWith('/uploads/') ? `http://localhost:5000${filePath}` : filePath;
+            const url = filePath.startsWith('/uploads/') ? `${API_BASE}${filePath}` : filePath;
             const isPdf = url.toLowerCase().endsWith('.pdf');
             return isPdf ? (
               <iframe src={url} style={{ width: '100%', height: 480, border: 'none', borderRadius: 8 }} title="Certificate" />

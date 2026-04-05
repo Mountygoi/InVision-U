@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useTheme } from '../i18n/ThemeContext';
+import { API } from '../config';
 
 const { Title, Text } = Typography;
 
@@ -14,12 +15,12 @@ const Login = () => {
   const { t, lang, setLang } = useLanguage();
   const { theme, toggleTheme } = useTheme();
 
-  const onFinish = async (values: any) => {
+  const onFinish = async (values: { email: string; password: string }) => {
     setLoading(true);
     try {
       // Ищем кандидата по email
-      const res = await axios.get(`http://localhost:5000/api/candidates?search=${values.email}`);
-      const user = res.data.find((c: any) => c.email === values.email);
+      const res = await axios.get(`${API}/candidates?search=${values.email}`);
+      const user = res.data.find((c: { email: string; password: string }) => c.email === values.email);
 
       if (user && user.password === values.password) {
         message.success(t('welcomeMsg'));

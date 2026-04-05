@@ -14,5 +14,24 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: invision-u-app
+    restart: unless-stopped
+    ports:
+      - "${PORT:-5000}:5000"
+    environment:
+      - DATABASE_URL=postgresql://invision:invision_pass@postgres:5432/invision_u
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - PORT=5000
+      - NODE_ENV=production
+    depends_on:
+      - postgres
+    volumes:
+      - uploads:/app/server/uploads
+
 volumes:
   pgdata:
+  uploads:

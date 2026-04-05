@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Layout, Row, Col, Card, Avatar, Tag, Button, Typography, Calendar, Space, message, Modal, List, Divider, Empty, Statistic, Select, Input, InputNumber, Progress } from 'antd';
 import { useLanguage } from '../i18n/LanguageContext';
 import { Video, RefreshCw, BookOpen, Calendar as CalIcon, MapPin, ChevronRight, Star, Clock, Users, ShieldAlert, AlertTriangle, Lightbulb, Heart, ShieldCheck } from 'lucide-react';
@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 import VideoConference from '../components/VideoConference';
 import { useTheme } from '../i18n/ThemeContext';
 import { themeColors } from '../i18n/themeColors';
+import { API } from '../config';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -75,7 +76,7 @@ const [evalData, setEvalData] = useState({
   const fetchCandidates = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await axios.get('http://localhost:5000/api/candidates');
+      const res = await axios.get(`${API}/candidates`);
       const interviewCandidates = res.data
         .filter((c: any) => c.status === 'interview' || c.interviewTime)
         .map((c: any) => ({
@@ -115,7 +116,7 @@ const [evalData, setEvalData] = useState({
     }
 
     const response = await axios.patch(
-      `http://localhost:5000/api/candidates/${id}/status`,
+      `${API}/candidates/${id}/status`,
       payload
     );
 

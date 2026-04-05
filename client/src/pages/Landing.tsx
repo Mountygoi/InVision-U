@@ -5,7 +5,7 @@ import { useLanguage } from '../i18n/LanguageContext';
 import { useTheme } from '../i18n/ThemeContext';
 import logoImg from '../assets/icons/logo.png';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 const Landing = () => {
   const navigate = useNavigate();

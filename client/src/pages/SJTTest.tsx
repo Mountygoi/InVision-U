@@ -3,6 +3,7 @@ import { Button, Card, Radio, Typography, Spin, message, Input } from 'antd';
 import { ArrowLeftOutlined, ArrowRightOutlined, CheckCircleFilled, LoadingOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { API } from '../config';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -121,7 +122,7 @@ const SJTTest = () => {
     setLoading(true);
 
     try {
-      await axios.post('http://localhost:5000/api/sjt/analyze', {
+      await axios.post(`${API}/sjt/analyze`, {
         candidateId,
         answers: answersArray,
       });
@@ -342,3 +343,4 @@ const SJTTest = () => {
 };
 
 export default SJTTest;
+

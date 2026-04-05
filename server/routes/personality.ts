@@ -27,10 +27,6 @@ router.post('/analyze', async (req, res) => {
       }
     }
 
-    console.log(
-      `Personality analysis requested for candidate: ${candidateId || 'anonymous'}, ${answers.length} answers`
-    );
-
     const result = await analyzePersonality(answers);
 
     // Persist to DB if candidateId provided (non-fatal if DB fails)

@@ -7,6 +7,7 @@ import type { DashboardStats } from '../types';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useTheme } from '../i18n/ThemeContext';
 import { themeColors } from '../i18n/themeColors';
+import { API } from '../config';
 
 const { Title, Text } = Typography;
 
@@ -40,7 +41,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/stats')
+    axios.get(`${API}/stats`)
       .then(res => setStats(res.data))
       .catch(err => console.error('Error loading stats:', err))
       .finally(() => setLoading(false));
