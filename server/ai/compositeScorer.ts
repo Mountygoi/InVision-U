@@ -10,7 +10,7 @@ import {
 export function calculateCompositeScore(
   aiScores: AIScores | null,
   achievementScore: number,
-  isRural: boolean,
+  _isRural: boolean,
   weights: ScoringWeights = DEFAULT_WEIGHTS,
   ielts: number | null = null, // Новое поле
   unt: number | null = null    // Новое поле
