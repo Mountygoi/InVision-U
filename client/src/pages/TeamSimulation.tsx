@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button, Typography, Input, Spin, Card } from 'antd';
-import { SendOutlined, TeamOutlined, CheckCircleFilled, LoadingOutlined } from '@ant-design/icons';
+import { SendOutlined, TeamOutlined, CheckCircleFilled, LoadingOutlined, HomeOutlined } from '@ant-design/icons';
 import axios from 'axios';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import type { SimulationChatMessage } from '../types';
 import { useTheme } from '../i18n/ThemeContext';
 import { API } from '../config';
@@ -43,6 +43,7 @@ const AGENT_ORDER: Array<'aigerim' | 'dauren' | 'nurlan'> = ['aigerim', 'dauren'
 
 export default function TeamSimulation() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const candidateId = searchParams.get('candidateId') || localStorage.getItem('candidateId') || '';
   const candidateName = localStorage.getItem('candidateName') || '';
   const { theme, toggleTheme } = useTheme();
@@ -158,7 +159,8 @@ export default function TeamSimulation() {
       }}>
         <div style={{ maxWidth: 780, margin: '0 auto', animation: 'fadeInUp 0.5s cubic-bezier(0.16,1,0.3,1) both' }}>
           {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+            <Button size="small" type="text" onClick={() => navigate('/')} style={{ borderRadius: 8 }}><HomeOutlined /></Button>
             <Button size="small" type="text" onClick={toggleTheme} style={{ borderRadius: 8 }}>{theme === 'light' ? '🌙' : '☀️'}</Button>
           </div>
           <div style={{ textAlign: 'center', marginBottom: 40 }}>
@@ -303,7 +305,7 @@ export default function TeamSimulation() {
           <Button
             type="primary"
             size="large"
-            href="/login"
+            onClick={() => navigate('/status')}
             style={{ borderRadius: 12, height: 52, paddingInline: 40, background: '#c1f11d', fontSize: 16 }}
           >
             Войти в личный кабинет →

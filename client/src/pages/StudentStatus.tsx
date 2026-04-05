@@ -12,6 +12,7 @@ import {
   DownloadOutlined,
   PrinterOutlined,
   TrophyOutlined,
+  HomeOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -251,6 +252,7 @@ const StudentStatus = () => {
             <Text style={{ color: textSecondary }}>{t('personalAccount')} • {candidate.name}</Text>
           </div>
           <Space>
+            <Button size="small" type="text" onClick={() => navigate('/')} style={{ borderRadius: 8 }}><HomeOutlined /></Button>
             <Button size="small" type="text" onClick={toggleTheme} style={{ borderRadius: 8 }}>{theme === 'light' ? '🌙' : '☀️'}</Button>
             <Button size="small" type={lang === 'ru' ? 'primary' : 'default'} onClick={() => setLang('ru')} style={{ borderRadius: 8 }}>RU</Button>
             <Button size="small" type={lang === 'kz' ? 'primary' : 'default'} onClick={() => setLang('kz')} style={{ borderRadius: 8 }}>KZ</Button>

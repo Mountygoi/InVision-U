@@ -1,6 +1,6 @@
 ﻿import { useState } from 'react';
 import { Card, Form, Input, Button, Typography, message, Layout } from 'antd';
-import { MailOutlined, LockOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { MailOutlined, LockOutlined, ArrowRightOutlined, HomeOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -130,6 +130,9 @@ const Login = () => {
         </div>
 
         <div style={{ textAlign: 'center', marginTop: 16, display: 'flex', justifyContent: 'center', gap: 8 }}>
+          <Button size="small" type="text" onClick={() => navigate('/')} style={{ color: '#64748B', fontSize: 12 }}>
+            <HomeOutlined />
+          </Button>
           <Button size="small" type="text" onClick={toggleTheme} style={{ color: '#64748B', fontSize: 12 }}>
             {theme === 'light' ? '🌙' : '☀️'}
           </Button>

@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { Form, Input, Button, Upload, Select, message, Card, Typography, Row, Col, InputNumber, Space, Tag, Divider, Alert, Modal } from 'antd';
 import {
   UploadOutlined, UserOutlined, BookOutlined, EnvironmentOutlined,
   PlusOutlined, DeleteOutlined, MailOutlined, PhoneOutlined,
   CameraOutlined, BulbOutlined,
-  RocketOutlined, StarOutlined, EditOutlined, TrophyOutlined
+  RocketOutlined, StarOutlined, EditOutlined, TrophyOutlined, HomeOutlined
 } from '@ant-design/icons';
 
 import axios from 'axios';
@@ -314,6 +314,9 @@ const StudentForm = () => {
             boxShadow: '0 4px 20px rgba(22, 163, 74, 0.3)',
           }}>iU</div>
           <div style={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 4 }}>
+            <Button size="small" type="text" onClick={() => navigate('/')} style={{ color: '#64748B' }}>
+              <HomeOutlined />
+            </Button>
             <Button size="small" type="text" onClick={toggleTheme} style={{ color: '#64748B' }}>
               {theme === 'light' ? '🌙' : '☀️'}
             </Button>

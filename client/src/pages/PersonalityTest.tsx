@@ -5,6 +5,7 @@ import {
   ArrowRightOutlined,
   CheckCircleFilled,
   LoadingOutlined,
+  HomeOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -653,7 +654,8 @@ const PersonalityTest = () => {
       <div style={{ maxWidth: 720, margin: '0 auto', animation: 'fadeInUp 0.5s cubic-bezier(0.16,1,0.3,1) both' }}>
 
         {/* Theme toggle */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+          <Button size="small" type="text" onClick={() => navigate('/')} style={{ borderRadius: 8 }}><HomeOutlined /></Button>
           <Button size="small" type="text" onClick={toggleTheme} style={{ borderRadius: 8 }}>{theme === 'light' ? '🌙' : '☀️'}</Button>
         </div>
 
