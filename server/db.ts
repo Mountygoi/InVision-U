@@ -3,6 +3,11 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// DigitalOcean managed DB uses self-signed CA
+if (process.env.DATABASE_URL) {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+}
+
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL || undefined,
   host: process.env.DATABASE_URL ? undefined : (process.env.DB_HOST || '127.0.0.1'),
