@@ -755,10 +755,13 @@ const StudentForm = () => {
             <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
               <Button
                 block
-                onClick={() => {
+                onClick={async () => {
                   setShowNudgePrompt(false);
                   setNudgeUsed(true);
-                  form.submit();
+                  try {
+                    const values = await form.validateFields();
+                    await submitForm(values);
+                  } catch { /* validation failed */ }
                 }}
                 style={{ height: 44, borderRadius: 10, fontWeight: 600 }}
               >
