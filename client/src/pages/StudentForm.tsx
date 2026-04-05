@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Form, Input, Button, Upload, Select, message, Card, Typography, Row, Col, InputNumber, Space, Tag, Divider, Alert } from 'antd';
+import { Form, Input, Button, Upload, Select, message, Card, Typography, Row, Col, InputNumber, Space, Tag, Divider, Alert, Modal } from 'antd';
 import {
   UploadOutlined, UserOutlined, BookOutlined, EnvironmentOutlined,
   PlusOutlined, DeleteOutlined, MailOutlined, PhoneOutlined,
@@ -106,6 +106,8 @@ const StudentForm = () => {
   const [nudgeEncouragement, setNudgeEncouragement] = useState('');
   const [nudgeVisible, setNudgeVisible] = useState(false);
   const [schoolOther, setSchoolOther] = useState(false);
+  const [nudgeUsed, setNudgeUsed] = useState(false);
+  const [showNudgePrompt, setShowNudgePrompt] = useState(false);
 
   const STORAGE_KEY = 'studentFormDraft';
 
@@ -152,6 +154,7 @@ const StudentForm = () => {
       return;
     }
 
+    setNudgeUsed(true);
     setNudgeLoading(true);
     try {
       const res = await axios.post(`${API}/nudge`, {
@@ -206,6 +209,14 @@ const StudentForm = () => {
   };
 
   const onFinish = async (values: any) => {
+    if (!nudgeUsed) {
+      setShowNudgePrompt(true);
+      return;
+    }
+    await submitForm(values);
+  };
+
+  const submitForm = async (values: any) => {
     setSubmitting(true);
     try {
       const nudgeAnswersList = Object.entries(nudgeAnswers)
@@ -716,6 +727,58 @@ const StudentForm = () => {
             </Button>
           </Form.Item>
         </Form>
+
+        <Modal
+          open={showNudgePrompt}
+          onCancel={() => setShowNudgePrompt(false)}
+          footer={null}
+          centered
+          width={420}
+          closable={false}
+          styles={{ mask: { backdropFilter: 'blur(2px)', background: 'rgba(0,0,0,0.45)' } }}
+        >
+          <div style={{ textAlign: 'center', padding: '8px 0' }}>
+            <div style={{
+              width: 48, height: 48, borderRadius: 12,
+              background: isDark ? 'rgba(22,163,74,0.15)' : '#F0FDF4',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 16px',
+            }}>
+              <BulbOutlined style={{ fontSize: 24, color: '#16a34a' }} />
+            </div>
+            <Title level={5} style={{ margin: '0 0 8px', color: isDark ? '#e2e8f0' : '#1F2937' }}>
+              {t('nudgePromptTitle') || 'Усильте свою заявку!'}
+            </Title>
+            <Text style={{ color: isDark ? '#94a3b8' : '#6B7280', fontSize: 14, lineHeight: 1.6 }}>
+              {t('nudgePromptDesc') || 'AI может дать персональные вопросы, ответы на которые покажут рецензентам ваши сильные стороны. Это займёт пару минут.'}
+            </Text>
+            <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+              <Button
+                block
+                onClick={() => {
+                  setShowNudgePrompt(false);
+                  setNudgeUsed(true);
+                  form.submit();
+                }}
+                style={{ height: 44, borderRadius: 10, fontWeight: 600 }}
+              >
+                {t('nudgePromptSkip') || 'Пройти дальше'}
+              </Button>
+              <Button
+                type="primary"
+                block
+                icon={<BulbOutlined />}
+                onClick={() => {
+                  setShowNudgePrompt(false);
+                  handleGetAIFeedback();
+                }}
+                style={{ height: 44, borderRadius: 10, fontWeight: 600, background: '#16a34a' }}
+              >
+                {t('nudgePromptGet') || 'Получить AI отзыв'}
+              </Button>
+            </div>
+          </div>
+        </Modal>
       </Card>
     </div>
   );
