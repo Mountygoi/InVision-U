@@ -18,6 +18,44 @@ const pool = new pg.Pool({
   ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
 });
 
+async function ensureSchemaAccess(client: pg.PoolClient): Promise<void> {
+  const attempts = [
+    // PostgreSQL 15+: doadmin is database owner → can ALTER schema ownership
+    async () => {
+      const { rows } = await client.query(`SELECT current_user AS u`);
+      const user = rows[0]?.u;
+      if (user) {
+        await client.query(`ALTER SCHEMA public OWNER TO "${user}"`);
+        console.log(`✅ Set public schema owner to ${user}`);
+      }
+    },
+    // Fallback: GRANT CREATE
+    async () => {
+      const { rows } = await client.query(`SELECT current_user AS u`);
+      const user = rows[0]?.u;
+      if (user) {
+        await client.query(`GRANT ALL ON SCHEMA public TO "${user}"`);
+        console.log(`✅ Granted schema access to ${user}`);
+      }
+    },
+    // Fallback: GRANT via pg_database_owner role (PG15+)
+    async () => {
+      await client.query(`GRANT CREATE ON SCHEMA public TO pg_database_owner`);
+      console.log('✅ Granted schema access via pg_database_owner');
+    },
+  ];
+
+  for (const attempt of attempts) {
+    try {
+      await attempt();
+      return;
+    } catch {
+      // try next approach
+    }
+  }
+  console.warn('⚠️  Could not grant schema access, will try CREATE anyway...');
+}
+
 export async function initDatabase(): Promise<void> {
   let client;
   try {
@@ -32,14 +70,7 @@ export async function initDatabase(): Promise<void> {
       console.log('✅ Database tables already exist, running migrations...');
     } else {
       console.log('⏳ Creating database tables...');
-      // Try granting schema access first (works if connected as admin/doadmin)
-      try {
-        const { rows: userRows } = await client.query(`SELECT current_user AS u`);
-        const currentUser = userRows[0]?.u;
-        if (currentUser) {
-          await client.query(`GRANT CREATE ON SCHEMA public TO ${currentUser}`);
-        }
-      } catch { /* ignore – may not have GRANT privilege */ }
+      await ensureSchemaAccess(client);
 
       await client.query(`
         CREATE TABLE IF NOT EXISTS candidates (
@@ -134,17 +165,18 @@ export async function initDatabase(): Promise<void> {
       try { await client.query(stmt); } catch { /* column may already exist */ }
     }
 
-    console.log('✅ Database migrations complete');
-  } catch (err: any) {
-    if (err?.code === '42501') {
-      console.error('⚠️  Permission denied on schema public. Tables may need to be created manually.');
-      console.error('   Run in DO database console: GRANT CREATE ON SCHEMA public TO your_user;');
-      console.error('   Or create the tables manually using the SQL from db.ts');
-      // Don't throw — let the server start if tables already exist from a prior deployment
-    } else {
-      console.error('❌ Database init error:', err);
-      throw err;
+    // Verify tables exist before proceeding
+    const { rows: verify } = await client.query(
+      `SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename = 'candidates'`
+    );
+    if (verify.length === 0) {
+      throw new Error('Failed to create database tables. Check database user permissions.');
     }
+
+    console.log('✅ Database migrations complete');
+  } catch (err) {
+    console.error('❌ Database init error:', err);
+    throw err;
   } finally {
     if (client) client.release();
   }
