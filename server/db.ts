@@ -90,6 +90,8 @@ export async function initDatabase(): Promise<void> {
       ALTER TABLE candidates ADD COLUMN IF NOT EXISTS school TEXT;
       ALTER TABLE candidates ADD COLUMN IF NOT EXISTS contact_method TEXT;
       ALTER TABLE candidates ADD COLUMN IF NOT EXISTS contact_handle TEXT;
+      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS essay_text_original TEXT;
+      ALTER TABLE candidates ADD COLUMN IF NOT EXISTS learnability_score JSONB;
     `);
     console.log('✅ Database tables initialized successfully');
   } catch (err) {

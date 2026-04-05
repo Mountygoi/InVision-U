@@ -134,6 +134,14 @@ export interface Candidate {
   personalityScores?: PersonalityScores;
   sjtScores?: SJTScores;
   simulationScores?: SimulationScores;
+  learnabilityScore?: {
+    dimensions: { key: string; score: number; evidence: string }[];
+    overallScore: number;
+    beforeSummary: string;
+    afterSummary: string;
+    verdict: 'high' | 'medium' | 'low';
+    verdictText: string;
+  };
   compositeScore: number;
   achievementScore: number;
   status: 'new' | 'under_review' | 'interview' | 'accepted' | 'declined' | 'waitlisted'| 'arbitration';

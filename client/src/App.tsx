@@ -1,42 +1,51 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ConfigProvider } from 'antd';
+import { ConfigProvider, theme as antTheme } from 'antd';
+import { LanguageProvider } from './i18n/LanguageContext';
+import { ThemeProvider, useTheme } from './i18n/ThemeContext';
 import AppHeader from './layout/AppHeader';
 import Dashboard from './pages/Dashboard';
 import Candidates from './pages/Candidates';
 import Settings from './pages/Settings';
 import StudentForm from './pages/StudentForm';
 import Scheduler from './pages/Scheduler';
-import StudentStatus from './pages/StudentStatus'; // Твой личный кабинет
-import Login from './pages/Login';                 // Твоя страница входа
-import SJTTest from './pages/SJTTest';             // Ситуационный тест
-import PersonalityTest from './pages/PersonalityTest'; // Тест личности (40 вопросов)
-import TeamSimulation from './pages/TeamSimulation'; // Командная симуляция
-import ReviewPage from './pages/ReviewPage';          // Страница ревью (admin)
-import Reviews from './pages/Reviews';               // Список кандидатов на проверке
+import StudentStatus from './pages/StudentStatus';
+import Login from './pages/Login';
+import SJTTest from './pages/SJTTest';
+import PersonalityTest from './pages/PersonalityTest';
+import TeamSimulation from './pages/TeamSimulation';
+import ReviewPage from './pages/ReviewPage';
+import Reviews from './pages/Reviews';
+import Landing from './pages/Landing';
 
-function App() {
+const AppInner = () => {
+  const { theme: currentTheme } = useTheme();
+  const isDark = currentTheme === 'dark';
+
   return (
     <ConfigProvider
       theme={{
+        algorithm: isDark ? antTheme.darkAlgorithm : antTheme.defaultAlgorithm,
         token: {
-          colorPrimary: '#c1f11d',
-          colorLink: '#c1f11d',
+          colorPrimary: '#16a34a',
+          colorLink: '#16a34a',
           fontFamily: "'Raleway', Arial, sans-serif",
           borderRadius: 12,
-          colorBgContainer: '#ffffff',
+          colorBgContainer: isDark ? '#1e293b' : '#ffffff',
+          colorBgElevated: isDark ? '#1e293b' : '#ffffff',
+          colorText: isDark ? '#f1f5f9' : undefined,
         },
         components: {
           Steps: {
-            colorPrimary: '#c1f11d',
+            colorPrimary: '#16a34a',
             colorTextDescription: '#94A3B8',
           },
           Button: {
-            colorPrimary: '#c1f11d',
-            colorPrimaryHover: '#d4f74d',
-            primaryColor: '#141414',
+            colorPrimary: '#16a34a',
+            colorPrimaryHover: '#15803d',
+            primaryColor: '#ffffff',
           },
           Menu: {
-            colorPrimary: '#c1f11d',
+            colorPrimary: '#16a34a',
           },
         },
       }}
@@ -83,14 +92,24 @@ function App() {
           }
         />
 
-        {/* Редирект по умолчанию (если зашел на корень сайта) */}
-        <Route path="/" element={<Navigate to="/apply" replace />} />
+        {/* Главная страница */}
+        <Route path="/" element={<Landing />} />
         
         {/* Обработка несуществующих страниц */}
-        <Route path="*" element={<Navigate to="/apply" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
     </ConfigProvider>
+  );
+};
+
+function App() {
+  return (
+    <ThemeProvider>
+    <LanguageProvider>
+      <AppInner />
+    </LanguageProvider>
+    </ThemeProvider>
   );
 }
 

@@ -1,5 +1,6 @@
   import { Router } from 'express';
   import { analyzeForNudge } from '../ai/nudgeAnalyzer.js';
+  import { analyzeLearnability } from '../ai/learnabilityAnalyzer.js';
 
   const router = Router();
 
@@ -28,6 +29,35 @@
     } catch (err: any) {
       console.error('Nudge analysis error:', err?.message || err);
       res.status(500).json({ error: 'Failed to analyze draft', details: err?.message });
+    }
+  });
+
+  // POST /api/nudge/analyze-learnability - Analyze coachability from nudge answers
+  router.post('/analyze-learnability', async (req, res) => {
+    try {
+      if (!process.env.GROQ_API_KEY) {
+        return res.status(503).json({ error: 'AI is not available' });
+      }
+
+      const { essayText, nudgeAnswers, achievements, skills, name } = req.body;
+
+      if (!essayText?.trim() && (!nudgeAnswers || nudgeAnswers.length === 0)) {
+        return res.status(400).json({
+          error: 'Need essay text or nudge answers to analyze learnability.'
+        });
+      }
+
+      const result = await analyzeLearnability({
+        essayText: essayText || '',
+        nudgeAnswers: nudgeAnswers || [],
+        achievements,
+        skills,
+        name,
+      });
+      res.json(result);
+    } catch (err: any) {
+      console.error('Learnability analysis error:', err?.message || err);
+      res.status(500).json({ error: 'Failed to analyze learnability', details: err?.message });
     }
   });
 

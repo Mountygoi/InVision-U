@@ -1,44 +1,51 @@
-import { Layout, Menu, Avatar, Space, Typography, Dropdown } from 'antd';
+﻿import { Layout, Menu, Avatar, Space, Typography, Dropdown } from 'antd';
 import { NavLink, useLocation } from 'react-router-dom';
 import { DownOutlined } from '@ant-design/icons';
-import logoSvg from '../assets/icons/logo.svg';
+import logoSvg from '../assets/icons/logo.png';
+import { useLanguage } from '../i18n/LanguageContext';
+import { useTheme } from '../i18n/ThemeContext';
 
 const { Header } = Layout;
 const { Text } = Typography;
 
 const AppHeader = () => {
   const location = useLocation();
+  const { t, lang, setLang } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === 'dark';
 
   const menuItems = [
-    { key: '/admin', label: <NavLink to="/admin">Dashboard</NavLink> },
-    { key: '/admin/candidates', label: <NavLink to="/admin/candidates">Candidates</NavLink> },
-    { key: '/admin/settings', label: <NavLink to="/admin/settings">Settings</NavLink> },
-    { key: '/admin/scheduler', label: <NavLink to="/admin/scheduler">Interviews</NavLink> },
-    { key: '/admin/reviews', label: <NavLink to="/admin/reviews">Reviews</NavLink> },
+    { key: '/admin', label: <NavLink to="/admin">{t('menuDashboard')}</NavLink> },
+    { key: '/admin/candidates', label: <NavLink to="/admin/candidates">{t('menuCandidates')}</NavLink> },
+    { key: '/admin/settings', label: <NavLink to="/admin/settings">{t('menuSettings')}</NavLink> },
+    { key: '/admin/scheduler', label: <NavLink to="/admin/scheduler">{t('menuInterviews')}</NavLink> },
+    { key: '/admin/reviews', label: <NavLink to="/admin/reviews">{t('menuReviews')}</NavLink> },
   ];
 
   const profileMenu = {
     items: [
-      { key: 'profile', label: 'Profile Settings' },
-      { key: 'logout', label: 'Sign Out', danger: true },
+      { key: 'theme', label: <span onClick={toggleTheme}>{theme === 'light' ? '🌙 Dark' : '☀️ Light'}</span> },
+      { key: 'lang', label: <span onClick={() => setLang(lang === 'ru' ? 'kz' : 'ru')}>{lang === 'ru' ? '🇰🇿 Қазақша' : '🇷🇺 Русский'}</span> },
+      { key: 'profile', label: t('profileSettings') },
+      { key: 'logout', label: t('signOut'), danger: true },
     ],
   };
 
   return (
     <Header style={{ 
-      background: 'rgba(255, 255, 255, 0.92)', 
+      background: isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.92)', 
       backdropFilter: 'blur(12px)',
       padding: '0 80px',
       height: '72px', 
       display: 'flex', 
       alignItems: 'center', 
       justifyContent: 'space-between',
-      borderBottom: '1px solid #E2E8F0',
+      borderBottom: `1px solid ${isDark ? '#334155' : '#E2E8F0'}`,
       position: 'fixed', 
       width: '100%', 
       zIndex: 1000,
-      boxShadow: '0 1px 8px rgba(0,0,0,0.04)',
-      transition: 'box-shadow 0.3s ease',
+      boxShadow: isDark ? '0 1px 8px rgba(0,0,0,0.2)' : '0 1px 8px rgba(0,0,0,0.04)',
+      transition: 'all 0.3s ease',
     }}>
       {/* LEFT: Логотип */}
       <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
@@ -75,11 +82,11 @@ const AppHeader = () => {
             <Avatar 
               src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin" 
               size={40} 
-              style={{ border: '2px solid rgba(193, 241, 29, 0.3)', transition: 'border-color 0.2s' }}
+              style={{ border: '2px solid rgba(22, 163, 74, 0.3)', transition: 'border-color 0.2s' }}
             />
             <Space orientation="vertical" size={0} style={{ lineHeight: '1.2' }}>
-              <Text style={{ fontSize: '11px', display: 'block', color: '#94A3B8' }}>Admin:</Text>
-              <Text strong style={{ fontSize: '14px', whiteSpace: 'nowrap', color: '#1E293B' }}>
+              <Text style={{ fontSize: '11px', display: 'block', color: '#94A3B8' }}>{t('admin')}</Text>
+              <Text strong style={{ fontSize: '14px', whiteSpace: 'nowrap', color: isDark ? '#f1f5f9' : '#1E293B' }}>
                 Bolatovich N. <DownOutlined style={{ fontSize: '10px', color: '#94A3B8' }} />
               </Text>
             </Space>
@@ -88,7 +95,6 @@ const AppHeader = () => {
       </div>
 
       <style>{`
-        /* Header menu styling — light theme with lime accent */
         .ant-layout-header .ant-menu-horizontal {
           background: transparent !important;
           border-bottom: none !important;
@@ -96,10 +102,10 @@ const AppHeader = () => {
         .ant-layout-header .ant-menu-horizontal .ant-menu-item {
           padding: 0 32px !important;
           margin: 0 !important;
-          color: #64748B !important;
+          color: ${isDark ? '#94a3b8' : '#64748B'} !important;
         }
         .ant-layout-header .ant-menu-horizontal .ant-menu-item:hover {
-          color: #1E293B !important;
+          color: ${isDark ? '#f1f5f9' : '#1E293B'} !important;
         }
         .ant-layout-header .ant-menu-horizontal .ant-menu-item a {
           color: inherit !important;
@@ -113,15 +119,15 @@ const AppHeader = () => {
           line-height: 70px !important;
         }
         .ant-layout-header .ant-menu-item-selected {
-          color: #141414 !important;
+          color: ${isDark ? '#f1f5f9' : '#141414'} !important;
           font-weight: 700 !important;
         }
         .ant-layout-header .ant-menu-item-selected a {
-          color: #141414 !important;
+          color: ${isDark ? '#f1f5f9' : '#141414'} !important;
         }
         .ant-layout-header .ant-menu-item-selected::after {
           border-bottom-width: 2px !important;
-          border-bottom-color: #c1f11d !important;
+          border-bottom-color: #16a34a !important;
           bottom: 0px !important;
         }
         .ant-layout-header .ant-menu-item::after {

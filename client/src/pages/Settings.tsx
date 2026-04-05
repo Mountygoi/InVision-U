@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Card, Slider, Typography, Space, Divider, Button, message, Spin } from 'antd';
-import { Award, Globe, Brain, Save } from 'lucide-react';
+import { Globe, Brain, Save } from 'lucide-react';
 import axios from 'axios';
 import type { ScoringWeights } from '../types';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const { Title, Text } = Typography;
 
@@ -12,12 +13,13 @@ const DEFAULT_WEIGHTS: ScoringWeights = {
   technicalPotential: 15,
   creativity: 10,
   resilience: 20,
-  socialImpact: 10,
+  socialImpact: 0,
   achievementBonus: 15,
   ruralBonus: 10,
 };
 
 const Settings = () => {
+  const { t } = useLanguage();
   const [weights, setWeights] = useState<ScoringWeights>(DEFAULT_WEIGHTS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -37,9 +39,9 @@ const Settings = () => {
     setSaving(true);
     try {
       await axios.put('http://localhost:5000/api/scoring-config', { weights });
-      message.success('Scoring weights saved and all candidate scores recalculated');
+      message.success(t('weightsSaved'));
     } catch (err) {
-      message.error('Failed to save scoring config');
+      message.error(t('failedSaveConfig'));
     } finally {
       setSaving(false);
     }
@@ -47,84 +49,67 @@ const Settings = () => {
 
   const handleReset = () => {
     setWeights(DEFAULT_WEIGHTS);
-    message.info('Weights reset to defaults (not saved yet)');
+    message.info(t('weightsReset'));
   };
 
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 100 }}><Spin size="large" /></div>;
 
-  const totalDimensionWeight = weights.motivation + weights.leadership + weights.technicalPotential + weights.creativity + weights.resilience + weights.socialImpact;
+  const totalDimensionWeight = weights.motivation + weights.leadership + weights.technicalPotential + weights.creativity + weights.resilience;
 
   return (
     <div style={{ padding: '32px 40px', maxWidth: '900px', fontFamily: "'Raleway', sans-serif", animation: 'fadeInUp 0.5s cubic-bezier(0.16,1,0.3,1) both' }}>
-      <Title level={2} style={{ letterSpacing: '-0.02em' }}>Scoring Configuration</Title>
-      <Text type="secondary">Configure the AI scoring weights to prioritize candidate dimensions. Changes recalculate all scores.</Text>
+      <Title level={2} style={{ letterSpacing: '-0.02em' }}>{t('scoringConfig')}</Title>
+      <Text type="secondary">{t('scoringConfigDesc')}</Text>
 
       <Divider />
 
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         {/* AI Dimension Weights */}
-        <Card title={<Space><Brain size={18} /> AI Dimension Weights <Text type="secondary" style={{ fontSize: 12 }}>(Total: {totalDimensionWeight})</Text></Space>}>
+        <Card title={<Space><Brain size={18} /> {t('aiDimensionWeights')} <Text type="secondary" style={{ fontSize: 12 }}>(Total: {totalDimensionWeight})</Text></Space>}>
           <div style={{ marginBottom: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}><Text>Motivation</Text><Text strong>{weights.motivation}</Text></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><Text>{t('settMotivation')}</Text><Text strong>{weights.motivation}</Text></div>
             <Slider max={50} value={weights.motivation} onChange={(val) => handleChange('motivation', val)} />
           </div>
           <div style={{ marginBottom: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}><Text>Leadership</Text><Text strong>{weights.leadership}</Text></div>
-            <Slider max={50} value={weights.leadership} onChange={(val) => handleChange('leadership', val)} trackStyle={{ background: '#c1f11d' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><Text>{t('settLeadership')}</Text><Text strong>{weights.leadership}</Text></div>
+            <Slider max={50} value={weights.leadership} onChange={(val) => handleChange('leadership', val)} trackStyle={{ background: '#16a34a' }} />
           </div>
           <div style={{ marginBottom: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}><Text>Technical Potential</Text><Text strong>{weights.technicalPotential}</Text></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><Text>{t('settTechnical')}</Text><Text strong>{weights.technicalPotential}</Text></div>
             <Slider max={50} value={weights.technicalPotential} onChange={(val) => handleChange('technicalPotential', val)} />
           </div>
           <div style={{ marginBottom: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}><Text>Creativity</Text><Text strong>{weights.creativity}</Text></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><Text>{t('settCreativity')}</Text><Text strong>{weights.creativity}</Text></div>
             <Slider max={50} value={weights.creativity} onChange={(val) => handleChange('creativity', val)} />
           </div>
           <div style={{ marginBottom: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Text>Resilience / "Path Traveled" <Text type="secondary" style={{ fontSize: 11 }}>— IinVision U core value</Text></Text>
+              <Text>{t('settResilience')} <Text type="secondary" style={{ fontSize: 11 }}>{t('settResilienceHint')}</Text></Text>
               <Text strong>{weights.resilience}</Text>
             </div>
             <Slider max={50} value={weights.resilience} onChange={(val) => handleChange('resilience', val)} trackStyle={{ background: '#3dedf1' }} handleStyle={{ borderColor: '#3dedf1' }} />
           </div>
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}><Text>Social Impact</Text><Text strong>{weights.socialImpact}</Text></div>
-            <Slider max={50} value={weights.socialImpact} onChange={(val) => handleChange('socialImpact', val)} />
-          </div>
-        </Card>
-
-        {/* Bonus Weights */}
-        <Card title={<Space><Award size={18} /> Bonus Factors</Space>}>
-          <div style={{ marginBottom: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}><Text>Achievement Bonus (olympiads, projects, awards)</Text><Text strong>{weights.achievementBonus}</Text></div>
-            <Slider max={30} value={weights.achievementBonus} onChange={(val) => handleChange('achievementBonus', val)} />
-          </div>
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}><Text>Rural Area Bonus</Text><Text strong>{weights.ruralBonus}</Text></div>
-            <Slider max={30} value={weights.ruralBonus} onChange={(val) => handleChange('ruralBonus', val)} trackStyle={{ background: '#3dedf1' }} handleStyle={{ borderColor: '#3dedf1' }} />
-            <Text type="secondary" style={{ fontSize: 12 }}>This parameter helps inVision U discover hidden talents in rural regions of Kazakhstan.</Text>
-          </div>
         </Card>
 
         {/* Transparency Card */}
-        <Card title={<Space><Globe size={18} /> Scoring Formula (Transparency)</Space>} style={{ borderLeft: '4px solid #c1f11d' }}>
+        <Card title={<Space><Globe size={18} /> {t('scoringFormula')}</Space>} style={{ borderLeft: '4px solid #16a34a' }}>
           <Text style={{ fontSize: 13, lineHeight: '1.8' }}>
-            <strong>Composite Score</strong> = (Weighted AI Dimension Average x 0.75) + Achievement Bonus + Rural Bonus<br />
-            <strong>AI Dimensions</strong>: Each essay is analyzed by Claude AI across 6 dimensions (0-100). Scores are weighted by the sliders above.<br />
-            <strong>Achievement Bonus</strong>: Deterministic points for olympiads (8-20pts), volunteering (10pts), projects (10pts), awards (8pts). Capped at 50.<br />
-            <strong>Rural Bonus</strong>: Added for candidates from underrepresented regions.<br />
-            <strong>AI does NOT make final decisions.</strong> All scores are recommendations for the human admissions committee.
+            <strong>{t('compositeScore')}</strong> = {t('formulaText1')}<br />
+            <strong>AI</strong>: {t('formulaText2')}<br />
+            <strong>{t('achievements')}</strong>: {t('formulaText3')}<br />
+            <strong>{t('ruralBonus')}</strong>: {t('formulaText4')}<br />
+            <strong>{t('formulaText5')}</strong>
           </Text>
         </Card>
 
         {/* Actions */}
         <div style={{ display: 'flex', gap: 12 }}>
           <Button type="primary" icon={<Save size={16} />} onClick={handleSave} loading={saving} size="large"
-            style={{ borderRadius: 10, background: '#c1f11d', fontWeight: 600 }}>
-            Save & Recalculate All Scores
+            style={{ borderRadius: 10, background: '#16a34a', fontWeight: 600 }}>
+            {t('saveRecalculate')}
           </Button>
           <Button onClick={handleReset} size="large" style={{ borderRadius: 10 }}>
-            Reset to Defaults
+            {t('resetDefaults')}
           </Button>
         </div>
       </Space>

@@ -93,7 +93,7 @@ export const DEFAULT_WEIGHTS: ScoringWeights = {
   technicalPotential: 15,
   creativity: 10,
   resilience: 20,
-  socialImpact: 10,
+  socialImpact: 0,
   achievementBonus: 15,
   ruralBonus: 10,
 };

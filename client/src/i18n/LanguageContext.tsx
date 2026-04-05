@@ -8,14 +8,14 @@ interface LanguageContextType {
 }
 
 const LanguageContext = createContext<LanguageContextType>({
-  lang: 'en',
+  lang: 'ru',
   setLang: () => {},
   t: (key) => key,
 });
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [lang, setLangState] = useState<Lang>(() => {
-    return (localStorage.getItem('lang') as Lang) || 'en';
+    return (localStorage.getItem('lang') as Lang) || 'ru';
   });
 
   const setLang = useCallback((l: Lang) => {
@@ -25,7 +25,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
 
   const t = useCallback((key: string, vars?: Record<string, string | number>): string => {
     const dict = translations[lang];
-    let str = (dict as any)[key] ?? (translations.en as any)[key] ?? key;
+    let str = (dict as any)?.[key] ?? (translations.ru as any)?.[key] ?? key;
     if (vars) {
       Object.entries(vars).forEach(([k, v]) => {
         str = str.replace(`{${k}}`, String(v));

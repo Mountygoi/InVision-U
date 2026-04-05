@@ -1,14 +1,17 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useLanguage } from '../i18n/LanguageContext';
+import { useTheme } from '../i18n/ThemeContext';
+import { themeColors } from '../i18n/themeColors';
 import {
   Layout, Row, Col, Card, Avatar, Tag, Button, Typography, Space,
-  Divider, Progress, Badge, Spin, message, Modal, Alert,
+  Divider, Progress, Spin, message, Modal, Alert,
 } from 'antd';
 import {
   ArrowLeftOutlined, CheckCircleOutlined, CloseCircleOutlined,
   UserOutlined, TrophyOutlined, FileTextOutlined,
 } from '@ant-design/icons';
-import { MapPin, GraduationCap, Mail, Phone, Shield } from 'lucide-react';
+import { MapPin, GraduationCap, Mail, Shield } from 'lucide-react';
 import axios from 'axios';
 
 const { Content } = Layout;
@@ -18,17 +21,18 @@ const API = 'http://localhost:5000';
 
 const score2color = (s: number) => s >= 70 ? '#10B981' : s >= 50 ? '#F59E0B' : '#EF4444';
 
-const ScorePill = ({ label, score }: { label: string; score: number }) => {
-  const c = score2color(score);
+const ScorePill = ({ label, score, isDark }: { label: string; score: number; isDark?: boolean }) => {
+  const sc = score2color(score);
+  const pc = themeColors(!!isDark);
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 8, background: 'white',
-      borderRadius: 8, padding: '6px 12px', border: `1px solid ${c}30`,
+      display: 'flex', alignItems: 'center', gap: 8, background: pc.cardBg,
+      borderRadius: 8, padding: '6px 12px', border: `1px solid ${sc}30`,
     }}>
-      <Text style={{ fontSize: 12, color: '#374151' }}>{label}</Text>
-      <Text strong style={{ fontSize: 13, color: c }}>{score}</Text>
-      <div style={{ width: 44, height: 4, background: '#E5E7EB', borderRadius: 2 }}>
-        <div style={{ width: `${score}%`, height: '100%', background: c, borderRadius: 2 }} />
+      <Text style={{ fontSize: 12, color: pc.textDark }}>{label}</Text>
+      <Text strong style={{ fontSize: 13, color: sc }}>{score}</Text>
+      <div style={{ width: 44, height: 4, background: isDark ? '#475569' : '#E5E7EB', borderRadius: 2 }}>
+        <div style={{ width: `${score}%`, height: '100%', background: sc, borderRadius: 2 }} />
       </div>
     </div>
   );
@@ -37,6 +41,10 @@ const ScorePill = ({ label, score }: { label: string; score: number }) => {
 const ReviewPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t } = useLanguage();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  const c = themeColors(isDark);
   const [candidate, setCandidate] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [approving, setApproving] = useState(false);
@@ -46,25 +54,25 @@ const ReviewPage = () => {
     if (!id) return;
     axios.get(`${API}/api/candidates/${id}`)
       .then(r => setCandidate(r.data))
-      .catch(() => message.error('Failed to load candidate'))
+      .catch(() => message.error(t('failedToLoadCandidate')))
       .finally(() => setLoading(false));
   }, [id]);
 
   const handleApprove = () => {
     Modal.confirm({
-      title: 'Approve this candidate?',
-      content: 'This will set their status to Accepted and they will receive a digital certificate.',
-      okText: 'Yes, Approve',
+      title: t('approveConfirmTitle'),
+      content: t('approveConfirmDesc'),
+      okText: t('yesApprove'),
       okType: 'primary',
-      cancelText: 'Cancel',
+      cancelText: t('cancel'),
       onOk: async () => {
         setApproving(true);
         try {
           await axios.patch(`${API}/api/candidates/${id}/status`, { status: 'accepted' });
-          message.success('Candidate approved! Certificate will be available on their dashboard.');
+          message.success(t('candidateApprovedSuccess'));
           setCandidate((prev: any) => ({ ...prev, status: 'accepted' }));
         } catch {
-          message.error('Failed to approve candidate');
+          message.error(t('failedToApprove'));
         } finally {
           setApproving(false);
         }
@@ -74,19 +82,19 @@ const ReviewPage = () => {
 
   const handleDecline = () => {
     Modal.confirm({
-      title: 'Decline this candidate?',
-      content: 'This action will set their status to Declined.',
-      okText: 'Decline',
+      title: t('declineConfirmTitle'),
+      content: t('declineConfirmDesc'),
+      okText: t('decline'),
       okType: 'danger',
-      cancelText: 'Cancel',
+      cancelText: t('cancel'),
       onOk: async () => {
         setDeclining(true);
         try {
           await axios.patch(`${API}/api/candidates/${id}/status`, { status: 'declined' });
-          message.success('Candidate declined.');
+          message.success(t('candidateDeclinedSuccess'));
           setCandidate((prev: any) => ({ ...prev, status: 'declined' }));
         } catch {
-          message.error('Failed to decline candidate');
+          message.error(t('failedToDecline'));
         } finally {
           setDeclining(false);
         }
@@ -107,8 +115,8 @@ const ReviewPage = () => {
 
   if (!candidate) return (
     <div style={{ textAlign: 'center', padding: 80 }}>
-      <Title level={3}>Candidate not found</Title>
-      <Button onClick={() => navigate('/admin/candidates')}>Back to Candidates</Button>
+      <Title level={3}>{t('candidateNotFound')}</Title>
+      <Button onClick={() => navigate('/admin/candidates')}>{t('backToCandidates')}</Button>
     </div>
   );
 
@@ -129,13 +137,13 @@ const ReviewPage = () => {
     : null;
 
   return (
-    <Layout style={{ minHeight: '100vh', background: '#fafafa' }}>
+    <Layout style={{ minHeight: '100vh', background: c.pageBg }}>
       <Content style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px', width: '100%', animation: 'fadeInUp 0.5s cubic-bezier(0.16,1,0.3,1) both' }}>
 
         {/* Top nav */}
         <Row justify="space-between" align="middle" style={{ marginBottom: 28 }}>
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/admin/candidates')}>
-            Back to Candidates
+            {t('backToCandidates')}
           </Button>
           <Space>
             <Text type="secondary" style={{ fontSize: 13 }}>Review Page</Text>
@@ -147,10 +155,10 @@ const ReviewPage = () => {
 
         {/* Header card */}
         <Card
-          style={{ borderRadius: 20, marginBottom: 24, border: '1px solid #E2E8F0', overflow: 'hidden' }}
+          style={{ borderRadius: 20, marginBottom: 24, border: `1px solid ${c.border}`, overflow: 'hidden', background: c.cardBg }}
           styles={{ body: { padding: 0 } }}
         >
-          <div style={{ background: '#c1f11d', padding: '28px 32px' }}>
+          <div style={{ background: '#16a34a', padding: '28px 32px' }}>
             <Row align="middle" gutter={24}>
               <Col flex="none">
                 <Avatar
@@ -174,7 +182,7 @@ const ReviewPage = () => {
                 </Space>
                 <div style={{ marginTop: 10 }}>
                   <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>
-                    Application ID: <code style={{ color: 'white', background: 'rgba(255,255,255,0.15)', padding: '2px 8px', borderRadius: 4 }}>
+                    {t('applicationId')} <code style={{ color: 'white', background: 'rgba(255,255,255,0.15)', padding: '2px 8px', borderRadius: 4 }}>
                       {candidate.id.slice(0, 8).toUpperCase()}
                     </code>
                   </Text>
@@ -183,7 +191,7 @@ const ReviewPage = () => {
               {/* Score summary */}
               <Col flex="none">
                 <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.15)', borderRadius: 16, padding: '16px 24px' }}>
-                  <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13, display: 'block' }}>Composite Score</Text>
+                  <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13, display: 'block' }}>{t('compositeScore')}</Text>
                   <Text style={{ color: 'white', fontSize: 44, fontWeight: 900, lineHeight: 1 }}>
                     {Math.round(candidate.compositeScore)}
                   </Text>
@@ -194,14 +202,14 @@ const ReviewPage = () => {
           </div>
 
           {/* Quick info bar */}
-          <Row style={{ padding: '16px 32px', background: 'white', borderTop: '1px solid #F0F4F8' }} gutter={24}>
-            <Col><Text type="secondary" style={{ fontSize: 12 }}>GPA</Text><br /><Text strong>{candidate.gpa || 'N/A'}</Text></Col>
+          <Row style={{ padding: '16px 32px', background: c.cardBg, borderTop: `1px solid ${c.borderAccent}` }} gutter={24}>
+            <Col><Text type="secondary" style={{ fontSize: 12 }}>{t('gpa')}</Text><br /><Text strong>{candidate.gpa || 'N/A'}</Text></Col>
             <Divider type="vertical" style={{ height: 36, marginTop: 4 }} />
-            <Col><Text type="secondary" style={{ fontSize: 12 }}>Year of Study</Text><br /><Text strong>{candidate.yearOfStudy || 'N/A'}</Text></Col>
+            <Col><Text type="secondary" style={{ fontSize: 12 }}>{t('yearOfStudy')}</Text><br /><Text strong>{candidate.yearOfStudy || 'N/A'}</Text></Col>
             <Divider type="vertical" style={{ height: 36, marginTop: 4 }} />
-            <Col><Text type="secondary" style={{ fontSize: 12 }}>Location</Text><br /><Tag color={candidate.isRural ? 'green' : 'blue'} style={{ fontSize: 11 }}>{candidate.isRural ? 'Rural +Bonus' : 'Urban'}</Tag></Col>
-            {candidate.ielts && (<><Divider type="vertical" style={{ height: 36, marginTop: 4 }} /><Col><Text type="secondary" style={{ fontSize: 12 }}>IELTS</Text><br /><Text strong>{candidate.ielts}</Text></Col></>)}
-            {candidate.unt && (<><Divider type="vertical" style={{ height: 36, marginTop: 4 }} /><Col><Text type="secondary" style={{ fontSize: 12 }}>UBT</Text><br /><Text strong>{candidate.unt}</Text></Col></>)}
+            <Col><Text type="secondary" style={{ fontSize: 12 }}>{t('location')}</Text><br /><Tag color={candidate.isRural ? 'green' : 'blue'} style={{ fontSize: 11 }}>{candidate.isRural ? t('ruralBonus') : t('urban')}</Tag></Col>
+            {candidate.ielts && (<><Divider type="vertical" style={{ height: 36, marginTop: 4 }} /><Col><Text type="secondary" style={{ fontSize: 12 }}>{t('ielts')}</Text><br /><Text strong>{candidate.ielts}</Text></Col></>)}
+            {candidate.unt && (<><Divider type="vertical" style={{ height: 36, marginTop: 4 }} /><Col><Text type="secondary" style={{ fontSize: 12 }}>{t('ubt')}</Text><br /><Text strong>{candidate.unt}</Text></Col></>)}
           </Row>
         </Card>
 
@@ -210,15 +218,15 @@ const ReviewPage = () => {
 
             {/* Interview Scores */}
             {(candidate.techScore != null || candidate.softScore != null) && (
-              <Card title={<Space><TrophyOutlined style={{ color: '#F59E0B' }} /> Interview Evaluation</Space>}
-                style={{ borderRadius: 16, marginBottom: 20, border: '1px solid #E2E8F0' }}
+              <Card title={<Space><TrophyOutlined style={{ color: '#F59E0B' }} /> {t('interviewEvaluation')}</Space>}
+                style={{ borderRadius: 16, marginBottom: 20, border: `1px solid ${c.border}`, background: c.cardBg }}
               >
                 <Row gutter={16}>
                   {candidate.techScore != null && (
                     <Col span={12}>
-                      <div style={{ background: '#F0FDF4', borderRadius: 12, padding: '16px', border: '1px solid #BBF7D0' }}>
-                        <Text type="secondary" style={{ fontSize: 12 }}>Panel A — Technical</Text>
-                        <div style={{ fontSize: 36, fontWeight: 800, color: score2color(candidate.techScore) }}>{candidate.techScore}<span style={{ fontSize: 16, color: '#9CA3AF' }}>/100</span></div>
+                      <div style={{ background: c.greenBg, borderRadius: 12, padding: '16px', border: `1px solid ${c.greenBorder}` }}>
+                        <Text type="secondary" style={{ fontSize: 12 }}>{t('panelA')}</Text>
+                        <div style={{ fontSize: 36, fontWeight: 800, color: score2color(candidate.techScore) }}>{candidate.techScore}<span style={{ fontSize: 16, color: c.textMuted }}>/100</span></div>
                         <Progress percent={candidate.techScore} showInfo={false} strokeColor={score2color(candidate.techScore)} size="small" />
                         {candidate.techNotes && <Paragraph italic style={{ fontSize: 12, marginTop: 8, marginBottom: 0 }}>"{candidate.techNotes}"</Paragraph>}
                       </div>
@@ -226,9 +234,9 @@ const ReviewPage = () => {
                   )}
                   {candidate.softScore != null && (
                     <Col span={12}>
-                      <div style={{ background: '#EFF6FF', borderRadius: 12, padding: '16px', border: '1px solid #d4edb0' }}>
-                        <Text type="secondary" style={{ fontSize: 12 }}>Panel B — Soft Skills</Text>
-                        <div style={{ fontSize: 36, fontWeight: 800, color: score2color(candidate.softScore) }}>{candidate.softScore}<span style={{ fontSize: 16, color: '#9CA3AF' }}>/100</span></div>
+                      <div style={{ background: c.blueBg, borderRadius: 12, padding: '16px', border: `1px solid ${c.greenBorder}` }}>
+                        <Text type="secondary" style={{ fontSize: 12 }}>{t('panelB')}</Text>
+                        <div style={{ fontSize: 36, fontWeight: 800, color: score2color(candidate.softScore) }}>{candidate.softScore}<span style={{ fontSize: 16, color: c.textMuted }}>/100</span></div>
                         <Progress percent={candidate.softScore} showInfo={false} strokeColor={score2color(candidate.softScore)} size="small" />
                         {candidate.softNotes && <Paragraph italic style={{ fontSize: 12, marginTop: 8, marginBottom: 0 }}>"{candidate.softNotes}"</Paragraph>}
                       </div>
@@ -236,8 +244,8 @@ const ReviewPage = () => {
                   )}
                 </Row>
                 {panelAvg != null && (
-                  <div style={{ marginTop: 16, textAlign: 'center', padding: '12px', background: '#F9FAFB', borderRadius: 10 }}>
-                    <Text type="secondary" style={{ fontSize: 13 }}>Combined Panel Average: </Text>
+                  <div style={{ marginTop: 16, textAlign: 'center', padding: '12px', background: c.surfaceBg, borderRadius: 10 }}>
+                    <Text type="secondary" style={{ fontSize: 13 }}>{t('combinedPanelAvg')} </Text>
                     <Text strong style={{ fontSize: 20, color: score2color(panelAvg) }}>{panelAvg}/100</Text>
                   </div>
                 )}
@@ -246,21 +254,21 @@ const ReviewPage = () => {
 
             {/* AI Essay Assessment */}
             {candidate.aiSummary && (
-              <Card title={<Space><Shield size={16} style={{ color: '#c1f11d' } as any} /> AI Essay Assessment</Space>}
-                style={{ borderRadius: 16, marginBottom: 20, border: '1px solid #E2E8F0' }}
+              <Card title={<Space><Shield size={16} style={{ color: '#16a34a' } as any} /> {t('aiEssayAssessment')}</Space>}
+                style={{ borderRadius: 16, marginBottom: 20, border: `1px solid ${c.border}`, background: c.cardBg }}
               >
-                <Paragraph style={{ fontSize: 14, lineHeight: 1.8, color: '#374151' }}>{candidate.aiSummary}</Paragraph>
+                <Paragraph style={{ fontSize: 14, lineHeight: 1.8, color: c.textDark }}>{candidate.aiSummary}</Paragraph>
                 {candidate.aiScores && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
                     {[
-                      ['Motivation', candidate.aiScores.motivation?.score],
-                      ['Leadership', candidate.aiScores.leadership?.score],
-                      ['Technical', candidate.aiScores.technicalPotential?.score],
-                      ['Creativity', candidate.aiScores.creativity?.score],
-                      ['Resilience', candidate.aiScores.resilience?.score],
-                      ['Social Impact', candidate.aiScores.socialImpact?.score],
+                      [t('motivation'), candidate.aiScores.motivation?.score],
+                      [t('leadership'), candidate.aiScores.leadership?.score],
+                      [t('technicalPotential'), candidate.aiScores.technicalPotential?.score],
+                      [t('creativity'), candidate.aiScores.creativity?.score],
+                      [t('resilience'), candidate.aiScores.resilience?.score],
+                      [t('socialImpact'), candidate.aiScores.socialImpact?.score],
                     ].filter(([, s]) => s != null).map(([label, score]) => (
-                      <ScorePill key={label as string} label={label as string} score={score as number} />
+                      <ScorePill key={label as string} label={label as string} score={score as number} isDark={isDark} />
                     ))}
                   </div>
                 )}
@@ -269,14 +277,14 @@ const ReviewPage = () => {
 
             {/* SJT */}
             {candidate.sjtScores?.overallScores && (
-              <Card title="📋 Situational Judgment Test"
-                style={{ borderRadius: 16, marginBottom: 20, border: '1px solid #BBF7D0', background: '#F0FDF4' }}
+              <Card title={`📋 ${t('sjtCard')}`}
+                style={{ borderRadius: 16, marginBottom: 20, border: `1px solid ${c.greenBorder}`, background: c.greenBg }}
                 extra={sjtOverall != null && <Tag color="green">Avg: {sjtOverall}/100</Tag>}
               >
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
                   {Object.entries(candidate.sjtScores.overallScores).map(([k, v]) => {
                     const labels: Record<string, string> = { leadership: '🧭 Leadership', problemSolving: '🔧 Problem-Solving', teamwork: '🤝 Teamwork', stressResilience: '💪 Resilience', ethics: '⚖️ Ethics' };
-                    return <ScorePill key={k} label={labels[k] || k} score={v as number} />;
+                    return <ScorePill key={k} label={labels[k] || k} score={v as number} isDark={isDark} />;
                   })}
                 </div>
                 {candidate.sjtScores.personalitySummary && (
@@ -287,14 +295,14 @@ const ReviewPage = () => {
 
             {/* Personality */}
             {candidate.personalityScores?.clusterScores && (
-              <Card title="🧠 Personality Assessment"
-                style={{ borderRadius: 16, marginBottom: 20, border: '1px solid #d4edb0', background: '#f0fce0' }}
+              <Card title={`🧠 ${t('personalityCard')}`}
+                style={{ borderRadius: 16, marginBottom: 20, border: `1px solid ${c.greenBorder}`, background: c.greenBg }}
                 extra={<Tag color="blue">Overall: {candidate.personalityScores.overallScore}/100</Tag>}
               >
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: candidate.personalityScores.narrative ? 12 : 0 }}>
                   {Object.entries(candidate.personalityScores.clusterScores).map(([k, v]) => {
                     const labels: Record<string, string> = { leadershipInitiative: '🚀 Leadership', responsibility: '⚖️ Responsibility', growthMindset: '🌱 Growth', ambition: '🎯 Ambition', ethics: '🧭 Ethics', communityOrientation: '🌍 Community', collaboration: '🤝 Collab', criticalThinking: '🧠 Critical' };
-                    return <ScorePill key={k} label={labels[k] || k} score={v as number} />;
+                    return <ScorePill key={k} label={labels[k] || k} score={v as number} isDark={isDark} />;
                   })}
                 </div>
                 {candidate.personalityScores.narrative && (
@@ -305,13 +313,13 @@ const ReviewPage = () => {
 
             {/* Simulation */}
             {candidate.simulationScores && (
-              <Card title="🎭 Team Simulation"
-                style={{ borderRadius: 16, marginBottom: 20, border: '1px solid #FED7AA', background: '#FFF7ED' }}
+              <Card title={`🎭 ${t('simulationCard')}`}
+                style={{ borderRadius: 16, marginBottom: 20, border: `1px solid ${c.orangeBorder}`, background: c.orangeBg }}
                 extra={<Tag color="orange">Score: {candidate.simulationScores.simulationScore}/100</Tag>}
               >
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
                   {[['🧭 Leadership', candidate.simulationScores.leadership], ['❤️ Empathy', candidate.simulationScores.empathy], ['⚡ Conflict Mgmt', candidate.simulationScores.conflictManagement], ['🤝 Team', candidate.simulationScores.teamOrientation], ['⚖️ Decisions', candidate.simulationScores.decisionMaking]].map(([l, s]) => (
-                    <ScorePill key={l as string} label={l as string} score={s as number} />
+                    <ScorePill key={l as string} label={l as string} score={s as number} isDark={isDark} />
                   ))}
                 </div>
                 {candidate.simulationScores.narrative && (
@@ -322,7 +330,7 @@ const ReviewPage = () => {
 
             {/* Reviewer Notes */}
             {candidate.reviewerNotes && (
-              <Card title="📝 Reviewer Notes" style={{ borderRadius: 16, marginBottom: 20, border: '1px solid #E2E8F0' }}>
+              <Card title={`📝 ${t('reviewerNotesCard')}`} style={{ borderRadius: 16, marginBottom: 20, border: `1px solid ${c.border}`, background: c.cardBg }}>
                 <Paragraph style={{ fontSize: 14 }}>{candidate.reviewerNotes}</Paragraph>
               </Card>
             )}
@@ -331,20 +339,20 @@ const ReviewPage = () => {
           <Col span={8}>
             {/* Decision card */}
             <Card
-              style={{ borderRadius: 16, marginBottom: 20, border: '2px solid #E2E8F0', position: 'sticky', top: 24 }}
+              style={{ borderRadius: 16, marginBottom: 20, border: `2px solid ${c.border}`, position: 'sticky', top: 24, background: c.cardBg }}
             >
-              <Title level={5} style={{ marginBottom: 16 }}>Committee Decision</Title>
+              <Title level={5} style={{ marginBottom: 16 }}>{t('committeeDecision')}</Title>
 
               {candidate.status === 'accepted' ? (
                 <Alert
-                  title="Approved"
-                  description="Candidate has been approved. Certificate available on their dashboard."
+                  title={t('statusAccepted')}
+                  description={t('candidateApprovedDesc')}
                   type="success"
                   showIcon
                   icon={<CheckCircleOutlined />}
                 />
               ) : candidate.status === 'declined' ? (
-                <Alert title="Declined" description="This candidate has been declined." type="error" showIcon />
+                <Alert title={t('statusDeclined')} description={t('candidateDeclinedDesc')} type="error" showIcon />
               ) : (
                 <Space direction="vertical" style={{ width: '100%' }}>
                   <Button
@@ -356,7 +364,7 @@ const ReviewPage = () => {
                     style={{ background: '#10B981', borderColor: '#10B981', borderRadius: 10, height: 48 }}
                     onClick={handleApprove}
                   >
-                    Approve Candidate
+                    {t('approveCandidate')}
                   </Button>
                   <Button
                     danger block size="large"
@@ -365,7 +373,7 @@ const ReviewPage = () => {
                     style={{ borderRadius: 10, height: 48 }}
                     onClick={handleDecline}
                   >
-                    Decline
+                    {t('decline')}
                   </Button>
                 </Space>
               )}
@@ -375,28 +383,28 @@ const ReviewPage = () => {
               {/* Score summary */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <Row justify="space-between">
-                  <Text type="secondary" style={{ fontSize: 13 }}>Composite Score</Text>
+                  <Text type="secondary" style={{ fontSize: 13 }}>{t('compositeScore')}</Text>
                   <Text strong style={{ color: score2color(candidate.compositeScore) }}>{Math.round(candidate.compositeScore)}/100</Text>
                 </Row>
-                {panelAvg != null && <Row justify="space-between"><Text type="secondary" style={{ fontSize: 13 }}>Interview Avg</Text><Text strong style={{ color: score2color(panelAvg) }}>{panelAvg}/100</Text></Row>}
-                {sjtOverall != null && <Row justify="space-between"><Text type="secondary" style={{ fontSize: 13 }}>SJT Avg</Text><Text strong style={{ color: score2color(sjtOverall) }}>{sjtOverall}/100</Text></Row>}
-                {candidate.personalityScores?.overallScore != null && <Row justify="space-between"><Text type="secondary" style={{ fontSize: 13 }}>Personality</Text><Text strong style={{ color: score2color(candidate.personalityScores.overallScore) }}>{candidate.personalityScores.overallScore}/100</Text></Row>}
-                {candidate.simulationScores?.simulationScore != null && <Row justify="space-between"><Text type="secondary" style={{ fontSize: 13 }}>Simulation</Text><Text strong style={{ color: score2color(candidate.simulationScores.simulationScore) }}>{candidate.simulationScores.simulationScore}/100</Text></Row>}
+                {panelAvg != null && <Row justify="space-between"><Text type="secondary" style={{ fontSize: 13 }}>{t('interviewAvg')}</Text><Text strong style={{ color: score2color(panelAvg) }}>{panelAvg}/100</Text></Row>}
+                {sjtOverall != null && <Row justify="space-between"><Text type="secondary" style={{ fontSize: 13 }}>{t('sjtAvg')}</Text><Text strong style={{ color: score2color(sjtOverall) }}>{sjtOverall}/100</Text></Row>}
+                {candidate.personalityScores?.overallScore != null && <Row justify="space-between"><Text type="secondary" style={{ fontSize: 13 }}>{t('personality')}</Text><Text strong style={{ color: score2color(candidate.personalityScores.overallScore) }}>{candidate.personalityScores.overallScore}/100</Text></Row>}
+                {candidate.simulationScores?.simulationScore != null && <Row justify="space-between"><Text type="secondary" style={{ fontSize: 13 }}>{t('simulation')}</Text><Text strong style={{ color: score2color(candidate.simulationScores.simulationScore) }}>{candidate.simulationScores.simulationScore}/100</Text></Row>}
               </div>
             </Card>
 
             {/* Personal info */}
-            <Card title={<Space><UserOutlined /> Personal Info</Space>} style={{ borderRadius: 16, border: '1px solid #E2E8F0' }}>
+            <Card title={<Space><UserOutlined /> {t('personalInfo')}</Space>} style={{ borderRadius: 16, border: `1px solid ${c.border}`, background: c.cardBg }}>
               {[
-                ['Full Name', candidate.name],
-                ['Email', candidate.email],
-                ['Phone', candidate.phone],
-                ['University', candidate.university],
-                ['City', candidate.city],
-                ['GPA', candidate.gpa],
-                ['Year', candidate.yearOfStudy ? `Year ${candidate.yearOfStudy}` : null],
-                ['IELTS', candidate.ielts],
-                ['UBT', candidate.unt],
+                [t('fullName'), candidate.name],
+                [t('email'), candidate.email],
+                [t('phone'), candidate.phone],
+                [t('university'), candidate.university],
+                [t('city'), candidate.city],
+                [t('gpa'), candidate.gpa],
+                [t('year'), candidate.yearOfStudy ? `${t('year')} ${candidate.yearOfStudy}` : null],
+                [t('ielts'), candidate.ielts],
+                [t('ubt'), candidate.unt],
               ].filter(([, v]) => v != null && v !== '').map(([label, value]) => (
                 <Row key={label as string} style={{ marginBottom: 8 }}>
                   <Col span={10}><Text type="secondary" style={{ fontSize: 12 }}>{label}</Text></Col>
@@ -407,7 +415,7 @@ const ReviewPage = () => {
               {candidate.skills?.length > 0 && (
                 <>
                   <Divider style={{ margin: '12px 0' }} />
-                  <Text type="secondary" style={{ fontSize: 12 }}>Skills</Text>
+                  <Text type="secondary" style={{ fontSize: 12 }}>{t('skills')}</Text>
                   <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                     {candidate.skills.map((s: string, i: number) => <Tag key={i} style={{ fontSize: 11, borderRadius: 6 }}>{s}</Tag>)}
                   </div>
@@ -418,11 +426,11 @@ const ReviewPage = () => {
             {/* Essay preview */}
             {candidate.essayText && (
               <Card
-                title={<Space><FileTextOutlined /> Essay Preview</Space>}
-                style={{ borderRadius: 16, marginTop: 20, border: '1px solid #E2E8F0' }}
+                title={<Space><FileTextOutlined /> {t('essayPreview')}</Space>}
+                style={{ borderRadius: 16, marginTop: 20, border: `1px solid ${c.border}`, background: c.cardBg }}
                 styles={{ body: { maxHeight: 240, overflowY: 'auto' } }}
               >
-                <Paragraph style={{ fontSize: 13, lineHeight: 1.7, whiteSpace: 'pre-wrap', color: '#374151' }}>
+                <Paragraph style={{ fontSize: 13, lineHeight: 1.7, whiteSpace: 'pre-wrap', color: c.textDark }}>
                   {candidate.essayText}
                 </Paragraph>
               </Card>

@@ -1,12 +1,15 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Layout, Row, Col, Card, Avatar, Tag, Button, Typography, Calendar, Space, message, Modal, List, Divider, Empty, Statistic, Badge, Select, Input, InputNumber, Progress } from 'antd';
-import { Video, RefreshCw, Mail, BookOpen, Calendar as CalIcon, MapPin, ChevronRight, Star, Clock, Phone, FileText, User, Users, ShieldAlert, AlertTriangle, Lightbulb, Heart, ShieldCheck } from 'lucide-react';
+﻿import { useState, useEffect, useCallback } from 'react';
+import { Layout, Row, Col, Card, Avatar, Tag, Button, Typography, Calendar, Space, message, Modal, List, Divider, Empty, Statistic, Select, Input, InputNumber, Progress } from 'antd';
+import { useLanguage } from '../i18n/LanguageContext';
+import { Video, RefreshCw, BookOpen, Calendar as CalIcon, MapPin, ChevronRight, Star, Clock, Users, ShieldAlert, AlertTriangle, Lightbulb, Heart, ShieldCheck } from 'lucide-react';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import VideoConference from '../components/VideoConference';
+import { useTheme } from '../i18n/ThemeContext';
+import { themeColors } from '../i18n/themeColors';
 
 const { Content } = Layout;
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 const { TextArea } = Input;
 
 interface Candidate {
@@ -25,6 +28,10 @@ interface Candidate {
 }
 
 const Scheduler = () => {
+  const { t } = useLanguage();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  const c = themeColors(isDark);
     const [evaluatingId, setEvaluatingId] = useState<string | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(false);
@@ -78,11 +85,11 @@ const [evalData, setEvalData] = useState({
       setCandidates(interviewCandidates);
     } catch (error) {
       console.error('Fetch error:', error);
-      message.error('Database sync failed');
+      message.error(t('dbSyncFailed'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchCandidates();
@@ -91,7 +98,7 @@ const [evalData, setEvalData] = useState({
   const handleScoreSubmit = async () => {
   const id = evaluatingId;
   if (!id) {
-    message.error("Критическая ошибка: ID потерян");
+    message.error(t('criticalIdLost'));
     return;
   }
 
@@ -115,11 +122,11 @@ const [evalData, setEvalData] = useState({
     if (response.status === 200) {
       const updated = response.data;
       if (updated.status === 'under_review') {
-        message.success('Обе панели оценили! Кандидат отправлен на проверку ✅');
+        message.success(t('bothPanelsEval'));
       } else if (updated.status === 'arbitration') {
-        message.warning('Конфликт оценок панелей! Кандидат отправлен на арбитраж ⚠️');
+        message.warning(t('conflictArbitration'));
       } else {
-        message.success(`Оценка панели сохранена. Ожидается оценка второй панели.`);
+        message.success(t('panelScoreSaved'));
       }
       setIsEvalModalOpen(false);
       setEvaluatingId(null);
@@ -127,7 +134,7 @@ const [evalData, setEvalData] = useState({
       fetchCandidates();
     }
   } catch (err: any) {
-    message.error("Сервер недоступен или ошибка в базе");
+    message.error(t('serverUnavailable'));
   }
 };
   const daySlots: string[] = [];
@@ -145,7 +152,7 @@ const [evalData, setEvalData] = useState({
     
     return count > 0 ? (
       <div style={{ marginTop: '4px' }}>
-        <CustomBadge text={`${count} slots`} />
+        <CustomBadge text={`${count} ${t('slots')}`} />
       </div>
     ) : null;
   };
@@ -165,7 +172,7 @@ const [evalData, setEvalData] = useState({
 
   // ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ ОТРИСОВКИ КРИТЕРИЕВ
   const renderCriterion = (label: string, key: string, desc: string, icon: any) => (
-    <div style={{ marginBottom: 20, padding: '12px', background: '#F9FAFB', borderRadius: '12px', border: '1px solid #F1F5F9' }}>
+    <div style={{ marginBottom: 20, padding: '12px', background: c.surfaceBg, borderRadius: '12px', border: `1px solid ${c.surfaceBg}` }}>
       <Row justify="space-between" align="middle" style={{ marginBottom: 8 }}>
         <Space>
           {icon}
@@ -174,7 +181,7 @@ const [evalData, setEvalData] = useState({
             <Text type="secondary" style={{ fontSize: 11 }}>{desc}</Text>
           </div>
         </Space>
-        <Text strong style={{ color: '#c1f11d', fontSize: 16 }}>{scores[key]}</Text>
+        <Text strong style={{ color: '#16a34a', fontSize: 16 }}>{scores[key]}</Text>
       </Row>
       <Row gutter={12} align="middle">
         <Col flex="auto">
@@ -195,7 +202,7 @@ const [evalData, setEvalData] = useState({
   return (
     <Content style={{ 
       padding: '24px', 
-      background: '#fafafa', 
+      background: c.pageBg, 
       height: 'calc(100vh - 64px)', 
       overflow: 'hidden', 
       display: 'flex',
@@ -206,8 +213,8 @@ const [evalData, setEvalData] = useState({
         .scheduler-layout { overflow: hidden; }
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
-        .candidate-item-hover:hover { background: #f5f5f5 !important; transform: translateX(4px); }
+        .custom-scroll::-webkit-scrollbar-thumb { background: ${c.scrollThumb}; border-radius: 10px; }
+        .candidate-item-hover:hover { background: ${c.surfaceAlt} !important; transform: translateX(4px); }
         .ant-picker-calendar-header { padding: 12px 16px !important; }
         .ant-picker-calendar-date-content { height: 60px !important; }
       `}</style>
@@ -223,27 +230,28 @@ const [evalData, setEvalData] = useState({
               height: '100%', 
               display: 'flex', 
               flexDirection: 'column',
-              boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
-              overflow: 'hidden'
+              boxShadow: c.shadowMd,
+              overflow: 'hidden',
+              background: c.cardBg
             }}
             styles={{ body: { flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', padding: 0 } }}
             title={
               <div style={{ padding: '8px 4px' }}>
-                <Title level={4} style={{ margin: 0, fontWeight: 800 }}>Applicants Queue</Title>
-                <Text type="secondary" style={{ fontSize: '13px' }}>Waiting for assignment</Text>
+                <Title level={4} style={{ margin: 0, fontWeight: 800, color: c.text }}>{t('applicantsQueue')}</Title>
+                <Text type="secondary" style={{ fontSize: '13px' }}>{t('waitingAssignment')}</Text>
               </div>
             }
           >
             <div className="custom-scroll" style={{ flex: 1, overflowY: 'auto', paddingBottom: '20px' }}>
               <List
                 dataSource={pendingCandidates}
-                renderItem={(c) => (
+                renderItem={(cand) => (
                   <div 
-                    onClick={() => setViewCandidate(c)}
+                    onClick={() => setViewCandidate(cand)}
                     style={{
                       padding: '18px 24px',
                       cursor: 'pointer',
-                      borderBottom: '1px solid #F1F5F9',
+                      borderBottom: `1px solid ${c.surfaceBg}`,
                       transition: 'all 0.2s ease',
                       display: 'flex',
                       alignItems: 'center',
@@ -252,16 +260,16 @@ const [evalData, setEvalData] = useState({
                     className="candidate-item-hover"
                   >
                     <Space size={16}>
-                      <Avatar size={48} src={getAvatar(c)} style={{ border: '2px solid #E2E8F0' }} />
+                      <Avatar size={48} src={getAvatar(cand)} style={{ border: `2px solid ${c.border}` }} />
                       <div>
-                        <Text strong style={{ display: 'block', fontSize: '14px' }}>{c.name}</Text>
-                        <Text type="secondary" style={{ fontSize: '12px' }}>{c.university}</Text>
+                        <Text strong style={{ display: 'block', fontSize: '14px', color: c.text }}>{cand.name}</Text>
+                        <Text type="secondary" style={{ fontSize: '12px', color: c.textSecondary }}>{cand.university}</Text>
                       </div>
                     </Space>
                     <ChevronRight size={18} color="#CBD5E1" />
                   </div>
                 )}
-                locale={{ emptyText: <Empty description="Queue is empty" style={{ marginTop: 60 }} /> }}
+                locale={{ emptyText: <Empty description={t('queueEmpty')} style={{ marginTop: 60 }} /> }}
               />
             </div>
           </Card>
@@ -273,15 +281,16 @@ const [evalData, setEvalData] = useState({
             bordered={false} 
             style={{ 
               borderRadius: '24px', 
-              boxShadow: '0 10px 30px rgba(0,0,0,0.04)', 
+              boxShadow: c.shadowMd, 
               height: '100%',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              background: c.cardBg
             }}
             styles={{ body: { height: 'calc(100% - 70px)', overflow: 'hidden', padding: '16px' } }}
             title={
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Space><CalIcon size={22} color="#c1f11d" /><Title level={4} style={{ margin: 0, fontWeight: 800 }}>Global Scheduler</Title></Space>
-                <Button icon={<RefreshCw size={16} />} onClick={fetchCandidates} loading={loading} type="primary" ghost style={{ borderRadius: '10px' }}>Refresh</Button>
+                <Space><CalIcon size={22} color="#16a34a" /><Title level={4} style={{ margin: 0, fontWeight: 800, color: c.text }}>{t('globalScheduler')}</Title></Space>
+                <Button icon={<RefreshCw size={16} />} onClick={fetchCandidates} loading={loading} type="primary" ghost style={{ borderRadius: '10px' }}>{t('refresh')}</Button>
               </div>
             }
           >
@@ -299,7 +308,7 @@ const [evalData, setEvalData] = useState({
 
       {/* MODAL 1: Слоты дня */}
       <Modal
-        title={<Space><Clock size={20} color="#c1f11d" /> <Text strong>Interviews: {selectedDate.format('DD MMMM YYYY')}</Text></Space>}
+        title={<Space><Clock size={20} color="#16a34a" /> <Text strong>Interviews: {selectedDate.format('DD MMMM YYYY')}</Text></Space>}
         open={isSlotsModalVisible}
         onCancel={() => setIsSlotsModalVisible(false)}
         footer={null}
@@ -315,21 +324,21 @@ const [evalData, setEvalData] = useState({
             return (
               <div key={time} style={{ 
                 display: 'flex', alignItems: 'center', padding: '14px 18px', marginBottom: '10px', 
-                borderRadius: '16px', background: candidate ? '#f0fce0' : '#FAFAFA',
-                border: candidate ? '1px solid #BAE7FF' : '1px solid #F1F5F9'
+                borderRadius: '16px', background: candidate ? c.greenBg : c.surfaceBg,
+                border: candidate ? '1px solid #BAE7FF' : `1px solid ${c.surfaceBg}`
               }}>
-                <Text strong style={{ width: '70px', color: candidate ? '#c1f11d' : '#94A3B8', fontSize: '15px' }}>{time}</Text>
+                <Text strong style={{ width: '70px', color: candidate ? '#16a34a' : c.textMuted, fontSize: '15px' }}>{time}</Text>
                 <Divider type="vertical" style={{ height: '24px' }} />
                 <div style={{ flex: 1 }}>
                   {candidate ? (
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
-                        <Text strong style={{ cursor: 'pointer', color: '#1E293B', textDecoration: 'underline' }} onClick={() => setViewCandidate(candidate)}>
+                        <Text strong style={{ cursor: 'pointer', color: c.text, textDecoration: 'underline' }} onClick={() => setViewCandidate(candidate)}>
                           {candidate.name}
                         </Text>
                         <div style={{ marginTop: 4 }}>
-                          <Tag icon={<Users size={10} />} color="processing" style={{ fontSize: 10 }}>Panel A: Academic</Tag>
-                          <Tag icon={<Users size={10} />} color="warning" style={{ fontSize: 10 }}>Panel B: Psych</Tag>
+                          <Tag icon={<Users size={10} />} color="processing" style={{ fontSize: 10 }}>{t('panelAAcademic')}</Tag>
+                          <Tag icon={<Users size={10} />} color="warning" style={{ fontSize: 10 }}>{t('panelBPsych')}</Tag>
                         </div>
                       </div>
                       <Button 
@@ -339,10 +348,10 @@ const [evalData, setEvalData] = useState({
                         style={{ borderRadius: '8px', background: '#10B981', borderColor: '#10B981' }}
                         onClick={() => { setActiveCall(candidate); setIsSlotsModalVisible(false); }}
                       >
-                        Join Panel
+                        {t('joinPanel')}
                       </Button>
                     </div>
-                  ) : <Text type="secondary" italic style={{ fontSize: '13px' }}>Available</Text>}
+                  ) : <Text type="secondary" italic style={{ fontSize: '13px' }}>{t('available')}</Text>}
                 </div>
               </div>
             );
@@ -356,17 +365,18 @@ const [evalData, setEvalData] = useState({
         onCancel={() => setViewCandidate(null)} 
         // Modal 2 Footer
 footer={[
-  <Button key="close" onClick={() => setViewCandidate(null)}>Close</Button>,
+  <Button key="close" onClick={() => setViewCandidate(null)}>{t('close') || 'Close'}</Button>,
   <Button 
   key="eval" 
   type="primary" 
   onClick={() => {
     console.log("Запоминаю ID:", viewCandidate?.id);
     setEvaluatingId(viewCandidate?.id || null); // Сохраняем ID в отдельную память
+    setViewCandidate(null);
     setIsEvalModalOpen(true);
   }}
 >
-  Evaluate Child
+  {t('evaluateChild')}
 </Button>
 ]} 
         width={650} 
@@ -376,7 +386,7 @@ footer={[
       >
         {viewCandidate && (
           <div style={{ overflow: 'hidden', borderRadius: '16px' }}>
-            <div style={{ background: '#c1f11d', padding: '40px', color: '#fff' }}>
+            <div style={{ background: '#16a34a', padding: '40px', color: '#fff' }}>
               <Row align="middle" gutter={24}>
                 <Col><Avatar size={90} src={getAvatar(viewCandidate)} style={{ border: '4px solid rgba(255,255,255,0.3)' }} /></Col>
                 <Col>
@@ -390,10 +400,10 @@ footer={[
             </div>
             <div style={{ padding: '32px' }}>
               <Row gutter={[24, 24]}>
-                <Col span={12}><Statistic title="Internal GPA" value={viewCandidate.gpa || 0} precision={2} prefix={<Star size={18} color="#F59E0B" fill="#F59E0B" />} /></Col>
+                <Col span={12}><Statistic title={t('internalGPA')} value={viewCandidate.gpa || 0} precision={2} prefix={<Star size={18} color="#F59E0B" fill="#F59E0B" />} /></Col>
                 <Col span={12}>
-                   <div style={{ background: '#fafafa', padding: '12px', borderRadius: '12px' }}>
-                      <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>CONTACTS</Text>
+                   <div style={{ background: c.pageBg, padding: '12px', borderRadius: '12px' }}>
+                      <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>{t('contacts')}</Text>
                       <Text style={{ fontSize: '13px', display: 'block', marginTop: '4px' }}>{viewCandidate.email}</Text>
                       <Text style={{ fontSize: '13px', display: 'block' }}>{viewCandidate.phone || '+7 (707) 123 45 67'}</Text>
                    </div>
@@ -406,56 +416,56 @@ footer={[
 
       {/* MODAL 4: РАСШИРЕННЫЙ SCORECARD (8 КРИТЕРИЕВ) */}
       <Modal
-  title={<Space><ShieldCheck size={20} color="#c1f11d" /> <Text strong>Evidence-Based Scorecard: {viewCandidate?.name}</Text></Space>}
+  title={<Space><ShieldCheck size={20} color="#16a34a" /> <Text strong>Evidence-Based Scorecard: {viewCandidate?.name}</Text></Space>}
   open={isEvalModalOpen}
   onCancel={() => setIsEvalModalOpen(false)}
   onOk={() => handleScoreSubmit()}
-  okText="Submit Scorecard"
+  okText={t('submitScorecard')}
   centered
   width={650}
 >
         <Space direction="vertical" style={{ width: '100%', padding: '10px 0' }} size="large">
-          <Card size="small" style={{ background: '#fafafa', border: '1px solid #E2E8F0' }}>
-            <Text type="secondary" style={{ fontSize: '11px' }}>ТЕКУЩАЯ КОМИССИЯ:</Text>
+          <Card size="small" style={{ background: c.pageBg, border: `1px solid ${c.border}` }}>
+            <Text type="secondary" style={{ fontSize: '11px' }}>{t('currentCommission')}</Text>
             <Select style={{ width: '100%', marginTop: 8 }} value={evalData.panelType} onChange={v => setEvalData({...evalData, panelType: v})}>
-              <Select.Option value="Technical">Академическая панель (Panel A)</Select.Option>
-              <Select.Option value="SoftSkills">Психологическая панель (Panel B)</Select.Option>
+              <Select.Option value="Technical">{t('academicPanel')} (Panel A)</Select.Option>
+              <Select.Option value="SoftSkills">{t('psychPanel')} (Panel B)</Select.Option>
             </Select>
           </Card>
 
           <div style={{ padding: '0 5px' }}>
             {evalData.panelType === 'Technical' ? (
               <>
-                {renderCriterion('Логика и Алгоритмы', 'logic', 'Способность находить закономерности.', <Lightbulb size={16} color="#c1f11d"/>)}
-                {renderCriterion('Академическая база', 'academic', 'Математика и общая эрудиция.', <BookOpen size={16} color="#c1f11d"/>)}
-                {renderCriterion('Problem Solving', 'problemSolving', 'Поиск решений в нестандартных ситуациях.', <ShieldCheck size={16} color="#c1f11d"/>)}
-                {renderCriterion('Критическое мышление', 'criticalThinking', 'Умение анализировать информацию.', <Star size={16} color="#c1f11d"/>)}
+                {renderCriterion(t('criteriaLogic'), 'logic', t('criteriaLogicDesc'), <Lightbulb size={16} color="#16a34a"/>)}
+                {renderCriterion(t('criteriaAcademic'), 'academic', t('criteriaAcademicDesc'), <BookOpen size={16} color="#16a34a"/>)}
+                {renderCriterion(t('criteriaProblemSolving'), 'problemSolving', t('criteriaProblemSolvingDesc'), <ShieldCheck size={16} color="#16a34a"/>)}
+                {renderCriterion(t('criteriaCriticalThinking'), 'criticalThinking', t('criteriaCriticalThinkingDesc'), <Star size={16} color="#16a34a"/>)}
               </>
             ) : (
               <>
-                {renderCriterion('Коммуникация', 'communication', 'Навыки общения и вежливость.', <Users size={16} color="#722ed1"/>)}
-                {renderCriterion('Curiosity (Интерес)', 'curiosity', 'Тяга к знаниям и активность.', <Lightbulb size={16} color="#722ed1"/>)}
-                {renderCriterion('Team Spirit', 'teamFit', 'Умение работать в группе.', <Heart size={16} color="#722ed1"/>)}
-                {renderCriterion('Эмоциональный интеллект', 'emotionalIntel', 'Понимание своих и чужих эмоций.', <ShieldAlert size={16} color="#722ed1"/>)}
+                {renderCriterion(t('criteriaCommunication'), 'communication', t('criteriaCommunicationDesc'), <Users size={16} color="#722ed1"/>)}
+                {renderCriterion(t('criteriaCuriosity'), 'curiosity', t('criteriaCuriosityDesc'), <Lightbulb size={16} color="#722ed1"/>)}
+                {renderCriterion(t('criteriaTeamSpirit'), 'teamFit', t('criteriaTeamSpiritDesc'), <Heart size={16} color="#722ed1"/>)}
+                {renderCriterion(t('criteriaEQ'), 'emotionalIntel', t('criteriaEQDesc'), <ShieldAlert size={16} color="#722ed1"/>)}
               </>
             )}
           </div>
 
-          <div style={{ background: '#f0fce0', padding: '20px', borderRadius: '16px', textAlign: 'center', border: '1px dashed #c1f11d' }}>
-            <Statistic title="Прогноз успешности ученика (AI Model)" value={calculateTotalScore()} suffix="%" valueStyle={{ color: '#c1f11d', fontWeight: 800 }} />
+          <div style={{ background: c.greenBg, padding: '20px', borderRadius: '16px', textAlign: 'center', border: '1px dashed #16a34a' }}>
+            <Statistic title={t('aiPrediction')} value={calculateTotalScore()} suffix="%" valueStyle={{ color: '#16a34a', fontWeight: 800 }} />
             {calculateTotalScore() < 45 && (
               <Tag color="error" style={{ marginTop: 10 }} icon={<AlertTriangle size={12} />}>
-                Arbitration Check Required
+                {t('arbitrationCheck')}
               </Tag>
             )}
           </div>
 
           <div>
-            <Text strong>Обоснование оценки:</Text>
+            <Text strong>{t('evalJustification')}</Text>
 <TextArea 
   rows={4} 
   style={{ marginTop: 8 }} 
-  placeholder="Опишите конкретные примеры поведения ребенка..." 
+  placeholder={t('evalJustificationPlaceholder')} 
   // Показываем нужные заметки в зависимости от активной панели
   value={evalData.panelType === 'Technical' ? evalData.techNotes : evalData.softNotes} 
   onChange={e => {
@@ -494,7 +504,7 @@ footer={[
 };
 
 const CustomBadge = ({ text }: { text: string }) => (
-  <span style={{ fontSize: '10px', background: '#c1f11d', color: '#141414', padding: '2px 8px', borderRadius: '6px', fontWeight: 700 }}>
+  <span style={{ fontSize: '10px', background: '#16a34a', color: '#ffffff', padding: '2px 8px', borderRadius: '6px', fontWeight: 700 }}>
     {text}
   </span>
 );

@@ -1,14 +1,18 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Card, Form, Input, Button, Typography, message, Layout } from 'antd';
 import { MailOutlined, LockOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useLanguage } from '../i18n/LanguageContext';
+import { useTheme } from '../i18n/ThemeContext';
 
 const { Title, Text } = Typography;
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { t, lang, setLang } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
 
   const onFinish = async (values: any) => {
     setLoading(true);
@@ -18,21 +22,21 @@ const Login = () => {
       const user = res.data.find((c: any) => c.email === values.email);
 
       if (user && user.password === values.password) {
-        message.success('Welcome to IinVision U!');
+        message.success(t('welcomeMsg'));
         localStorage.setItem('userEmail', values.email);
         navigate('/status');
       } else {
-        message.error('Invalid email or password. Please check your temporary password.');
+        message.error(t('invalidCredentials'));
       }
     } catch (err) {
-      message.error('Connection error. Is the server running?');
+      message.error(t('connectionError'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Layout style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'linear-gradient(160deg, #fafafa 0%, #f0f4e8 100%)' }}>
+    <Layout style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'linear-gradient(160deg, #fafafa 0%, #ecfdf5 100%)' }}>
       <div style={{ animation: 'fadeInUp 0.6s cubic-bezier(0.16,1,0.3,1) both' }}>
       <Card 
         style={{ 
@@ -48,25 +52,25 @@ const Login = () => {
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <div style={{
             width: '48px', height: '48px',
-            background: '#c1f11d',
+            background: '#16a34a',
             borderRadius: '14px', margin: '0 auto 20px',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#141414', fontWeight: 'bold', fontSize: '20px',
+            color: '#ffffff', fontWeight: 'bold', fontSize: '20px',
             fontFamily: "'Raleway', sans-serif",
-            boxShadow: '0 4px 20px rgba(193, 241, 29, 0.3)',
+            boxShadow: '0 4px 20px rgba(22, 163, 74, 0.3)',
           }}>iU</div>
-          <Title level={3} style={{ margin: '0 0 4px', color: '#1E293B', fontFamily: "'Raleway', sans-serif" }}>Candidate Login</Title>
-          <Text style={{ color: '#64748B', fontSize: 14 }}>Enter your email and the password we provided</Text>
+          <Title level={3} style={{ margin: '0 0 4px', color: '#1E293B', fontFamily: "'Raleway', sans-serif" }}>{t('candidateLogin')}</Title>
+          <Text style={{ color: '#64748B', fontSize: 14 }}>{t('loginSubtitle')}</Text>
         </div>
 
         <Form layout="vertical" onFinish={onFinish} size="large">
           <Form.Item 
             name="email" 
-            rules={[{ required: true, type: 'email', message: 'Please enter your email' }]}
+            rules={[{ required: true, type: 'email', message: t('emailRequired') }]}
           >
             <Input 
               prefix={<MailOutlined style={{ color: '#94A3B8' }} />} 
-              placeholder="Email address" 
+              placeholder={t('emailPlaceholder')} 
               style={{ 
                 background: '#f8f9fa', 
                 border: '1px solid #E2E8F0', 
@@ -79,11 +83,11 @@ const Login = () => {
 
           <Form.Item 
             name="password" 
-            rules={[{ required: true, message: 'Please enter your password' }]}
+            rules={[{ required: true, message: t('passwordRequired') }]}
           >
             <Input.Password 
               prefix={<LockOutlined style={{ color: '#94A3B8' }} />} 
-              placeholder="Temporary password"
+              placeholder={t('passwordPlaceholder')}
               style={{ 
                 background: '#f8f9fa', 
                 border: '1px solid #E2E8F0', 
@@ -103,7 +107,7 @@ const Login = () => {
             style={{ 
               height: 50, 
               borderRadius: 14, 
-              background: '#c1f11d', 
+              background: '#16a34a', 
               color: '#141414',
               border: 'none',
               marginTop: 12,
@@ -111,16 +115,25 @@ const Login = () => {
               fontFamily: "'Raleway', sans-serif",
               fontSize: '15px',
               letterSpacing: '0.02em',
-              boxShadow: '0 4px 16px rgba(193, 241, 29, 0.3)',
+              boxShadow: '0 4px 16px rgba(22, 163, 74, 0.3)',
             }}
           >
-            Sign In
+            {t('signIn')}
           </Button>
         </Form>
         
         <div style={{ textAlign: 'center', marginTop: 28 }}>
-          <Text style={{ color: '#94A3B8', fontSize: 13 }}>Haven't applied yet? </Text>
-          <Button type="link" onClick={() => navigate('/apply')} style={{ padding: 0, color: '#65a30d', fontWeight: 600, fontSize: 13 }}>Apply Now</Button>
+          <Text style={{ color: '#94A3B8', fontSize: 13 }}>{t('noAccountYet')}</Text>
+          <Button type="link" onClick={() => navigate('/apply')} style={{ padding: 0, color: '#15803d', fontWeight: 600, fontSize: 13 }}>{t('applyNow')}</Button>
+        </div>
+
+        <div style={{ textAlign: 'center', marginTop: 16, display: 'flex', justifyContent: 'center', gap: 8 }}>
+          <Button size="small" type="text" onClick={toggleTheme} style={{ color: '#64748B', fontSize: 12 }}>
+            {theme === 'light' ? '🌙' : '☀️'}
+          </Button>
+          <Button size="small" type="text" onClick={() => setLang(lang === 'ru' ? 'kz' : 'ru')} style={{ color: '#64748B', fontSize: 12 }}>
+            {lang === 'ru' ? '🇰🇿 Қазақша' : '🇷🇺 Русский'}
+          </Button>
         </div>
       </Card>
       </div>
