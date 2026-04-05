@@ -41,14 +41,14 @@ const Scheduler = () => {
   const [viewCandidate, setViewCandidate] = useState<Candidate | null>(null);
   const [activeCall, setActiveCall] = useState<Candidate | null>(null); 
 
-  // Состояния для Глубокой Оценки (Scorecard)
+  // Deep evaluation (Scorecard) state
   const [isEvalModalOpen, setIsEvalModalOpen] = useState(false);
 const [evalData, setEvalData] = useState({ 
   panelType: 'Technical',
   techNotes: '', 
   softNotes: '' 
 });  
-  // РАСШИРЕННЫЕ КРИТЕРИИ (8 параметров для элитной школы)
+  // Evaluation criteria (8 parameters split into two panels)
  const [scores, setScores] = useState<Record<string, number>>({
   logic: 5, academic: 5, problemSolving: 5, criticalThinking: 5,      // Panel A
   communication: 5, curiosity: 5, teamFit: 5, emotionalIntel: 5       // Panel B
@@ -61,10 +61,10 @@ const [evalData, setEvalData] = useState({
     return timeStr;
   };
 
-  // Расчет итогового балла на основе критериев выбранной роли
+  // Calculate total score based on selected panel criteria
   const calculateTotalScore = () => {
   const isTech = evalData.panelType === 'Technical';
-  // Берем только те оценки, которые относятся к текущей панели
+  // Pick scores for the active panel only
   const vals = isTech 
     ? [scores.logic, scores.academic, scores.problemSolving, scores.criticalThinking]
     : [scores.communication, scores.curiosity, scores.teamFit, scores.emotionalIntel];
@@ -171,7 +171,7 @@ const [evalData, setEvalData] = useState({
     return c.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(c.name)}`;
   };
 
-  // ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ ОТРИСОВКИ КРИТЕРИЕВ
+  // Helper: render criteria score sliders
   const renderCriterion = (label: string, key: string, desc: string, icon: any) => (
     <div style={{ marginBottom: 20, padding: '12px', background: c.surfaceBg, borderRadius: '12px', border: `1px solid ${c.surfaceBg}` }}>
       <Row justify="space-between" align="middle" style={{ marginBottom: 8 }}>
@@ -220,7 +220,7 @@ const [evalData, setEvalData] = useState({
         .ant-picker-calendar-date-content { height: 60px !important; }
       `}</style>
 
-      <Row gutter={24} style={{ flex: 1, minHeight: 0 }}>
+      <Row gutter={24} style={{ flex: 1, minHeight: 0 }} className="scheduler-row">
         
         {/* LEFT: Очередь кандидатов */}
         <Col span={8} style={{ height: '100%', paddingBottom: '24px' }}>
@@ -371,7 +371,7 @@ footer={[
   key="eval" 
   type="primary" 
   onClick={() => {
-    setEvaluatingId(viewCandidate?.id || null); // Сохраняем ID в отдельную память
+    setEvaluatingId(viewCandidate?.id || null);
     setViewCandidate(null);
     setIsEvalModalOpen(true);
   }}
@@ -466,13 +466,13 @@ footer={[
   rows={4} 
   style={{ marginTop: 8 }} 
   placeholder={t('evalJustificationPlaceholder')} 
-  // Показываем нужные заметки в зависимости от активной панели
+  // Show notes for the active panel
   value={evalData.panelType === 'Technical' ? evalData.techNotes : evalData.softNotes} 
   onChange={e => {
     const val = e.target.value;
     setEvalData(prev => ({
       ...prev,
-      // Динамически обновляем либо techNotes, либо softNotes
+      // Update techNotes or softNotes depending on active panel
       [prev.panelType === 'Technical' ? 'techNotes' : 'softNotes']: val
     }));
   }} 

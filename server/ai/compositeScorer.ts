@@ -12,12 +12,12 @@ export function calculateCompositeScore(
   achievementScore: number,
   _isRural: boolean,
   weights: ScoringWeights = DEFAULT_WEIGHTS,
-  ielts: number | null = null, // Новое поле
-  unt: number | null = null    // Новое поле
+  ielts: number | null = null,
+  unt: number | null = null
 ): number {
   let baseScore = 0;
 
-  // 1. Расчет базовой части (как и было)
+  // Weighted AI dimension score + achievement bonus
   if (!aiScores) {
     const base = (achievementScore / 50) * 30; 
     baseScore = base;
@@ -44,10 +44,10 @@ export function calculateCompositeScore(
     baseScore = weightedAI * 0.75 + achievementBonus;
   }
 
-  // 2. Логика "Conservative Scoring" (Штрафы за несоответствие критериям)
+  // Apply academic threshold penalties
   let finalScore = baseScore;
 
-  // Критерии IELTS (Целевой 6.5+)
+  // IELTS penalty (target: 6.5+)
   if (ielts !== null) {
     if (ielts < IELTS_MIN_CRITICAL) {
       finalScore -= IELTS_CRITICAL_PENALTY;
@@ -56,7 +56,7 @@ export function calculateCompositeScore(
     }
   }
 
-  // Критерии ЕНТ (UNT) (Целевой 80+)
+  // UNT penalty (target: 85+)
   if (unt !== null) {
     if (unt < UNT_MIN_CRITICAL) {
       finalScore -= UNT_CRITICAL_PENALTY;
@@ -65,6 +65,6 @@ export function calculateCompositeScore(
     }
   }
 
-  // Возвращаем результат в диапазоне 0-100 с округлением до 1 знака
+  // Clamp to 0-100 and round to 1 decimal place
   return Math.round(Math.min(100, Math.max(0, finalScore)) * 10) / 10;
 }

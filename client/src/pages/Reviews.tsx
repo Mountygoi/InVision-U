@@ -112,7 +112,7 @@ const Reviews = () => {
 
         {/* Filters */}
         <Card style={{ marginBottom: 24, borderRadius: 14, border: `1px solid ${c.border}`, background: c.cardBg, boxShadow: c.shadowSm }} styles={{ body: { padding: '16px 20px' } }}>
-          <Row gutter={16} align="middle">
+          <Row gutter={[16, 12]} align="middle" wrap>
             <Col flex="auto">
               <Input
                 placeholder={t('searchPlaceholder')}
@@ -175,9 +175,9 @@ const Reviews = () => {
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ''; (e.currentTarget as HTMLElement).style.boxShadow = c.shadowSm; }}
                   styles={{ body: { padding: 0 } }}
                 >
-                  <Row align="middle" style={{ height: '100%' }}>
+                  <Row align="middle" style={{ height: '100%' }} wrap>
                     {/* Left: Avatar + Info */}
-                    <Col style={{ padding: '20px', display: 'flex', alignItems: 'center', minWidth: 280 }}>
+                    <Col xs={24} md={8} style={{ padding: '20px', display: 'flex', alignItems: 'center', minWidth: 280 }}>
                       <Space size={16}>
                         <Avatar
                           size={56}

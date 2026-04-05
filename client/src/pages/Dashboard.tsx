@@ -51,12 +51,12 @@ const Dashboard = () => {
   if (!stats) return <div style={{ padding: 40 }}><Text type="danger">{t('failedLoadDashboard')}</Text></div>;
 
   return (
-    <div style={{ padding: '32px 40px', fontFamily: "'Raleway', sans-serif", animation: 'fadeInUp 0.5s cubic-bezier(0.16,1,0.3,1) both', background: c.pageBg, color: c.text }}>
+    <div className="dashboard-page" style={{ padding: '32px 40px', fontFamily: "'Raleway', sans-serif", animation: 'fadeInUp 0.5s cubic-bezier(0.16,1,0.3,1) both', background: c.pageBg, color: c.text }}>
       <Title level={2} style={{ marginBottom: '8px', letterSpacing: '-0.02em', color: c.text }}>{t('admissionsDashboard')}</Title>
       <Text type="secondary" style={{ display: 'block', marginBottom: '32px', fontSize: 15, color: c.textSecondary }}>{t('dashboardSubtitle')}</Text>
 
       {/* Metric Cards */}
-      <Row gutter={[20, 20]} style={{ marginBottom: 32 }}>
+      <Row gutter={[20, 20]} style={{ marginBottom: 32 }} className="dashboard-metrics">
         <Col span={6}>
           <Card variant="borderless" style={{ borderRadius: '16px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', transition: 'transform 0.25s ease, box-shadow 0.25s ease', cursor: 'default' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)'; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ''; (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 12px rgba(0,0,0,0.04)'; }}>
             <Statistic
@@ -97,8 +97,7 @@ const Dashboard = () => {
       </Row>
 
       {/* Charts Row */}
-      <Row gutter={[20, 20]} style={{ marginBottom: 32 }}>
-        {/* Score Distribution */}
+      <Row gutter={[20, 20]} style={{ marginBottom: 32 }} className="dashboard-charts">
         <Col span={12}>
           <Card title={<Text strong style={{ fontSize: 16, color: c.text }}>{t('scoreDistribution')}</Text>} style={{ borderRadius: '16px', height: '100%', border: `1px solid ${c.border}`, background: c.cardBg }}>
             <div style={{ height: 250 }}>
@@ -143,7 +142,7 @@ const Dashboard = () => {
       </Row>
 
       {/* Bottom Row */}
-      <Row gutter={[20, 20]}>
+      <Row gutter={[20, 20]} className="dashboard-bottom">
         {/* Regional Breakdown */}
         <Col span={14}>
           <Card title={<><MapPin size={16} style={{ marginRight: 8, color: c.text }} /> {t('regionalBreakdown')}</>} style={{ borderRadius: '16px', border: `1px solid ${c.border}`, background: c.cardBg }}>

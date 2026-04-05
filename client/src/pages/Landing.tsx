@@ -27,7 +27,7 @@ const Landing = () => {
       padding: '40px 20px',
     }}>
       {/* Theme toggle + Language switcher */}
-      <div style={{ position: 'absolute', top: 24, right: 32, display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div className="landing-controls" style={{ position: 'absolute', top: 24, right: 32, display: 'flex', alignItems: 'center', gap: 8 }}>
         <Button
           type="text"
           size="small"
@@ -58,10 +58,11 @@ const Landing = () => {
       <img
         src={logoImg}
         alt="inVision U"
+        className="landing-logo"
         style={{ width: 180, height: 180, marginBottom: 32, borderRadius: 32, objectFit: 'contain' }}
       />
 
-      <Text style={{
+      <Text className="landing-subtitle" style={{
         fontSize: 18,
         color: isDark ? '#94a3b8' : '#475569',
         marginTop: 12,
@@ -72,7 +73,7 @@ const Landing = () => {
         {t('landingSubtitle')}
       </Text>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%', maxWidth: 340 }}>
+      <div className="landing-buttons" style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%', maxWidth: 340 }}>
         <Button
           type="primary"
           size="large"

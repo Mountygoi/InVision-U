@@ -19,7 +19,7 @@ const Login = () => {
   const onFinish = async (values: { email: string; password: string }) => {
     setLoading(true);
     try {
-      // Ищем кандидата по email
+      // Find candidate by email
       const res = await axios.get(`${API}/candidates?search=${values.email}`);
       const user = res.data.find((c: { email: string; password: string }) => c.email === values.email);
 
@@ -41,6 +41,7 @@ const Login = () => {
     <Layout style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: isDark ? 'linear-gradient(160deg, #0f172a 0%, #1e293b 100%)' : 'linear-gradient(160deg, #fafafa 0%, #ecfdf5 100%)' }}>
       <div style={{ animation: 'fadeInUp 0.6s cubic-bezier(0.16,1,0.3,1) both' }}>
       <Card 
+        className="login-card"
         style={{ 
           width: '100%',
           maxWidth: 440, 

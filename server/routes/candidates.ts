@@ -22,7 +22,7 @@ async function extractPdfText(filePath: string): Promise<string> {
   }
 }
 
-// НОВОЕ: Генерация временного пароля (6 символов, верхний регистр)
+// Generate a 6-character uppercase temporary password
 const generateTempPassword = () => Math.random().toString(36).slice(-6).toUpperCase();
 
 const router = Router();
@@ -66,7 +66,7 @@ router.get('/', async (req, res) => {
       name: row.name,
       email: row.email,
       password: row.password,
-      avatarUrl: row.avatar_url, // Добавлено поле аватарки
+      avatarUrl: row.avatar_url,
       university: row.university,
       school: row.school,
       city: row.city,
@@ -507,19 +507,17 @@ router.patch('/:id/status', async (req, res) => {
       reviewer_notes 
     } = req.body;
 
-    // 1. Проверка валидности статуса (добавляем 'arbitration')
     const validStatuses = ['new', 'under_review', 'interview', 'accepted', 'declined', 'waitlisted', 'arbitration'];
     if (status && !validStatuses.includes(status)) {
       return res.status(400).json({ error: 'Invalid status' });
     }
 
-    // 2. Получаем текущие данные для лога
     const current = await pool.query('SELECT status, tech_score, soft_score FROM candidates WHERE id = $1', [id]);
     if (current.rows.length === 0) {
       return res.status(404).json({ error: 'Candidate not found' });
     }
 
-    // 3. ОБНОВЛЕНИЕ БАЗЫ (используем COALESCE, чтобы не затирать существующие данные)
+    // Use COALESCE to preserve existing values when fields are not provided
     const updateQuery = `
       UPDATE candidates SET 
         status = COALESCE($1, status),
@@ -534,11 +532,11 @@ router.patch('/:id/status', async (req, res) => {
     const result = await pool.query(updateQuery, [status, tech_score, soft_score, tech_notes, soft_notes, reviewer_notes, id]);
     let updatedCandidate = result.rows[0];
 
-    // 4. ЛОГИКА АВТО-СТАТУСА: если обе панели оценили → под_ревью или арбитраж
+    // Auto-status: both panels scored → move to review or arbitration
     if (updatedCandidate.tech_score !== null && updatedCandidate.soft_score !== null) {
       const diff = Math.abs(updatedCandidate.tech_score - updatedCandidate.soft_score);
       if (diff > 40) {
-        // Конфликт оценок → арбитраж
+        // Score conflict → trigger arbitration
         if (updatedCandidate.status !== 'arbitration') {
           const arbResult = await pool.query(
             "UPDATE candidates SET status = 'arbitration', updated_at = NOW() WHERE id = $1 RETURNING *",
@@ -551,7 +549,7 @@ router.patch('/:id/status', async (req, res) => {
           );
         }
       } else if (updatedCandidate.status === 'interview') {
-        // Обе оценки есть, конфликта нет → отправляем на проверку
+        // Both scores present, no conflict → send to review
         const urResult = await pool.query(
           "UPDATE candidates SET status = 'under_review', updated_at = NOW() WHERE id = $1 RETURNING *",
           [id]
@@ -560,7 +558,6 @@ router.patch('/:id/status', async (req, res) => {
       }
     }
 
-    // 5. Запись в обычный Audit Log
     await pool.query(
       'INSERT INTO audit_log (candidate_id, action, old_value, new_value) VALUES ($1, $2, $3, $4)',
       [id, 'status_or_score_change', current.rows[0].status, updatedCandidate.status]

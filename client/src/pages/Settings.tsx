@@ -60,7 +60,7 @@ const Settings = () => {
   const totalDimensionWeight = weights.motivation + weights.leadership + weights.technicalPotential + weights.creativity + weights.resilience;
 
   return (
-    <div style={{ padding: '32px 40px', maxWidth: '900px', fontFamily: "'Raleway', sans-serif", animation: 'fadeInUp 0.5s cubic-bezier(0.16,1,0.3,1) both', background: isDark ? '#0f172a' : undefined, minHeight: '100vh' }}>
+    <div className="settings-page" style={{ padding: '32px 40px', maxWidth: '900px', fontFamily: "'Raleway', sans-serif", animation: 'fadeInUp 0.5s cubic-bezier(0.16,1,0.3,1) both', background: isDark ? '#0f172a' : undefined, minHeight: '100vh' }}>
       <Title level={2} style={{ letterSpacing: '-0.02em' }}>{t('scoringConfig')}</Title>
       <Text type="secondary">{t('scoringConfigDesc')}</Text>
 

@@ -57,7 +57,7 @@ const Candidates = () => {
   const [sortBy, setSortBy] = useState<string>('score_desc');
   const [statusFilters, setStatusFilters] = useState<string[]>([]);
 
-  // Арбитраж
+  // Arbitration state
   const [isArbModalOpen, setIsArbModalOpen] = useState(false);
   const [arbLoading, setArbLoading] = useState(false);
   const [arbResolveScore, setArbResolveScore] = useState<number | ''>(75);
@@ -72,12 +72,12 @@ const Candidates = () => {
     suggestedScore?: number;
   } | null>(null);
 
-  // Документы
+  // Document modals
   const [essayModalOpen, setEssayModalOpen] = useState(false);
   const [certModal, setCertModal] = useState<{ type: 'ielts' | 'unt'; open: boolean }>({ type: 'ielts', open: false });
   const [certApproving, setCertApproving] = useState(false);
 
-  // Оценка интервью
+  // Interview evaluation
   const [evalModalOpen, setEvalModalOpen] = useState(false);
   const [evalSaving, setEvalSaving] = useState(false);
   const [techScore, setTechScore] = useState<number | ''>('');
@@ -189,7 +189,7 @@ const Candidates = () => {
     }
   };
 
-  // ФУНКЦИЯ ДЛЯ КНОПКИ AUDIT INFO
+  // Show audit transparency info
   const showAuditInfo = () => {
     Modal.info({
       title: t('auditTitle'),
@@ -216,7 +216,7 @@ const Candidates = () => {
     });
   };
 
-  // AI Арбитраж — реальный анализ расхождения оценок панелей
+  // AI arbitration — analyze panel score discrepancy
   const generateArbitrationReport = async (candidate: Candidate) => {
     setArbLoading(true);
     message.loading({ content: t('aiAnalyzing'), key: 'arb_gen' });
@@ -233,7 +233,7 @@ const Candidates = () => {
     }
   };
 
-  // Одобрение сертификата
+  // Approve certificate
   const approveCert = async (candidateId: string, certType: 'ielts' | 'unt') => {
     setCertApproving(true);
     try {
@@ -247,7 +247,7 @@ const Candidates = () => {
     }
   };
 
-  // Сохранение оценок интервью
+  // Save interview evaluation scores
   const handleSaveEval = async () => {
     if (!selectedId) return;
     if (techScore === '' || softScore === '') {

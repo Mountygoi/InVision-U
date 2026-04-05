@@ -2,15 +2,15 @@ import React from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
 
 interface VideoConferenceProps {
-  roomName: string; // Это уникальный ID кандидата
-  userName: string; // Имя участника (Admin или имя студента)
+  roomName: string; // Unique candidate ID
+  userName: string; // Participant name (Admin or student)
   onClose: () => void;
 }
 
 const VideoConference: React.FC<VideoConferenceProps> = ({ roomName, userName, onClose }) => {
   const { t } = useLanguage();
-  // Используем MiroTalk P2P - это бесплатный сервис без регистрации и лимитов.
-  // Мы передаем roomName и имя пользователя прямо в URL.
+  // MiroTalk P2P — free service, no registration required.
+  // Room name and username are passed directly in the URL.
   const roomUrl = `https://p2p.mirotalk.com/join/${roomName}?name=${encodeURIComponent(userName)}`;
 
   return (
@@ -24,7 +24,7 @@ const VideoConference: React.FC<VideoConferenceProps> = ({ roomName, userName, o
     }}>
       <iframe
         src={roomUrl}
-        // Разрешаем доступ к оборудованию внутри iframe
+        // Allow camera/microphone access inside iframe
         allow="camera; microphone; display-capture; fullscreen; clipboard-read; clipboard-write; autoplay"
         style={{ 
           width: '100%', 

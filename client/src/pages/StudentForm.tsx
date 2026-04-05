@@ -16,7 +16,7 @@ import { API } from '../config';
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
-// ФУНКЦИЯ-ПОМОЩНИК: Чтобы Ant Design корректно забирал файл из компонента Upload
+// Normalize Upload component value for Ant Design Form
 const normFile = (e: any) => {
   if (Array.isArray(e)) {
     return e;
@@ -32,7 +32,7 @@ interface AchievementEntry {
   level?: string;
 }
 
-// ===== All Kazakhstan cities =====
+// Kazakhstan cities list
 
 const KZ_CITIES = [
   // Cities of republican significance
@@ -238,7 +238,7 @@ const StudentForm = () => {
       formData.append('contactHandle', values.contactHandle || '');
       formData.append('gender', values.gender || '');
       
-      // Новые академические данные
+      // Academic scores
       if (values.ielts != null) formData.append('ielts', String(values.ielts));
       if (values.unt != null) formData.append('unt', String(values.unt));
       formData.append('videoUrl', values.videoUrl || '');
@@ -256,7 +256,7 @@ const StudentForm = () => {
         formData.append('avatar', avatarList[0].originFileObj);
       }
 
-      // Новые сертификаты PDF
+      // Certificate uploads
       if (values.ieltsFile?.[0]?.originFileObj) {
         formData.append('ielts_cert', values.ieltsFile[0].originFileObj);
       }
@@ -286,7 +286,7 @@ const StudentForm = () => {
   const isDark = theme === 'dark';
 
   return (
-    <div style={{
+    <div className="student-form-wrapper" style={{
       padding: '60px 20px',
       background: isDark ? 'linear-gradient(160deg, #0f172a 0%, #1a2e1a 100%)' : 'linear-gradient(160deg, #fafafa 0%, #ecfdf5 100%)',
       minHeight: '100vh',

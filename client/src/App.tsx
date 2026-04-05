@@ -52,27 +52,16 @@ const AppInner = () => {
     >
     <Router>
       <Routes>
-        {/* --- ПУБЛИЧНЫЕ РОУТЫ ДЛЯ КАНДИДАТОВ --- */}
+        {/* Public routes */}
         
-        {/* Подача заявки */}
         <Route path="/apply" element={<StudentForm />} />
-        
-        {/* Вход в личный кабинет */}
         <Route path="/login" element={<Login />} />
-        
-        {/* Страница статуса (Личный кабинет) */}
         <Route path="/status" element={<StudentStatus />} />
-
-        {/* Тест личности (40 вопросов) */}
         <Route path="/personality-test" element={<PersonalityTest />} />
-
-        {/* Ситуационный тест (SJT) */}
         <Route path="/test" element={<SJTTest />} />
-
-        {/* Командная симуляция */}
         <Route path="/simulation" element={<TeamSimulation />} />
 
-        {/* --- РОУТЫ АДМИН ПАНЕЛИ (С префиксом /admin) --- */}
+        {/* Admin panel routes */}
         <Route
           path="/admin/*"
           element={
@@ -92,10 +81,10 @@ const AppInner = () => {
           }
         />
 
-        {/* Главная страница */}
+        {/* Landing page */}
         <Route path="/" element={<Landing />} />
         
-        {/* Обработка несуществующих страниц */}
+        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
