@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Form, Input, Button, Upload, Select, message, Card, Typography, Row, Col, InputNumber, Space, Tag, Divider, Alert } from 'antd';
 import {
   UploadOutlined, UserOutlined, BookOutlined, EnvironmentOutlined,
@@ -106,6 +106,41 @@ const StudentForm = () => {
   const [nudgeEncouragement, setNudgeEncouragement] = useState('');
   const [nudgeVisible, setNudgeVisible] = useState(false);
   const [schoolOther, setSchoolOther] = useState(false);
+
+  const STORAGE_KEY = 'studentFormDraft';
+
+  // Restore saved form data on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) return;
+      const draft = JSON.parse(saved);
+      if (draft.fields) form.setFieldsValue(draft.fields);
+      if (draft.achievements) setAchievements(draft.achievements);
+      if (draft.skills) setSkills(draft.skills);
+      if (draft.schoolOther) setSchoolOther(true);
+    } catch { /* corrupted data — ignore */ }
+  }, [form]);
+
+  // Save form data to localStorage on every change
+  const saveDraft = useCallback(() => {
+    try {
+      const fields = form.getFieldsValue();
+      // Don't persist file uploads (can't serialize File objects)
+      delete fields.avatar;
+      delete fields.ieltsFile;
+      delete fields.untFile;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        fields,
+        achievements,
+        skills,
+        schoolOther,
+      }));
+    } catch { /* storage full — ignore */ }
+  }, [form, achievements, skills, schoolOther]);
+
+  // Auto-save when achievements/skills/schoolOther change
+  useEffect(() => { saveDraft(); }, [saveDraft]);
 
   const handleGetAIFeedback = async () => {
     const values = form.getFieldsValue();
@@ -224,6 +259,7 @@ const StudentForm = () => {
       localStorage.setItem('tempPassword', tempPassword);
       localStorage.setItem('userEmail', values.email || '');
       localStorage.setItem('candidateName', values.name || '');
+      localStorage.removeItem(STORAGE_KEY);
 
       message.success(t('dataSaved'));
       navigate(`/personality-test?candidateId=${candidateId}`);
@@ -278,7 +314,9 @@ const StudentForm = () => {
           <Text style={{ color: '#64748B' }}>{t('formSubtitle')}</Text>
         </div>
 
-        <Form form={form} layout="vertical" onFinish={onFinish} requiredMark={false} autoComplete="off" scrollToFirstError onFinishFailed={() => message.error(t('fillAllFields'))}>
+        <Form form={form} layout="vertical" onFinish={onFinish} onValuesChange={saveDraft} requiredMark={false} autoComplete="off" scrollToFirstError onFinishFailed={() => message.error(t('fillAllFields'))}
+          onKeyDown={e => { if (e.key === 'Enter' && (e.target as HTMLElement).tagName !== 'TEXTAREA') e.preventDefault(); }}
+        >
           
           <Title level={5} style={{ marginBottom: 16, color: isDark ? '#4ade80' : '#166534', fontFamily: "'Raleway', sans-serif" }}>{t('profilePhoto')}</Title>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '32px' }}>
