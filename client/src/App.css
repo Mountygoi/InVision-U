@@ -124,3 +124,87 @@
   animation: shimmer 1.5s infinite;
   border-radius: var(--radius-sm);
 }
+
+/* ---------- Mobile Responsive ---------- */
+@media (max-width: 768px) {
+  /* Header */
+  .ant-layout-header {
+    padding: 0 16px !important;
+    height: 56px !important;
+  }
+  .ant-layout-header .ant-menu-horizontal {
+    display: none !important;
+  }
+  .ant-layout-header .ant-menu-horizontal {
+    line-height: 56px !important;
+  }
+
+  /* Candidates page: stack panels vertically */
+  .candidates-layout {
+    height: auto !important;
+    min-height: 100vh !important;
+    overflow: auto !important;
+  }
+  .candidates-layout .ant-row {
+    flex-direction: column !important;
+  }
+  .candidates-layout .ant-col-9,
+  .candidates-layout .ant-col-15 {
+    flex: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+  .candidates-layout .ant-col-9 {
+    height: auto !important;
+    max-height: 50vh !important;
+  }
+  .candidates-layout .ant-col-15 {
+    height: auto !important;
+  }
+
+  /* Forms: single column */
+  .ant-form .ant-col-12,
+  .ant-form .ant-col-8 {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Cards: smaller padding */
+  .ant-card-body {
+    padding: 16px !important;
+  }
+
+  /* Content padding */
+  .ant-layout-content {
+    padding: 12px !important;
+  }
+
+  /* Row gutters */
+  .ant-row {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  .ant-row > .ant-col {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  /* Modals: full-width on mobile */
+  .ant-modal {
+    max-width: calc(100vw - 32px) !important;
+    margin: 16px auto !important;
+  }
+  .ant-modal-body {
+    padding: 16px !important;
+  }
+
+  /* StudentForm: reduce padding */
+  .ant-card {
+    border-radius: 16px !important;
+  }
+
+  /* Radar chart: smaller on mobile */
+  .recharts-responsive-container {
+    min-height: 200px !important;
+  }
+}

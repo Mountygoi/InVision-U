@@ -38,7 +38,7 @@ router.get('/', async (req, res) => {
   try {
     const { search, status, sort = 'composite_score', order = 'desc' } = req.query;
 
-    let query = 'SELECT id, name, email, password, avatar_url, university, school, city, region, is_rural, gpa, year_of_study, achievements, skills, essay_text, ai_scores, ai_summary, ai_flags, ai_model_version, ai_analyzed_at, composite_score, achievement_score, status, reviewer_notes, created_at, updated_at, interview_time, personality_scores, sjt_scores, simulation_scores, tech_score, soft_score, tech_notes, soft_notes, ielts_file_path, unt_file_path, ielts_approved, unt_approved, contact_method, contact_handle FROM candidates WHERE 1=1';
+    let query = 'SELECT id, name, email, password, avatar_url, university, school, city, region, is_rural, gpa, year_of_study, achievements, skills, essay_text, ai_scores, ai_summary, ai_flags, ai_model_version, ai_analyzed_at, composite_score, achievement_score, status, reviewer_notes, created_at, updated_at, interview_time, personality_scores, sjt_scores, simulation_scores, tech_score, soft_score, tech_notes, soft_notes, ielts_file_path, unt_file_path, ielts_approved, unt_approved, contact_method, contact_handle, video_url, gender, learnability_score FROM candidates WHERE 1=1';
     const params: (string | number)[] = [];
     let paramIdx = 1;
 
@@ -102,6 +102,9 @@ router.get('/', async (req, res) => {
       untApproved: row.unt_approved ?? false,
       contactMethod: row.contact_method,
       contactHandle: row.contact_handle,
+      videoUrl: row.video_url,
+      gender: row.gender,
+      learnabilityScore: row.learnability_score,
     }));
 
     res.json(candidates);
@@ -170,6 +173,7 @@ router.get('/:id', async (req, res) => {
       videoUrl: row.video_url,
       contactMethod: row.contact_method,
       contactHandle: row.contact_handle,
+      gender: row.gender,
     });
   } catch (err) {
     console.error('Error fetching candidate:', err);
@@ -207,6 +211,7 @@ router.post(
         videoUrl,
         contactMethod,
         contactHandle,
+        gender,
       } = req.body;
 
       if (!name || !city) {
@@ -260,8 +265,8 @@ router.post(
           status, password, avatar_url, composite_score,
           nudge_answers, ielts, unt, video_url,
           ielts_file_path, unt_file_path,
-          contact_method, contact_handle
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27)
+          contact_method, contact_handle, gender
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28)
         RETURNING id`,
         [
           name, email || null, phone || null, university || null,
@@ -279,6 +284,7 @@ router.post(
           untFilePath,
           contactMethod || null,
           contactHandle || null,
+          gender || null,
         ]
       );
 

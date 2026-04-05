@@ -114,6 +114,7 @@ export interface Candidate {
   avatarUrl?: string;
   email?: string;
   phone?: string;
+  gender?: 'male' | 'female';
   university?: string;
   school?: string;
   city: string;

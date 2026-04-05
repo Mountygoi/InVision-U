@@ -353,13 +353,19 @@ const ru = {
   formPhone: 'Телефон',
   formSchool: 'Школа',
   formCity: 'Город / Регион',
+  formGender: 'Пол',
+  selectGender: 'Выберите пол',
+  genderMale: 'Мужской',
+  genderFemale: 'Женский',
+  genderRequired: 'Пожалуйста, укажите пол',
   preferredContact: 'Предпочтительный способ связи',
   contactHandle: 'Контакт',
   ieltsScore: 'Балл IELTS (6.5–9.0)',
   untScore: 'Балл ЕНТ (80–140)',
   ieltsCertPdf: 'Сертификат IELTS (PDF)',
   untCertPdf: 'Сертификат ЕНТ (PDF)',
-  videoLink: 'Ссылка на видео (YouTube/Loom/Google Drive)',
+  videoLink: 'Ссылка на видео (YouTube/Google Drive)',
+  videoUrlInvalid: 'Ссылка должна быть на YouTube или Google Drive',
   uploadEssayPdf: 'Загрузить эссе (PDF)',
   orWriteEssay: 'Или напишите эссе здесь',
   writeEssay: 'Напишите ваше эссе',
@@ -597,6 +603,8 @@ const ru = {
 
   // ===== VideoConference =====
   closeView: 'Закрыть просмотр',
+  watchVideo: 'Видеопрезентация',
+  unsafeVideoLink: 'Небезопасная ссылка — разрешены только YouTube и Google Drive',
 };
 
 const kz: Record<string, string> = {
@@ -942,13 +950,19 @@ const kz: Record<string, string> = {
   formPhone: 'Телефон',
   formSchool: 'Мектеп',
   formCity: 'Қала / Аймақ',
+  formGender: 'Жынысы',
+  selectGender: 'Жынысын таңдаңыз',
+  genderMale: 'Ер',
+  genderFemale: 'Әйел',
+  genderRequired: 'Жынысын көрсетіңіз',
   preferredContact: 'Қолайлы байланыс тәсілі',
   contactHandle: 'Байланыс',
   ieltsScore: 'IELTS баллы (6.5–9.0)',
   untScore: 'ЕНТ баллы (80–140)',
   ieltsCertPdf: 'IELTS сертификаты (PDF)',
   untCertPdf: 'ЕНТ сертификаты (PDF)',
-  videoLink: 'Бейне сілтеме (YouTube/Loom/Google Drive)',
+  videoLink: 'Бейне сілтеме (YouTube/Google Drive)',
+  videoUrlInvalid: 'Сілтеме YouTube немесе Google Drive болуы керек',
   uploadEssayPdf: 'Эссе жүктеу (PDF)',
   orWriteEssay: 'Немесе эссені осында жазыңыз',
   writeEssay: 'Эссеңізді жазыңыз',
@@ -1181,6 +1195,8 @@ const kz: Record<string, string> = {
 
   // ===== VideoConference =====
   closeView: 'Қарауды жабу',
+  watchVideo: 'Бейнетаныстыру',
+  unsafeVideoLink: 'Қауіпсіз емес сілтеме — тек YouTube және Google Drive рұқсат етілген',
 };
 
 export const translations: Record<Lang, Record<string, string>> = { ru, kz };

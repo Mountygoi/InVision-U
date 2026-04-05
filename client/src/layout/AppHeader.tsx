@@ -1,6 +1,7 @@
-﻿import { Layout, Menu, Avatar, Space, Typography, Dropdown } from 'antd';
-import { NavLink, useLocation } from 'react-router-dom';
-import { DownOutlined } from '@ant-design/icons';
+﻿import { useState } from 'react';
+import { Layout, Menu, Avatar, Space, Typography, Dropdown, Drawer, Button } from 'antd';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { DownOutlined, MenuOutlined } from '@ant-design/icons';
 import logoSvg from '../assets/icons/logo.png';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useTheme } from '../i18n/ThemeContext';
@@ -10,9 +11,11 @@ const { Text } = Typography;
 
 const AppHeader = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { t, lang, setLang } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === 'dark';
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const menuItems = [
     { key: '/admin', label: <NavLink to="/admin">{t('menuDashboard')}</NavLink> },
@@ -48,7 +51,7 @@ const AppHeader = () => {
       transition: 'all 0.3s ease',
     }}>
       {/* LEFT: Логотип */}
-      <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0, cursor: 'pointer' }} onClick={() => navigate('/')}>
         <img src={logoSvg} alt="inVision U" style={{ height: '42px', transition: 'opacity 0.2s' }} />
       </div>
 
@@ -94,6 +97,33 @@ const AppHeader = () => {
         </Dropdown>
       </div>
 
+      {/* MOBILE: Hamburger Button */}
+      <Button
+        type="text"
+        icon={<MenuOutlined />}
+        onClick={() => setMobileMenuOpen(true)}
+        className="mobile-menu-btn"
+        style={{ display: 'none', fontSize: 20, color: isDark ? '#f1f5f9' : '#1E293B' }}
+      />
+
+      {/* MOBILE: Drawer Menu */}
+      <Drawer
+        title="inVision U"
+        placement="right"
+        onClose={() => setMobileMenuOpen(false)}
+        open={mobileMenuOpen}
+        width={260}
+        styles={{ body: { padding: 0 } }}
+      >
+        <Menu
+          mode="vertical"
+          selectedKeys={[location.pathname]}
+          items={menuItems}
+          onClick={() => setMobileMenuOpen(false)}
+          style={{ border: 'none' }}
+        />
+      </Drawer>
+
       <style>{`
         .ant-layout-header .ant-menu-horizontal {
           background: transparent !important;
@@ -135,6 +165,11 @@ const AppHeader = () => {
         }
         .ant-layout-header .ant-menu-item:not(.ant-menu-item-selected)::after {
           border-bottom-color: transparent !important;
+        }
+        @media (max-width: 768px) {
+          .ant-layout-header .ant-menu-horizontal { display: none !important; }
+          .mobile-menu-btn { display: inline-flex !important; }
+          .ant-layout-header { padding: 0 16px !important; }
         }
       `}</style>
     </Header>

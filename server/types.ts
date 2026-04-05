@@ -48,6 +48,7 @@ export interface Candidate {
   name: string;
   email?: string;
   phone?: string;
+  gender?: 'male' | 'female';
   university?: string;
   school?: string;
   city: string;

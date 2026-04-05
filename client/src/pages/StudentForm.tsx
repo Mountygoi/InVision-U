@@ -236,6 +236,7 @@ const StudentForm = () => {
       formData.append('city', values.city || '');
       formData.append('contactMethod', 'telegram');
       formData.append('contactHandle', values.contactHandle || '');
+      formData.append('gender', values.gender || '');
       
       // Новые академические данные
       if (values.ielts != null) formData.append('ielts', String(values.ielts));
@@ -448,6 +449,14 @@ const StudentForm = () => {
                 <Input prefix={<span style={{ color: '#bfbfbf' }}>@</span>} placeholder="username" style={{ height: '45px', borderRadius: '8px' }} />
               </Form.Item>
             </Col>
+            <Col span={12}>
+              <Form.Item name="gender" label={<Text strong>{t('formGender')}</Text>} rules={[{ required: true, message: t('genderRequired') }]}>
+                <Select placeholder={t('selectGender')} style={{ height: '45px' }}>
+                  <Select.Option value="male">{t('genderMale')}</Select.Option>
+                  <Select.Option value="female">{t('genderFemale')}</Select.Option>
+                </Select>
+              </Form.Item>
+            </Col>
           </Row>
 
           <Divider />
@@ -497,7 +506,22 @@ const StudentForm = () => {
           <Form.Item 
             name="videoUrl" 
             label={<Text strong>{t('videoLink')}</Text>}
-            rules={[{ required: true, message: t('videoRequired') }]}
+            rules={[
+              { required: true, message: t('videoRequired') },
+              {
+                validator: (_, value) => {
+                  if (!value) return Promise.resolve();
+                  try {
+                    const hostname = new URL(value).hostname;
+                    const ALLOWED = ['youtube.com', 'youtu.be', 'drive.google.com'];
+                    if (ALLOWED.some(d => hostname === d || hostname.endsWith('.' + d))) {
+                      return Promise.resolve();
+                    }
+                  } catch { /* invalid URL */ }
+                  return Promise.reject(new Error(t('videoUrlInvalid')));
+                },
+              },
+            ]}
           >
             <Input 
               prefix={<CameraOutlined style={{ color: '#bfbfbf' }} />} 

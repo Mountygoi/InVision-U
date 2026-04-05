@@ -159,6 +159,7 @@ export async function initDatabase(): Promise<void> {
       `ALTER TABLE candidates ADD COLUMN IF NOT EXISTS contact_handle TEXT`,
       `ALTER TABLE candidates ADD COLUMN IF NOT EXISTS essay_text_original TEXT`,
       `ALTER TABLE candidates ADD COLUMN IF NOT EXISTS learnability_score JSONB`,
+      `ALTER TABLE candidates ADD COLUMN IF NOT EXISTS gender TEXT`,
     ];
 
     for (const stmt of alterStatements) {

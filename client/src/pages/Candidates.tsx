@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Row, Col, Avatar, Tag, Button, Typography, Space, Empty, message, Input, Layout, Card, Divider, Select, Progress, Badge, Alert, Modal, Slider, Popover, Checkbox } from 'antd';
-import { ShieldCheck, FileText, Send, XCircle, MapPin, GraduationCap, CheckCircle2, AlertTriangle, Bot, TrendingUp, User, EyeOff, Scale, SlidersHorizontal, RefreshCw } from 'lucide-react';
+import { ShieldCheck, FileText, Send, XCircle, MapPin, GraduationCap, CheckCircle2, AlertTriangle, Bot, TrendingUp, User, EyeOff, Scale, SlidersHorizontal, RefreshCw, Video } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, PolarRadiusAxis, Radar as RadarArea } from 'recharts';
@@ -289,7 +289,7 @@ const Candidates = () => {
   };
 
   return (
-    <Layout style={{ height: '100vh', overflow: 'hidden', background: c.pageBg }}>
+    <Layout className="candidates-layout" style={{ height: '100vh', overflow: 'hidden', background: c.pageBg }}>
       <style>{`
         .candidates-layout { overflow: hidden; }
         .ant-layout { background: ${c.pageBg} !important; }
@@ -499,6 +499,25 @@ const Candidates = () => {
                           ) : (
                             <Tag style={{ borderRadius: 10, fontSize: 11, padding: '2px 10px', lineHeight: '24px' }}>{t('noUbtCert')}</Tag>
                           )}
+                          {selectedCandidate.videoUrl && (() => {
+                            const SAFE_DOMAINS = ['youtube.com', 'youtu.be', 'drive.google.com'];
+                            let isSafeLink = false;
+                            try { const h = new URL(selectedCandidate.videoUrl!).hostname; isSafeLink = SAFE_DOMAINS.some(d => h === d || h.endsWith('.' + d)); } catch { /* invalid url */ }
+                            return (
+                              <Button
+                                size="small"
+                                icon={<Video size={13} />}
+                                style={{ borderRadius: 10, fontSize: 12, padding: '2px 12px', height: 30, borderColor: isSafeLink ? '#16a34a' : '#EF4444', color: isSafeLink ? '#16a34a' : '#EF4444' }}
+                                href={isSafeLink ? selectedCandidate.videoUrl : undefined}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                disabled={!isSafeLink}
+                                title={isSafeLink ? selectedCandidate.videoUrl : t('unsafeVideoLink')}
+                              >
+                                {t('videoLink')} {isSafeLink ? '' : '⚠️'}
+                              </Button>
+                            );
+                          })()}
                         </div>
                       )}
                     </div>
