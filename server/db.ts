@@ -10,6 +10,7 @@ const pool = new pg.Pool({
   database: process.env.DATABASE_URL ? undefined : (process.env.DB_NAME || 'invision_u'),
   user: process.env.DATABASE_URL ? undefined : (process.env.DB_USER || 'invision'),
   password: process.env.DATABASE_URL ? undefined : (process.env.DB_PASSWORD || 'invision_pass'),
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
 });
 
 export async function initDatabase(): Promise<void> {
