@@ -8,5 +8,6 @@
     "module": "Node16",
     "declaration": false,
     "sourceMap": false
-  }
+  },
+  "exclude": ["__tests__", "**/*.test.ts", "vitest.config.ts"]
 }

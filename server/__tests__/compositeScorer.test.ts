@@ -59,13 +59,12 @@ describe('calculateCompositeScore', () => {
   });
 
   it('applies no IELTS penalty when at or above target', () => {
-    const without = calculateCompositeScore(null, 30, false);
+    const base = calculateCompositeScore(null, 30, false);
     const withGood = calculateCompositeScore(null, 30, false, DEFAULT_WEIGHTS, 7.0);
-    expect(withGood).toBeCloseTo(without, 1);
+    expect(withGood).toBeCloseTo(base, 1);
   });
 
   it('applies UNT critical penalty when below 75', () => {
-    const without = calculateCompositeScore(null, 30, false);
     const withLow = calculateCompositeScore(null, 30, false, DEFAULT_WEIGHTS, null, 60);
     // Critical penalty = -40
     expect(withLow).toBe(0); // 18 - 40 = -22 → capped at 0
