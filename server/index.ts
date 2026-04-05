@@ -5,7 +5,6 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { initDatabase } from './db.js';
-import { seedDatabase } from './seed.js';
 import candidatesRouter from './routes/candidates.js';
 import personalityRouter from './routes/personality.js';
 import statsRouter from './routes/stats.js';
@@ -121,7 +120,6 @@ const PORT = parseInt(process.env.PORT || '5000');
 async function start() {
   try {
     await initDatabase();
-    await seedDatabase();
 
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`InVision U API running on port ${PORT} | AI: ${process.env.GROQ_API_KEY ? 'enabled' : 'disabled'}`);
